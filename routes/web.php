@@ -7,11 +7,9 @@ use App\Http\Controllers\Mahasiswa\MahasiswaDashboardController;
 use App\Http\Controllers\Mahasiswa\NotifikasiController;
 use App\Http\Controllers\Mahasiswa\PengajuanController;
 
-
 use App\Http\Controllers\Dosen\DosenDashboardController;
 use App\Http\Controllers\Dosen\DosenPengajuanController;
 use App\Http\Controllers\Dosen\DosenJudulController;
-
 
 /*
 |--------------------------------------------------------------------------
@@ -81,6 +79,10 @@ Route::middleware(['auth', 'role:mahasiswa'])
 
         Route::get('/pengajuan', [PengajuanController::class, 'index'])
             ->name('pengajuan');
+
+        /* ROUTE UNTUK MENYIMPAN PENGAJUAN */
+        Route::post('/pengajuan', [PengajuanController::class, 'store'])
+            ->name('pengajuan.store');
 
         Route::get('/notifikasi', [NotifikasiController::class, 'index'])
             ->name('notifikasi');

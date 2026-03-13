@@ -3,6 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\User;
+use App\Models\Laboratorium;
+use App\Models\Pengajuan;
 
 class Judul extends Model
 {

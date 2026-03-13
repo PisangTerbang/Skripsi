@@ -1,39 +1,98 @@
 <x-layout>
     <x-slot:title>{{ $title }}</x-slot>
-    <div class="grid gap-4 mt-4">
 
-        @foreach ($judul as $j)
-            <div class="bg-white rounded-xl shadow p-5 border-l-4 border-indigo-600">
+    <div class="mt-4">
 
-                <h2 class="font-semibold">{{ $j->nama_judul }}</h2>
+        <div class="bg-white border rounded-lg p-4 mb-6 flex justify-between items-center">
 
-                <p class="text-sm text-slate-500 mt-1">
-                    {{ $j->deskripsi }}
-                </p>
+            <div>
+                <h3 class="font-semibold text-gray-700">Pengajuan Anda</h3>
                 <p class="text-sm text-gray-500">
-                    Peminat: {{ $j->pengajuan->count() }}
+                    {{ $jumlahPengajuan }} / 2 Judul
                 </p>
-
-                <form method="POST" action="/pengajuan/ajukan" class="mt-3">
-                    @csrf
-                    <input type="hidden" name="judul_id" value="{{ $j->id }}">
-
-                    <label class="text-sm">Prioritas</label>
-                    <select name="prioritas" class="border rounded p-1 ml-2">
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                    </select>
-
-                    <textarea name="alasan" placeholder="Alasan memilih" class="w-full mt-2 border rounded p-2 text-sm"></textarea>
-
-                    <button class="mt-2 bg-indigo-600 text-white px-3 py-1 rounded">
-                        Ajukan
-                    </button>
-                </form>
-
             </div>
-        @endforeach
+
+            <div class="text-sm text-gray-500">
+                Maksimal 2 pengajuan
+            </div>
+
+        </div>
+
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            @foreach ($judul as $j)
+                <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 flex flex-col justify-between">
+
+                    <div class="flex justify-between items-center mb-3">
+
+                        <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                            {{ $j->kode ?? '-' }}
+                        </span>
+
+                        <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                            {{ $j->laboratorium->nama ?? '-' }}
+                        </span>
+
+                    </div>
+
+                    <h2 class="text-lg font-semibold text-gray-800 leading-snug mb-2">
+                        {{ $j->nama_judul }}
+                    </h2>
+
+                    <p class="text-sm text-gray-500 mb-4">
+                        {{ $j->deskripsi ?? 'Tidak ada deskripsi' }}
+                    </p>
+
+                    <div class="flex justify-between text-sm text-gray-600 mb-4">
+
+                        <div>
+                            <span class="font-medium">Dosen:</span>
+                            {{ $j->dosen?->name ?? '-' }}
+                        </div>
+
+                        <div>
+                            <span class="font-medium">Peminat:</span>
+                            {{ $j->pengajuan_count ?? 0 }}
+                        </div>
+
+                    </div>
+
+                    <form method="POST" action="{{ route('Mahasiswa.pengajuan.store') }}"
+                        class="space-y-3 border-t pt-4">
+
+                        @csrf
+
+                        <input type="hidden" name="judul_id" value="{{ $j->id }}">
+
+                        <div>
+                            <label class="text-xs text-gray-500">Prioritas</label>
+
+                            <input type="number" name="prioritas" min="1" max="2"
+                                class="w-20 border rounded px-2 py-1 text-sm text-center">
+                        </div>
+
+                        <textarea name="alasan" rows="2" placeholder="Alasan memilih judul" class="w-full border rounded-lg p-2 text-sm"></textarea>
+
+                        @if ($jumlahPengajuan >= 2)
+                            <button type="button" disabled
+                                class="bg-gray-400 text-white px-4 py-2 rounded-lg text-sm cursor-not-allowed w-full">
+                                Batas Pengajuan Tercapai
+                            </button>
+                        @else
+                            <button type="submit"
+                                class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700 w-full">
+                                Ajukan
+                            </button>
+                        @endif
+
+                    </form>
+
+                </div>
+            @endforeach
+
+        </div>
 
     </div>
+
 </x-layout>
