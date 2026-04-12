@@ -14,17 +14,23 @@ class PengajuanController extends Controller
     {
         $mahasiswaId = Auth::id();
 
-        $judul = Judul::whereRaw('aktif = true')
-            ->withCount('pengajuan')
+
+        $judul = Judul::aktif()
             ->with(['laboratorium', 'dosen'])
             ->get();
 
         $jumlahPengajuan = Pengajuan::where('mahasiswa_id', $mahasiswaId)->count();
 
+        // Ambil judul yang sudah dipilih
+        $pengajuanSaya = Pengajuan::where('mahasiswa_id', $mahasiswaId)
+            ->pluck('judul_id')
+            ->toArray();
+
         return view('Mahasiswa.pengajuan', [
             'judul' => $judul,
             'title' => 'Pengajuan',
-            'jumlahPengajuan' => $jumlahPengajuan
+            'jumlahPengajuan' => $jumlahPengajuan,
+            'pengajuanSaya' => $pengajuanSaya
         ]);
     }
 
@@ -40,10 +46,21 @@ class PengajuanController extends Controller
 
         $jumlahPengajuan = Pengajuan::where('mahasiswa_id', $mahasiswaId)->count();
 
+        // ❌ Maksimal 2
         if ($jumlahPengajuan >= 2) {
             return back()->with('error', 'Anda hanya boleh mengajukan maksimal 2 judul.');
         }
 
+        // ❌ Tidak boleh pilih judul yang sama
+        $sudahAmbil = Pengajuan::where('mahasiswa_id', $mahasiswaId)
+            ->where('judul_id', $request->judul_id)
+            ->exists();
+
+        if ($sudahAmbil) {
+            return back()->with('error', 'Anda sudah memilih judul ini.');
+        }
+
+        // ❌ Prioritas tidak boleh sama
         $prioritasDipakai = Pengajuan::where('mahasiswa_id', $mahasiswaId)
             ->where('prioritas', $request->prioritas)
             ->exists();

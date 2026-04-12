@@ -23,6 +23,11 @@ class Judul extends Model
         'aktif' => 'boolean',
     ];
 
+    public function scopeAktif($query)
+    {
+        return $query->whereRaw('aktif = true');
+    }
+
     public function laboratorium()
     {
         return $this->belongsTo(Laboratorium::class);
