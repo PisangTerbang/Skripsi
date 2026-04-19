@@ -15,6 +15,7 @@ return new class extends Migration
             $table->unique(['mahasiswa_id', 'judul_id']);
         });
     }
+    
 
     /**
      * Reverse the migrations.

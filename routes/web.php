@@ -109,12 +109,19 @@ Route::middleware(['auth', 'role:dosen'])
 
         Route::get('/pengajuan', [DosenPengajuanController::class, 'index'])
             ->name('pengajuan');
+        Route::put('/pengajuan/{id}', [DosenPengajuanController::class, 'update'])
+            ->name('pengajuan.update');
 
         Route::get('/judul', [DosenJudulController::class, 'index'])
             ->name('judul');
 
-    });
+        Route::post('/judul', [DosenJudulController::class, 'store'])
+            ->name('judul.store');
 
+        Route::delete('/judul/{id}', [DosenJudulController::class, 'destroy'])
+            ->name('judul.destroy');
+
+    });
 
 /*
 |--------------------------------------------------------------------------

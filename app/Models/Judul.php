@@ -16,11 +16,13 @@ class Judul extends Model
         'dosen_id',
         'nama_judul',
         'deskripsi',
-        'aktif'
+        'aktif',
+        'is_locked'
     ];
 
     protected $casts = [
         'aktif' => 'boolean',
+        'is_locked' => 'boolean',
     ];
 
     public function scopeAktif($query)
