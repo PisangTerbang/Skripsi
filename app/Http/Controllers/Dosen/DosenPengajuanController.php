@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Pengajuan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\Laboratorium;
+use App\Models\Judul;
 
 class DosenPengajuanController extends Controller
 {
@@ -16,66 +18,95 @@ class DosenPengajuanController extends Controller
             ->get()
             ->groupBy('judul_id');
 
+        $laboratorium = Laboratorium::all();
+
         return view('dosen.pengajuan', [
             'pengajuan' => $pengajuan,
+            'laboratorium' => $laboratorium,
             'title' => 'Pengajuan Judul Mahasiswa'
         ]);
     }
 
     public function update(Request $request, $id)
     {
-        DB::transaction(function () use ($request, $id) {
+        // 🔥 VALIDASI WAJIB (biar status tidak null)
+        $request->validate([
+            'status' => 'required|in:disetujui,ditolak',
+            'catatan_dosen' => 'nullable|string',
+            'laboratorium_id' => 'nullable'
+        ]);
 
-            $pengajuan = Pengajuan::with(['judul', 'mahasiswa'])->findOrFail($id);
-            $statusBaru = $request->status;
+        try {
+            DB::transaction(function () use ($request, $id) {
 
-            // ❌ Cegah double-approve untuk judul yang sama
-            if ($statusBaru === 'disetujui' && $pengajuan->judul_id) {
-                $sudahAda = Pengajuan::where('judul_id', $pengajuan->judul_id)
-                    ->where('status', 'disetujui')
-                    ->exists();
+                $pengajuan = Pengajuan::with(['judul', 'mahasiswa'])->findOrFail($id);
 
-                if ($sudahAda) {
-                    throw new \Exception('Judul sudah diambil mahasiswa lain.');
+                $statusBaru = $request->status;
+
+                // 🔥 CEK: mahasiswa sudah punya judul disetujui
+                if ($statusBaru === 'disetujui') {
+                    $sudahPunya = Pengajuan::where('mahasiswa_id', $pengajuan->mahasiswa_id)
+                        ->where('status', 'disetujui')
+                        ->exists();
+
+                    if ($sudahPunya) {
+                        throw new \Exception('Mahasiswa sudah memiliki judul yang disetujui');
+                    }
                 }
-            }
 
-            // 🔥 HANDLE MANDIRI → CONVERT KE JUDUL
-            if ($statusBaru === 'disetujui' && $pengajuan->jenis === 'mandiri') {
+                // 🔥 SET STATUS (INI YANG PENTING)
+                $pengajuan->status = $statusBaru;
+                $pengajuan->catatan_dosen = $request->catatan_dosen;
 
-                // 🛑 Idempotent guard: jika sudah pernah di-convert, jangan buat lagi
-                if (!$pengajuan->judul_id) {
+                // =============================
+                // MODE PILIH
+                // =============================
+                if ($statusBaru === 'disetujui' && $pengajuan->jenis === 'pilih') {
+
+                    if ($pengajuan->judul) {
+                        $pengajuan->judul->update([
+                            'is_locked' => true
+                        ]);
+                    }
+
+                    Pengajuan::where('judul_id', $pengajuan->judul_id)
+                        ->where('id', '!=', $pengajuan->id)
+                        ->update([
+                            'status' => 'ditolak',
+                            'catatan_dosen' => 'Judul sudah diambil oleh ' . $pengajuan->mahasiswa->name
+                        ]);
+                }
+
+                // =============================
+                // MODE MANDIRI
+                // =============================
+                if ($statusBaru === 'disetujui' && $pengajuan->jenis === 'mandiri') {
+
+                    if (!$request->laboratorium_id) {
+                        throw new \Exception('Laboratorium wajib dipilih');
+                    }
 
                     $judulBaru = Judul::create([
                         'nama_judul' => $pengajuan->judul_mandiri,
                         'deskripsi' => $pengajuan->deskripsi_mandiri,
-                        'dosen_id' => auth()->id(), // dosen yang approve
-                        'laboratorium_id' => 1,     // sementara default (bisa kamu ganti nanti)
-                        'aktif' => true
+                        'laboratorium_id' => $request->laboratorium_id,
+                        'dosen_id' => auth()->id(),
+                        'is_locked' => true
                     ]);
 
-                    // 🔗 hubungkan pengajuan ke judul baru
                     $pengajuan->judul_id = $judulBaru->id;
                 }
-            }
 
-            // 🔄 Update status pengajuan
-            $pengajuan->status = $statusBaru;
-            $pengajuan->catatan_dosen = $request->catatan_dosen;
-            $pengajuan->save();
+                // 🔥 SAVE FINAL
+                $pengajuan->save();
+            });
 
-            // 🔥 Jika disetujui → tolak semua pengajuan lain untuk judul yang sama
-            if ($statusBaru === 'disetujui' && $pengajuan->judul_id) {
+            return back()->with('success', 'Status berhasil diperbarui');
 
-                Pengajuan::where('judul_id', $pengajuan->judul_id)
-                    ->where('id', '!=', $pengajuan->id)
-                    ->update([
-                        'status' => 'ditolak',
-                        'catatan_dosen' => 'Judul sudah diambil oleh ' . $pengajuan->mahasiswa->name
-                    ]);
-            }
-        });
+        } catch (\Exception $e) {
 
-        return back()->with('success', 'Status pengajuan diperbarui');
+            // 🔥 BIAR KAMU LIHAT ERROR SEBENARNYA
+            return back()->with('error', $e->getMessage());
+        }
     }
 }

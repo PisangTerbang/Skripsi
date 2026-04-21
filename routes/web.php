@@ -3,10 +3,12 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProfileController;
 
-use App\Http\Controllers\Mahasiswa\MahasiswaDashboardController;
-use App\Http\Controllers\Mahasiswa\NotifikasiController;
+// MAHASISWA
+use App\Http\Controllers\Mahasiswa\BerandaController;
 use App\Http\Controllers\Mahasiswa\PengajuanController;
+use App\Http\Controllers\Mahasiswa\NotifikasiController;
 
+// DOSEN
 use App\Http\Controllers\Dosen\DosenDashboardController;
 use App\Http\Controllers\Dosen\DosenPengajuanController;
 use App\Http\Controllers\Dosen\DosenJudulController;
@@ -21,27 +23,27 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
-
 /*
 |--------------------------------------------------------------------------
-| DASHBOARD REDIRECT
+| DASHBOARD REDIRECT (AUTO ROLE)
 |--------------------------------------------------------------------------
 */
 
 Route::get('/dashboard', function () {
 
-    if (auth()->user()->role == 'mahasiswa') {
-        return redirect()->route('Mahasiswa.beranda');
+    $user = auth()->user();
+
+    if ($user->role === 'mahasiswa') {
+        return redirect()->route('mahasiswa.beranda');
     }
 
-    if (auth()->user()->role == 'dosen') {
+    if ($user->role === 'dosen') {
         return redirect()->route('dosen.dashboard');
     }
 
     return redirect()->route('login');
 
 })->middleware('auth')->name('dashboard');
-
 
 /*
 |--------------------------------------------------------------------------
@@ -62,7 +64,6 @@ Route::middleware('auth')->group(function () {
 
 });
 
-
 /*
 |--------------------------------------------------------------------------
 | MAHASISWA AREA
@@ -71,27 +72,39 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware(['auth', 'role:mahasiswa'])
     ->prefix('mahasiswa')
-    ->name('Mahasiswa.')
+    ->name('mahasiswa.') // 🔥 DIUBAH JADI LOWERCASE (STANDARD)
     ->group(function () {
 
-        Route::get('/beranda', [MahasiswaDashboardController::class, 'index'])
+        // BERANDA
+        Route::get('/beranda', [BerandaController::class, 'index'])
             ->name('beranda');
 
+        Route::get('/beranda/data', [\App\Http\Controllers\Mahasiswa\BerandaController::class, 'data'])
+            ->name('beranda.data');
+
+        // PENGAJUAN
         Route::get('/pengajuan', [PengajuanController::class, 'index'])
             ->name('pengajuan');
 
-        /* ROUTE UNTUK MENYIMPAN PENGAJUAN */
         Route::post('/pengajuan', [PengajuanController::class, 'store'])
             ->name('pengajuan.store');
 
-        Route::get('/notifikasi', [NotifikasiController::class, 'index'])
-            ->name('notifikasi');
+        // RIWAYAT
+        Route::get('/riwayat', [PengajuanController::class, 'riwayat'])
+            ->name('riwayat');
 
+        // NOTIFIKASI
+        Route::get('/notifikasi-data', [NotifikasiController::class, 'data'])
+            ->name('notifikasi.data');
+
+        Route::post('/notifikasi-read', [NotifikasiController::class, 'readAll'])
+            ->name('notifikasi.read');
+
+        // PENGATURAN
         Route::view('/pengaturan', 'Mahasiswa.pengaturan')
             ->name('pengaturan');
 
     });
-
 
 /*
 |--------------------------------------------------------------------------
@@ -104,14 +117,18 @@ Route::middleware(['auth', 'role:dosen'])
     ->name('dosen.')
     ->group(function () {
 
+        // DASHBOARD
         Route::get('/', [DosenDashboardController::class, 'index'])
             ->name('dashboard');
 
+        // PENGAJUAN MAHASISWA
         Route::get('/pengajuan', [DosenPengajuanController::class, 'index'])
             ->name('pengajuan');
+
         Route::put('/pengajuan/{id}', [DosenPengajuanController::class, 'update'])
             ->name('pengajuan.update');
 
+        // MANAJEMEN JUDUL
         Route::get('/judul', [DosenJudulController::class, 'index'])
             ->name('judul');
 
@@ -125,7 +142,7 @@ Route::middleware(['auth', 'role:dosen'])
 
 /*
 |--------------------------------------------------------------------------
-| AUTH ROUTES
+| AUTH
 |--------------------------------------------------------------------------
 */
 

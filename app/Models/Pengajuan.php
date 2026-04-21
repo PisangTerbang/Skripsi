@@ -3,6 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\User;
+use App\Models\Judul;
+use App\Models\Periode;
 use App\Models\Aktivitas;
 
 class Pengajuan extends Model
@@ -19,8 +22,15 @@ class Pengajuan extends Model
         'prioritas',
         'alasan',
         'status',
-        'catatan_dosen'
+        'catatan_dosen',
+        'periode_id'
     ];
+
+    /*
+    |--------------------------------------------------------------------------
+    | RELATIONSHIP
+    |--------------------------------------------------------------------------
+    */
 
     public function mahasiswa()
     {
@@ -37,58 +47,73 @@ class Pengajuan extends Model
         return $this->belongsTo(User::class, 'dosen_pilihan_id');
     }
 
+    public function periode()
+    {
+        return $this->belongsTo(Periode::class);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | MODEL EVENTS
+    |--------------------------------------------------------------------------
+    */
+
     protected static function booted()
     {
-        // Cegah perubahan jika sudah diputuskan
         static::updating(function ($pengajuan) {
 
             $statusLama = $pengajuan->getOriginal('status');
             $statusBaru = $pengajuan->status;
 
-            // Jika sebelumnya sudah diputuskan → tidak boleh diubah lagi
-            if (in_array($statusLama, ['disetujui', 'ditolak'])) {
+            // 🔒 LOCK FIELD KRITIS
+            if (
+                in_array($statusLama, ['disetujui', 'ditolak']) &&
+                (
+                    $pengajuan->isDirty('status') ||
+                    $pengajuan->isDirty('judul_id') ||
+                    $pengajuan->isDirty('prioritas') ||
+                    $pengajuan->isDirty('jenis')
+                )
+            ) {
                 throw new \Exception('Pengajuan yang sudah diputuskan tidak dapat diubah.');
             }
 
-            // Jika status berubah dari pending → disetujui
+            // ✅ NOTIF DISETUJUI
             if ($statusLama === 'pending' && $statusBaru === 'disetujui') {
-                Aktivitas::create([
-                    'user_id' => $pengajuan->mahasiswa_id,
-                    'tipe' => 'persetujuan',
-                    'pesan' => 'Pengajuan judul Anda telah disetujui.'
-                ]);
+                Aktivitas::buat(
+                    $pengajuan->mahasiswa_id,
+                    'persetujuan',
+                    'Pengajuan judul Anda telah disetujui.'
+                );
             }
 
-            // Jika status berubah dari pending → ditolak
+            // ❌ NOTIF DITOLAK
             if ($statusLama === 'pending' && $statusBaru === 'ditolak') {
-                Aktivitas::create([
-                    'user_id' => $pengajuan->mahasiswa_id,
-                    'tipe' => 'penolakan',
-                    'pesan' => 'Pengajuan judul Anda ditolak. Catatan: ' . $pengajuan->catatan_dosen
-                ]);
+                Aktivitas::buat(
+                    $pengajuan->mahasiswa_id,
+                    'penolakan',
+                    'Pengajuan ditolak. Catatan: ' . ($pengajuan->catatan_dosen ?? '-')
+                );
             }
         });
 
-        // Otomatis isi periode aktif saat membuat pengajuan
         static::creating(function ($pengajuan) {
 
             if (!$pengajuan->periode_id) {
-                $periode = \App\Models\Periode::periodeAktif();
-                if ($periode) {
 
-                    // Tambahan: cek apakah periode sudah ditutup
-                    if ($periode->ditutup) {
-                        throw new \Exception('Periode sudah ditutup.');
-                    }
+                // 🔥 POSTGRES SAFE BOOLEAN
+                $periode = Periode::whereRaw('aktif IS TRUE')->first();
 
-                    $pengajuan->periode_id = $periode->id;
+                if (!$periode) {
+                    throw new \Exception('Tidak ada periode aktif.');
                 }
+
+                if ($periode->ditutup) {
+                    throw new \Exception('Periode sudah ditutup.');
+                }
+
+                $pengajuan->periode_id = $periode->id;
             }
         });
-    }
-
-    public function periode()
-    {
-        return $this->belongsTo(Periode::class);
     }
 }

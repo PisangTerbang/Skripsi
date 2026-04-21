@@ -36,7 +36,7 @@
                 📌 Ajukan Judul Mandiri
             </h2>
 
-            <form method="POST" action="{{ route('Mahasiswa.pengajuan.store') }}" class="space-y-3">
+            <form method="POST" action="{{ route('mahasiswa.pengajuan.store') }}" class="space-y-3">
                 @csrf
                 <input type="hidden" name="jenis" value="mandiri">
 
@@ -109,7 +109,7 @@
                     @endif
 
                     {{-- FORM --}}
-                    <form method="POST" action="{{ route('Mahasiswa.pengajuan.store') }}" class="mt-auto">
+                    <form method="POST" action="{{ route('mahasiswa.pengajuan.store') }}" class="mt-auto">
                         @csrf
 
                         <input type="hidden" name="jenis" value="pilih">

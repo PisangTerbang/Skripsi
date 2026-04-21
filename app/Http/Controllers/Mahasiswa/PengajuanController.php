@@ -30,7 +30,10 @@ class PengajuanController extends Controller
             ])
             ->get();
 
-        $jumlahPengajuan = Pengajuan::where('mahasiswa_id', $mahasiswaId)->count();
+        // 🔥 FIX: HITUNG LANGSUNG (NO HELPER)
+        $jumlahPengajuan = Pengajuan::where('mahasiswa_id', $mahasiswaId)
+            ->whereIn('status', ['pending', 'disetujui'])
+            ->count();
 
         $pengajuanSaya = Pengajuan::where('mahasiswa_id', $mahasiswaId)
             ->pluck('judul_id')
@@ -52,33 +55,45 @@ class PengajuanController extends Controller
             'prioritas' => 'required|integer|min:1|max:2',
         ]);
 
-        if (Pengajuan::where('mahasiswa_id', $mahasiswaId)->count() >= 2) {
-            return back()->with('error', 'Maksimal 2 pengajuan.');
+        // 🔥 SLOT FIX (NO HELPER)
+        $jumlahAktif = Pengajuan::where('mahasiswa_id', $mahasiswaId)
+            ->whereIn('status', ['pending', 'disetujui'])
+            ->count();
+
+        if ($jumlahAktif >= 2) {
+            return back()->with('error', 'Maksimal 2 pengajuan aktif.');
         }
 
-        if (
-            Pengajuan::where('mahasiswa_id', $mahasiswaId)
-                ->where('prioritas', $request->prioritas)
-                ->exists()
-        ) {
+        // 🔥 PRIORITAS FIX (NO HELPER)
+        $prioritasTerpakai = Pengajuan::where('mahasiswa_id', $mahasiswaId)
+            ->whereIn('status', ['pending', 'disetujui'])
+            ->where('prioritas', $request->prioritas)
+            ->exists();
+
+        if ($prioritasTerpakai) {
             return back()->with('error', 'Prioritas sudah digunakan.');
         }
 
+        // =====================
         // MODE PILIH
+        // =====================
         if ($request->jenis === 'pilih') {
 
             $request->validate([
                 'judul_id' => 'required'
             ]);
 
-            if (
-                Pengajuan::where('mahasiswa_id', $mahasiswaId)
-                    ->where('judul_id', $request->judul_id)
-                    ->exists()
-            ) {
+            // 🔥 CEK SUDAH DIPILIH
+            $sudahDipilih = Pengajuan::where('mahasiswa_id', $mahasiswaId)
+                ->whereIn('status', ['pending', 'disetujui'])
+                ->where('judul_id', $request->judul_id)
+                ->exists();
+
+            if ($sudahDipilih) {
                 return back()->with('error', 'Judul sudah dipilih.');
             }
 
+            // 🔥 CEK SUDAH DIAMBIL ORANG LAIN
             $sudahDiambil = Pengajuan::where('judul_id', $request->judul_id)
                 ->where('status', 'disetujui')
                 ->exists();
@@ -97,7 +112,9 @@ class PengajuanController extends Controller
             ]);
         }
 
+        // =====================
         // MODE MANDIRI
+        // =====================
         if ($request->jenis === 'mandiri') {
 
             $request->validate([
@@ -116,5 +133,20 @@ class PengajuanController extends Controller
         }
 
         return back()->with('success', 'Pengajuan berhasil dikirim');
+    }
+
+    public function riwayat()
+    {
+        $mahasiswaId = Auth::id();
+
+        $pengajuan = Pengajuan::with(['judul', 'dosenPilihan'])
+            ->where('mahasiswa_id', $mahasiswaId)
+            ->latest()
+            ->get();
+
+        return view('Mahasiswa.riwayat', [
+            'pengajuan' => $pengajuan,
+            'title' => 'Riwayat Pengajuan'
+        ]);
     }
 }

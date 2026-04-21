@@ -4,13 +4,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- ✅ WAJIB: CSRF -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
     <title>Dashboard</title>
 
     @vite('resources/css/app.css')
+
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script>
+        document.addEventListener('alpine:init', () => {
+
+            Alpine.store('notif', {
+
+                unread: 0,
+                interval: null,
+
+                async fetch() {
+                    try {
+                        const res = await fetch("{{ route('mahasiswa.notifikasi.data') }}", {
+                            credentials: 'same-origin'
+                        });
+
+                        const data = await res.json();
+                        this.unread = data.unread;
+
+                    } catch (e) {
+                        console.error('Notif error:', e);
+                    }
+                },
+
+                // 🔥 mark semua sebagai dibaca
+                async markAllRead() {
+                    try {
+                        await fetch("{{ route('mahasiswa.notifikasi.read') }}", {
+                            method: 'POST',
+                            credentials: 'same-origin',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector(
+                                    'meta[name="csrf-token"]').content
+                            }
+                        });
+
+                        this.unread = 0;
+
+                    } catch (e) {
+                        console.error('Mark read error:', e);
+                    }
+                },
+
+                init() {
+                    this.fetch();
+
+                    // 🔥 cegah interval dobel
+                    if (this.interval) clearInterval(this.interval);
+
+                    this.interval = setInterval(() => {
+                        this.fetch();
+                    }, 5000);
+                }
+            });
+
+        });
+    </script>
 </head>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 
 <body class="bg-gradient-to-br from-slate-50 via-indigo-50 to-slate-100 h-screen overflow-hidden">
 

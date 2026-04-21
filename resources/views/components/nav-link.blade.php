@@ -1,6 +1,6 @@
 @props(['route', 'icon'])
 
-<a href="{{ route($route) }}"
+<a href="{{ Route::has($route) ? route($route) : '#' }}"
     class="flex items-center gap-3 px-4 py-2 rounded-lg transition
    {{ request()->routeIs($route) ? 'bg-indigo-500 text-white' : 'hover:bg-indigo-500/50 text-indigo-100' }}">
 

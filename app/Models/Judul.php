@@ -12,6 +12,7 @@ class Judul extends Model
     protected $table = 'judul';
 
     protected $fillable = [
+        'kode',
         'laboratorium_id',
         'dosen_id',
         'nama_judul',
@@ -24,6 +25,11 @@ class Judul extends Model
         'aktif' => 'boolean',
         'is_locked' => 'boolean',
     ];
+
+    // ❌ JANGAN ADA DEFAULT ATTRIBUTES YANG SET BOOLEAN
+    // protected $attributes = [
+    //     'is_locked' => false
+    // ];
 
     public function scopeAktif($query)
     {
@@ -43,20 +49,5 @@ class Judul extends Model
     public function pengajuan()
     {
         return $this->hasMany(Pengajuan::class);
-    }
-
-    public function jumlahPeminat()
-    {
-        return $this->pengajuan()
-            ->where('jenis', 'pilih')
-            ->count();
-    }
-
-    public function jumlahDisetujui()
-    {
-        return $this->pengajuan()
-            ->where('jenis', 'pilih')
-            ->where('status', 'disetujui')
-            ->count();
     }
 }

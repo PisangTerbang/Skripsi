@@ -44,7 +44,6 @@ class DosenJudulController extends Controller
 
     public function store(Request $request)
     {
-        // ✅ VALIDASI
         $request->validate([
             'laboratorium_id' => 'required',
             'nama_judul' => 'required|string|max:255',
@@ -55,12 +54,14 @@ class DosenJudulController extends Controller
 
         Judul::create([
             'laboratorium_id' => $request->laboratorium_id,
-            'dosen_id' => Auth::id(),
-            'kode' => $kode, // 🔥 TAMBAHAN
+            'dosen_id' => auth()->id(),
+            'kode' => $kode,
             'nama_judul' => $request->nama_judul,
             'deskripsi' => $request->deskripsi,
-            'aktif' => true,
-            'is_locked' => false   
+
+            // 🔥 WAJIB BOOLEAN POSTGRES
+            'aktif' => DB::raw('true'),
+            'is_locked' => DB::raw('false'),
         ]);
 
         return back()->with('success', 'Judul berhasil ditambahkan');
