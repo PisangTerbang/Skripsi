@@ -12,7 +12,7 @@
            {{ $isActive
                ? 'bg-white/20 text-white shadow-lg shadow-indigo-900/20'
                : 'text-indigo-200 hover:bg-white/10 hover:text-white' }}"
-    :class="pressed && {{ $isActive ? 'false' : 'true' }} ? 'scale-[0.98]' : ''" role="menuitem"
+    :class="pressed && !{{ $isActive ? 'true' : 'false' }} ? 'scale-[0.98]' : ''" role="menuitem"
     aria-current="{{ $isActive ? 'page' : 'false' }}">
 
     {{-- Active Indicator Bar --}}
@@ -47,7 +47,7 @@
     @endif
 
     {{-- Hover Background --}}
-    <span x-show="hover && {{ $isActive ? 'false' : 'true' }}" x-transition:enter="transition ease-out duration-200"
+    <span x-show="hover && !{{ $isActive ? 'true' : 'false' }}" x-transition:enter="transition ease-out duration-200"
         x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
         x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0" class="absolute inset-0 bg-white/5 rounded-xl pointer-events-none">

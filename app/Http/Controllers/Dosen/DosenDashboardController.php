@@ -12,9 +12,8 @@ class DosenDashboardController extends Controller
     public function index()
     {
         $periodeAktif = Periode::periodeAktif();
-        $pending = Pengajuan::where('periode_id', $periodeAktif->id)
-            ->where('status', 'pending')
-            ->count();
+
+        // ================= STATS =================
         $total = Pengajuan::where('periode_id', $periodeAktif->id)->count();
         $disetujui = Pengajuan::where('periode_id', $periodeAktif->id)
             ->where('status', 'disetujui')
@@ -22,11 +21,17 @@ class DosenDashboardController extends Controller
         $ditolak = Pengajuan::where('periode_id', $periodeAktif->id)
             ->where('status', 'ditolak')
             ->count();
+        $pending = Pengajuan::where('periode_id', $periodeAktif->id)
+            ->where('status', 'pending')
+            ->count();
+
         $totalSemua = max($total, 1); // cegah bagi 0
 
         $persenPending = round(($pending / $totalSemua) * 100);
         $persenSetuju = round(($disetujui / $totalSemua) * 100);
         $persenTolak = round(($ditolak / $totalSemua) * 100);
+
+        // ================= TREN PENGAJUAN =================
         $trenPengajuan = Periode::select(
             'semester',
             'tahun_ajaran',
@@ -37,6 +42,7 @@ class DosenDashboardController extends Controller
             ->orderBy('tahun_ajaran')
             ->get();
 
+        // ================= TREN KEPUTUSAN =================
         $trenKeputusan = Periode::select(
             'semester',
             'tahun_ajaran',
@@ -48,6 +54,7 @@ class DosenDashboardController extends Controller
             ->orderBy('tahun_ajaran')
             ->get();
 
+        // ================= LAB STATS =================
         $labDisetujui = \App\Models\Laboratorium::select(
             'laboratorium.nama',
             DB::raw('count(pengajuan.id) as total')
@@ -85,6 +92,17 @@ class DosenDashboardController extends Controller
             ->groupBy('laboratorium.nama')
             ->get();
 
+        // ================= RECENT SUBMISSIONS (NEW) =================
+        $recentSubmissions = Pengajuan::with(['mahasiswa', 'judul'])
+            ->where('periode_id', $periodeAktif->id)
+            ->where('status', 'pending')
+            ->latest()
+            ->take(5)
+            ->get();
+
+        // ================= APPROVAL RATE =================
+        $approvalRate = $total > 0 ? round(($disetujui / $total) * 100) : 0;
+
         return view('dosen.dashboard', [
             'total' => $total,
             'disetujui' => $disetujui,
@@ -99,6 +117,8 @@ class DosenDashboardController extends Controller
             'labDisetujui' => $labDisetujui,
             'labDitolak' => $labDitolak,
             'rasioLab' => $rasioLab,
+            'recentSubmissions' => $recentSubmissions,
+            'approvalRate' => $approvalRate,
             'title' => 'Dashboard Dosen'
         ]);
     }

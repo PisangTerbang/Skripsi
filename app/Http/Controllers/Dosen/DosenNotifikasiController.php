@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Mahasiswa;
+namespace App\Http\Controllers\Dosen;
 
 use App\Http\Controllers\Controller;
 use App\Models\Aktivitas;
@@ -9,10 +9,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
-class NotifikasiController extends Controller
+class DosenNotifikasiController extends Controller
 {
     /**
-     * Halaman Notifikasi
+     * Halaman Notifikasi Dosen
      */
     public function index()
     {
@@ -21,7 +21,7 @@ class NotifikasiController extends Controller
         $aktivitas = DB::table('aktivitas')
             ->where('user_id', $userId)
             ->orderBy('created_at', 'desc')
-            ->paginate(50); // Increase to 50 for better UX
+            ->paginate(50);
 
         // Convert created_at to Carbon
         $aktivitas->getCollection()->transform(function ($item) {
@@ -30,7 +30,7 @@ class NotifikasiController extends Controller
             return $item;
         });
 
-        return view('mahasiswa.notifikasi', [
+        return view('dosen.notifikasi', [
             'aktivitas' => $aktivitas,
             'title' => 'Notifikasi'
         ]);
@@ -51,7 +51,6 @@ class NotifikasiController extends Controller
                 ], 401);
             }
 
-            // Get latest 50 notifications
             $notif = DB::table('aktivitas')
                 ->where('user_id', $userId)
                 ->orderBy('created_at', 'desc')
@@ -79,7 +78,7 @@ class NotifikasiController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Notifikasi data error', [
+            Log::error('Notifikasi data error (Dosen)', [
                 'error' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine()
@@ -109,7 +108,6 @@ class NotifikasiController extends Controller
                 ], 401);
             }
 
-            // Check if notification exists and belongs to user
             $notification = DB::table('aktivitas')
                 ->where('id', $id)
                 ->where('user_id', $userId)
@@ -122,7 +120,6 @@ class NotifikasiController extends Controller
                 ], 404);
             }
 
-            // Already read, no need to update
             if ($notification->is_read) {
                 return response()->json([
                     'success' => true,
@@ -131,13 +128,11 @@ class NotifikasiController extends Controller
                 ]);
             }
 
-            // Mark as read
-            $updated = DB::table('aktivitas')
+            DB::table('aktivitas')
                 ->where('id', $id)
                 ->where('user_id', $userId)
                 ->update(['is_read' => DB::raw('true')]);
 
-            // Get new unread count
             $unreadCount = DB::table('aktivitas')
                 ->where('user_id', $userId)
                 ->where('is_read', '=', DB::raw('false'))
@@ -150,11 +145,9 @@ class NotifikasiController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Mark as read error', [
+            Log::error('Mark as read error (Dosen)', [
                 'id' => $id,
-                'error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
+                'error' => $e->getMessage()
             ]);
 
             return response()->json([
@@ -191,10 +184,8 @@ class NotifikasiController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('ReadAll error', [
-                'error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
+            Log::error('ReadAll error (Dosen)', [
+                'error' => $e->getMessage()
             ]);
 
             return response()->json([

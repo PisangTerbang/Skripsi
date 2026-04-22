@@ -35,14 +35,22 @@ class BerandaController extends Controller
             ->latest()
             ->first();
 
-        // ================= RIWAYAT TERAKHIR =================
+        // ================= RIWAYAT TERAKHIR (FORMATTED) =================
         $riwayat = Pengajuan::with('judul')
             ->where('mahasiswa_id', $mahasiswaId)
             ->latest()
             ->take(5)
-            ->get();
+            ->get()
+            ->map(function ($r) {
+                return [
+                    'judul' => $r->judul->nama_judul ?? $r->judul_mandiri,
+                    'status' => $r->status,
+                    'waktu' => $r->created_at->diffForHumans(),
+                    'isNew' => false
+                ];
+            });
 
-        return view('Mahasiswa.beranda', compact(
+        return view('mahasiswa.beranda', compact(
             'total',
             'pending',
             'ditolak',
@@ -51,9 +59,8 @@ class BerandaController extends Controller
             'disetujui',
             'riwayat'
         ))->with('title', 'Beranda');
-
-
     }
+
     public function data()
     {
         $mahasiswaId = Auth::id();

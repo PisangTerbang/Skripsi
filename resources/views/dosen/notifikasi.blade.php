@@ -1,4 +1,4 @@
-<x-layout>
+<x-layout-dosen>
     <x-slot:title>{{ $title }}</x-slot>
 
     <div x-data="notifikasiPage()" x-init="init()" class="space-y-4">
@@ -11,8 +11,8 @@
                     {{-- Title & Stats --}}
                     <div>
                         <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-3">
-                            <span class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
-                                <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor"
+                            <span class="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
+                                <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -45,7 +45,7 @@
                         {{-- Mark All Read Button --}}
                         <button @click="markAllAsRead()" :disabled="loading || unreadCount === 0"
                             class="px-4 py-2 text-sm font-medium text-white
-                                       bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-all
+                                       bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-all
                                        disabled:bg-gray-300 disabled:cursor-not-allowed
                                        flex items-center gap-2 shadow-sm hover:shadow-md">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -60,19 +60,19 @@
                 {{-- Filter Tabs --}}
                 <div class="flex gap-2 mt-6 border-b border-gray-200">
                     <button @click="filter = 'all'"
-                        :class="filter === 'all' ? 'border-indigo-600 text-indigo-600' :
+                        :class="filter === 'all' ? 'border-emerald-600 text-emerald-600' :
                             'border-transparent text-gray-500 hover:text-gray-700'"
                         class="px-4 py-2 text-sm font-medium border-b-2 transition-colors">
                         Semua (<span x-text="totalCount"></span>)
                     </button>
                     <button @click="filter = 'unread'"
-                        :class="filter === 'unread' ? 'border-indigo-600 text-indigo-600' :
+                        :class="filter === 'unread' ? 'border-emerald-600 text-emerald-600' :
                             'border-transparent text-gray-500 hover:text-gray-700'"
                         class="px-4 py-2 text-sm font-medium border-b-2 transition-colors">
                         Belum Dibaca (<span x-text="unreadCount"></span>)
                     </button>
                     <button @click="filter = 'read'"
-                        :class="filter === 'read' ? 'border-indigo-600 text-indigo-600' :
+                        :class="filter === 'read' ? 'border-emerald-600 text-emerald-600' :
                             'border-transparent text-gray-500 hover:text-gray-700'"
                         class="px-4 py-2 text-sm font-medium border-b-2 transition-colors">
                         Sudah Dibaca (<span x-text="readCount"></span>)
@@ -108,16 +108,25 @@
                         <div class="divide-y divide-gray-100">
                             <template x-for="notif in filteredNotifications" :key="notif.id">
                                 <div @click="markAsRead(notif.id)"
-                                    :class="!notif.is_read ? 'bg-indigo-50/50 hover:bg-indigo-50' : 'hover:bg-gray-50'"
+                                    :class="!notif.is_read ? 'bg-emerald-50/50 hover:bg-emerald-50' : 'hover:bg-gray-50'"
                                     class="p-4 transition-all duration-200 cursor-pointer group">
 
                                     <div class="flex items-start gap-4">
                                         {{-- Icon --}}
-                                        <div :class="!notif.is_read ? 'bg-indigo-100' : 'bg-gray-100'"
+                                        <div :class="!notif.is_read ? 'bg-emerald-100' : 'bg-gray-100'"
                                             class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0
                                                     transition-all duration-200 group-hover:scale-110">
+                                            <template x-if="notif.tipe === 'pengajuan_baru'">
+                                                <svg :class="!notif.is_read ? 'text-emerald-600' : 'text-gray-500'"
+                                                    class="w-5 h-5" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                </svg>
+                                            </template>
                                             <template x-if="notif.tipe === 'approved'">
-                                                <svg :class="!notif.is_read ? 'text-indigo-600' : 'text-gray-500'"
+                                                <svg :class="!notif.is_read ? 'text-emerald-600' : 'text-gray-500'"
                                                     class="w-5 h-5" fill="none" stroke="currentColor"
                                                     viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -134,8 +143,9 @@
                                                         d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                 </svg>
                                             </template>
-                                            <template x-if="notif.tipe !== 'approved' && notif.tipe !== 'rejected'">
-                                                <svg :class="!notif.is_read ? 'text-indigo-600' : 'text-gray-500'"
+                                            <template
+                                                x-if="notif.tipe !== 'pengajuan_baru' && notif.tipe !== 'approved' && notif.tipe !== 'rejected'">
+                                                <svg :class="!notif.is_read ? 'text-emerald-600' : 'text-gray-500'"
                                                     class="w-5 h-5" fill="none" stroke="currentColor"
                                                     viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -153,14 +163,14 @@
                                             <div class="flex items-center gap-2 mt-1">
                                                 <span class="text-xs text-gray-400" x-text="notif.waktu"></span>
                                                 <template x-if="!notif.is_read">
-                                                    <span class="text-xs text-indigo-600 font-medium">• Baru</span>
+                                                    <span class="text-xs text-emerald-600 font-medium">• Baru</span>
                                                 </template>
                                             </div>
                                         </div>
 
                                         {{-- Unread Indicator --}}
                                         <template x-if="!notif.is_read">
-                                            <div class="w-2 h-2 bg-indigo-600 rounded-full flex-shrink-0 mt-2"></div>
+                                            <div class="w-2 h-2 bg-emerald-600 rounded-full flex-shrink-0 mt-2"></div>
                                         </template>
                                     </div>
                                 </div>
@@ -211,7 +221,6 @@
                 },
 
                 init() {
-                    // Auto refresh every 10 seconds
                     setInterval(() => {
                         this.fetchNotifications(true);
                     }, 10000);
@@ -221,7 +230,7 @@
                     if (!silent) this.loading = true;
 
                     try {
-                        const response = await fetch("{{ route('mahasiswa.notifikasi.data') }}", {
+                        const response = await fetch("{{ route('dosen.notifikasi.data') }}", {
                             credentials: 'same-origin'
                         });
 
@@ -229,7 +238,6 @@
 
                         const data = await response.json();
 
-                        // Update notifications
                         this.notifications = data.data.map(item => ({
                             id: item.id,
                             pesan: item.pesan,
@@ -238,14 +246,12 @@
                             waktu: item.waktu
                         }));
 
-                        // Update counts
                         this.unreadCount = data.unread;
                         this.totalCount = this.notifications.length;
                         this.readCount = this.totalCount - this.unreadCount;
 
-                        // Update global store
-                        if (this.$store.notif) {
-                            this.$store.notif.unread = data.unread;
+                        if (this.$store.notifDosen) {
+                            this.$store.notifDosen.unread = data.unread;
                         }
 
                         if (!silent) {
@@ -266,13 +272,12 @@
                     const notif = this.notifications.find(n => n.id === id);
                     if (!notif || notif.is_read) return;
 
-                    // Optimistic update
                     notif.is_read = true;
                     this.unreadCount--;
                     this.readCount++;
 
                     try {
-                        const response = await fetch(`/mahasiswa/notifikasi/${id}/read`, {
+                        const response = await fetch(`/dosen/notifikasi/${id}/read`, {
                             method: 'POST',
                             credentials: 'same-origin',
                             headers: {
@@ -283,14 +288,12 @@
 
                         if (!response.ok) throw new Error('Failed to mark as read');
 
-                        // Update global store
-                        if (this.$store.notif) {
-                            this.$store.notif.unread = this.unreadCount;
+                        if (this.$store.notifDosen) {
+                            this.$store.notifDosen.unread = this.unreadCount;
                         }
 
                     } catch (error) {
                         console.error('Mark read error:', error);
-                        // Revert optimistic update
                         notif.is_read = false;
                         this.unreadCount++;
                         this.readCount--;
@@ -304,7 +307,7 @@
                     this.loading = true;
 
                     try {
-                        const response = await fetch("{{ route('mahasiswa.notifikasi.read') }}", {
+                        const response = await fetch("{{ route('dosen.notifikasi.read') }}", {
                             method: 'POST',
                             credentials: 'same-origin',
                             headers: {
@@ -315,14 +318,12 @@
 
                         if (!response.ok) throw new Error('Failed to mark all as read');
 
-                        // Update all notifications
                         this.notifications.forEach(n => n.is_read = true);
                         this.readCount = this.totalCount;
                         this.unreadCount = 0;
 
-                        // Update global store
-                        if (this.$store.notif) {
-                            this.$store.notif.unread = 0;
+                        if (this.$store.notifDosen) {
+                            this.$store.notifDosen.unread = 0;
                         }
 
                         this.showToast('Semua notifikasi telah ditandai sebagai dibaca', 'success');
@@ -370,4 +371,4 @@
         }
     </script>
 
-</x-layout>
+</x-layout-dosen>
