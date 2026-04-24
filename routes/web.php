@@ -13,6 +13,7 @@ use App\Http\Controllers\Dosen\DosenDashboardController;
 use App\Http\Controllers\Dosen\DosenPengajuanController;
 use App\Http\Controllers\Dosen\DosenJudulController;
 use App\Http\Controllers\Dosen\DosenNotifikasiController;
+use App\Http\Controllers\Dosen\DosenPengaturanController;
 
 /*
 |--------------------------------------------------------------------------
@@ -45,9 +46,9 @@ Route::get('/dashboard', function () {
 })->middleware('auth')->name('dashboard');
 
 /*
-|--------------------------------------------------------------------------
+|----------------------------------------------------------------
 | PROFILE
-|--------------------------------------------------------------------------
+|----------------------------------------------------------------
 */
 
 Route::middleware('auth')->group(function () {
@@ -166,9 +167,18 @@ Route::middleware(['auth', 'role:dosen'])
         Route::post('/notifikasi/{id}/read', [DosenNotifikasiController::class, 'markAsRead'])
             ->name('notifikasi.mark-read');
 
-        // PENGATURAN
-        Route::view('/pengaturan', 'dosen.pengaturan')
+        // PENGATURAN DOSEN
+        Route::get('/pengaturan', [DosenPengaturanController::class, 'index'])
             ->name('pengaturan');
+
+        Route::put('/pengaturan/profile', [DosenPengaturanController::class, 'updateProfile'])
+            ->name('pengaturan.profile');
+
+        Route::put('/pengaturan/password', [DosenPengaturanController::class, 'updatePassword'])
+            ->name('pengaturan.password');
+
+        Route::delete('/pengaturan/avatar', [DosenPengaturanController::class, 'removeAvatar'])
+            ->name('pengaturan.avatar.remove');
     });
 
 /*

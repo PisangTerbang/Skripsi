@@ -23,10 +23,11 @@ class DosenNotifikasiController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(50);
 
-        // Convert created_at to Carbon
+        // Transform data untuk Alpine.js
         $aktivitas->getCollection()->transform(function ($item) {
             $item->created_at = Carbon::parse($item->created_at);
             $item->updated_at = Carbon::parse($item->updated_at);
+            $item->waktu = $item->created_at->diffForHumans();
             return $item;
         });
 

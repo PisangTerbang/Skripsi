@@ -320,7 +320,7 @@
 
         </div>
 
-    </div>
+    
 
     {{-- ================= REVIEW MODAL ================= --}}
     <div x-show="showModal" x-cloak @click.self="showModal = false"
@@ -335,11 +335,15 @@
             {{-- Modal Header --}}
             <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
                 <h3 class="text-xl font-bold text-gray-800">
-                    <span x-show="reviewAction === 'disetujui'" class="text-green-600">✓ Setujui Pengajuan</span>
-                    <span x-show="reviewAction === 'ditolak'" class="text-red-600">✗ Tolak Pengajuan</span>
+                    <template x-if="reviewAction === 'disetujui'">
+                        <span class="text-green-600">Setujui Pengajuan</span>
+                    </template>
+                    <template x-if="reviewAction === 'ditolak'">
+                        <span class="text-red-600">Tolak Pengajuan</span>
+                    </template>
                 </h3>
                 <button @click="showModal = false" class="text-gray-400 hover:text-gray-600 transition-colors">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -347,77 +351,81 @@
             </div>
 
             {{-- Modal Body --}}
-            <form :action="`/dosen/pengajuan/${selectedItem.id}`" method="POST" class="p-6 space-y-6">
-                @csrf
-                @method('PUT')
-
-                <input type="hidden" name="status" x-model="reviewAction">
+            <div class="p-6 space-y-6">
 
                 {{-- Student Info --}}
                 <div class="bg-gray-50 rounded-xl p-4">
-                    <p class="text-sm text-gray-600 mb-2">Mahasiswa:</p>
+                    <p class="text-sm text-gray-600 mb-1">Mahasiswa:</p>
                     <p class="text-lg font-bold text-gray-800" x-text="selectedItem.mahasiswa"></p>
-                    <p class="text-sm text-gray-600 mt-2">Judul:</p>
+                    <p class="text-sm text-gray-600 mt-2 mb-1">Judul:</p>
                     <p class="font-semibold text-gray-800" x-text="selectedItem.judul_text"></p>
                 </div>
 
-                {{-- Lab Selection (for mandiri) --}}
-                <div x-show="selectedItem.jenis === 'mandiri' && reviewAction === 'disetujui'">
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">
-                        Pilih Laboratorium <span class="text-red-500">*</span>
-                    </label>
-                    <select name="laboratorium_id" required
-                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
-                        <option value="">-- Pilih Laboratorium --</option>
-                        @foreach ($laboratorium as $lab)
-                            <option value="{{ $lab->id }}">{{ $lab->nama }}</option>
-                        @endforeach
-                    </select>
-                    <p class="text-xs text-gray-500 mt-1">Wajib dipilih untuk judul mandiri</p>
-                </div>
+                {{-- Form --}}
+                <form method="POST" :action="'/dosen/pengajuan/' + selectedItem.id" class="space-y-6">
+                    @csrf
+                    @method('PUT')
 
-                {{-- Catatan --}}
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">
-                        Catatan untuk Mahasiswa
-                        <span x-show="reviewAction === 'ditolak'" class="text-red-500">*</span>
-                    </label>
-                    <textarea name="catatan_dosen" rows="5" :required="reviewAction === 'ditolak'"
-                        placeholder="Berikan catatan, saran, atau alasan keputusan Anda..."
-                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent"></textarea>
-                    <p class="text-xs text-gray-500 mt-1">Maksimal 1000 karakter</p>
-                </div>
+                    <input type="hidden" name="status" :value="reviewAction">
 
-                {{-- Warning --}}
-                <div x-show="reviewAction === 'disetujui'" class="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                    <p class="text-sm text-blue-800">
-                        <span class="font-semibold">Perhatian:</span> Setelah disetujui, judul akan terkunci dan
-                        pengajuan lain untuk judul ini akan otomatis ditolak.
-                    </p>
-                </div>
+                    {{-- Lab Selection (for mandiri + disetujui) --}}
+                    <template x-if="selectedItem.jenis === 'mandiri' && reviewAction === 'disetujui'">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                Pilih Laboratorium <span class="text-red-500">*</span>
+                            </label>
+                            <select name="laboratorium_id" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                                <option value="">-- Pilih Laboratorium --</option>
+                                @foreach ($laboratorium as $lab)
+                                    <option value="{{ $lab->id }}">{{ $lab->nama }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </template>
 
-                {{-- Actions --}}
-                <div class="flex gap-4 pt-4">
-                    <button type="button" @click="showModal = false"
-                        class="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-all">
-                        Batal
-                    </button>
-                    <button type="submit"
-                        class="flex-1 px-6 py-3 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl"
-                        :class="{
-                            'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white': reviewAction === 'disetujui',
-                            'bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white': reviewAction === 'ditolak'
-                        }">
-                        <span x-show="reviewAction === 'disetujui'">Setujui Pengajuan</span>
-                        <span x-show="reviewAction === 'ditolak'">Tolak Pengajuan</span>
-                    </button>
-                </div>
+                    {{-- Catan --}}
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Catatan untuk Mahasiswa
+                        </label>
+                        <textarea name="catatan_dosen" rows="4" placeholder="Berikan catatan, saran, atau alasan keputusan Anda..."
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent"></textarea>
+                    </div>
 
-            </form>
+                    {{-- Warning for Approve --}}
+                    <template x-if="reviewAction === 'disetujui'">
+                        <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                            <p class="text-sm text-blue-800">
+                                <span class="font-semibold">Perhatian:</span> Setelah disetujui, judul akan terkunci
+                                dan pengajuan lain untuk judul ini akan otomatis ditolak.
+                            </p>
+                        </div>
+                    </template>
+
+                    {{-- Actions --}}
+                    <div class="flex gap-4 pt-4">
+                        <button type="button" @click="showModal = false"
+                            class="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-all">
+                            Batal
+                        </button>
+                        <button type="submit"
+                            class="flex-1 px-6 py-3 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl text-white"
+                            :class="reviewAction === 'disetujui' ? 'bg-green-600 hover:bg-green-700' :
+                                'bg-red-600 hover:bg-red-700'">
+                            <span
+                                x-text="reviewAction === 'disetujui' ? 'Setujui Pengajuan' : 'Tolak Pengajuan'"></span>
+                        </button>
+                    </div>
+
+                </form>
+
+            </div>
 
         </div>
 
     </div>
+
 
     {{-- ================= ALPINE SCRIPT ================= --}}
     <script>
@@ -428,7 +436,12 @@
                 filterJenis: 'all',
                 showModal: false,
                 reviewAction: '',
-                selectedItem: {},
+                selectedItem: {
+                    id: null,
+                    mahasiswa: '',
+                    judul_text: '',
+                    jenis: ''
+                },
                 allData: [],
                 filteredData: [],
 
@@ -444,7 +457,7 @@
                                 kode: '{{ $first->jenis === 'pilih' ? $first->judul->kode ?? '' : '' }}',
                                 deskripsi: '{{ $first->jenis === 'mandiri' ? addslashes($first->deskripsi_mandiri) : '' }}',
                                 jenis: '{{ $first->jenis }}',
-                                pemenang: '{{ $pemenang ? $pemenang->mahasiswa->name : '' }}',
+                                pemenang: '{{ $pemenang ? addslashes($pemenang->mahasiswa->name) : '' }}',
                                 items: [
                                     @foreach ($items as $p)
                                         @php
@@ -457,7 +470,7 @@
                                             jenis: '{{ $p->jenis }}',
                                             judul_text: '{{ $p->jenis === 'mandiri' ? addslashes($p->judul_mandiri) : addslashes($p->judul->nama_judul ?? '-') }}',
                                             alasan: '{{ addslashes($p->alasan ?? '') }}',
-                                            catatan_dosen: '{{ addslashes($p->catatan_dosen ?? '') }}',
+                                            catan_dosen: '{{ addslashes($p->catatan_dosen ?? '') }}',
                                             waktu: '{{ $p->created_at->diffForHumans() }}',
                                             sudah_punya_judul: {{ $sudahPunyaJudul ? 'true' : 'false' }}
                                         }
@@ -473,37 +486,47 @@
                 },
 
                 applyFilter() {
-                    let result = this.allData;
+                    var self = this;
+                    var result = this.allData;
 
-                    // Filter by search
                     if (this.searchQuery) {
-                        const query = this.searchQuery.toLowerCase();
-                        result = result.map(group => {
-                            const filteredItems = group.items.filter(item =>
-                                item.mahasiswa.toLowerCase().includes(query) ||
-                                item.judul_text.toLowerCase().includes(query)
-                            );
-                            return filteredItems.length > 0 ? {
-                                ...group,
-                                items: filteredItems
-                            } : null;
-                        }).filter(g => g !== null);
+                        var query = this.searchQuery.toLowerCase();
+                        result = result.map(function(group) {
+                            var filteredItems = group.items.filter(function(item) {
+                                return item.mahasiswa.toLowerCase().includes(query) ||
+                                    item.judul_text.toLowerCase().includes(query);
+                            });
+                            if (filteredItems.length > 0) {
+                                return Object.assign({}, group, {
+                                    items: filteredItems
+                                });
+                            }
+                            return null;
+                        }).filter(function(g) {
+                            return g !== null;
+                        });
                     }
 
-                    // Filter by status
-                    if (this.filterStatus !== 'all') {
-                        result = result.map(group => {
-                            const filteredItems = group.items.filter(item => item.status === this.filterStatus);
-                            return filteredItems.length > 0 ? {
-                                ...group,
-                                items: filteredItems
-                            } : null;
-                        }).filter(g => g !== null);
+                    if (self.filterStatus !== 'all') {
+                        result = result.map(function(group) {
+                            var filteredItems = group.items.filter(function(item) {
+                                return item.status === self.filterStatus;
+                            });
+                            if (filteredItems.length > 0) {
+                                return Object.assign({}, group, {
+                                    items: filteredItems
+                                });
+                            }
+                            return null;
+                        }).filter(function(g) {
+                            return g !== null;
+                        });
                     }
 
-                    // Filter by jenis
-                    if (this.filterJenis !== 'all') {
-                        result = result.filter(group => group.jenis === this.filterJenis);
+                    if (self.filterJenis !== 'all') {
+                        result = result.filter(function(group) {
+                            return group.jenis === self.filterJenis;
+                        });
                     }
 
                     this.filteredData = result;

@@ -409,8 +409,6 @@
 
         </div>
 
-    </div>
-
     {{-- ================= MODAL PENGAJUAN ================= --}}
     <div x-show="showModal" x-cloak @click.self="showModal = false"
         class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -509,10 +507,9 @@
 
         </div>
 
-    </div>
 
     {{-- ================= ALPINE SCRIPT ================= --}}
-    <script>
+        <script>
         function pengajuanPage() {
             return {
                 activeTab: 'pilih',
@@ -525,7 +522,6 @@
                 filteredJudul: [],
 
                 init() {
-                    // Load judul data
                     this.allJudul = [
                         @foreach ($judul as $j)
                             @php
@@ -533,20 +529,20 @@
                                 $isTaken = $approved !== null;
                                 $takenBy = $approved ? $approved->mahasiswa->name : null;
                                 $isSelected = in_array($j->id, $pengajuanSaya);
-                            @endphp {
+                            @endphp
+                            {
                                 id: {{ $j->id }},
-                                kode: '{{ $j->kode ?? '-' }}',
+                                kode: '{{ $j->kode ?? "-" }}',
                                 nama_judul: '{{ addslashes($j->nama_judul) }}',
-                                deskripsi: '{{ addslashes($j->deskripsi) }}',
+                deskripsi: '{{ addslashes($j->deskripsi) }}',
                                 lab_id: {{ $j->laboratorium_id }},
-                                lab_name: '{{ $j->laboratorium->nama ?? '-' }}',
-                                dosen_name: '{{ $j->dosen->name ?? '-' }}',
+                                lab_name: '{{ $j->laboratorium->nama ?? "-" }}',
+                                dosen_name: '{{ $j->dosen->name ?? "-" }}',
                                 peminat: {{ $j->peminat ?? 0 }},
                                 is_taken: {{ $isTaken ? 'true' : 'false' }},
-                                taken_by: '{{ $takenBy }}',
+                                taken_by: '{{ addslashes($takenBy ?? "") }}',
                                 is_selected: {{ $isSelected ? 'true' : 'false' }}
-                            }
-                            {{ $loop->last ? '' : ',' }}
+                            }{{ $loop->last ? '' : ',' }}
                         @endforeach
                     ];
 
@@ -554,29 +550,29 @@
                 },
 
                 filterJudul() {
-                    let result = this.allJudul;
+                    var self = this;
+                    var result = this.allJudul;
 
-                    // Filter by search
                     if (this.searchQuery) {
-                        const query = this.searchQuery.toLowerCase();
-                        result = result.filter(j =>
-                            j.nama_judul.toLowerCase().includes(query) ||
-                            j.dosen_name.toLowerCase().includes(query) ||
-                            j.deskripsi.toLowerCase().includes(query)
-                        );
-                    }
+                        var query = this.searchQuery.toLowerCase();
+                        result = result.filter(function(j) {
+                            return j.nama_judul.toLowerCase().includes(query) ||
+                j.dosen_name.toLowerCase().includes(query) ||
+                                j.deskripsi.toLowerCase().includes(query);
+                        });
+                }
 
-                    // Filter by lab
                     if (this.selectedLab) {
-                        result = result.filter(j => j.lab_id == this.selectedLab);
+                        result = result.filter(function(j) {
+                            return j.lab_id == self.selectedLab;
+                        });
                     }
 
-                    // Filter by status
                     if (this.filterStatus === 'available') {
-                        result = result.filter(j => !j.is_taken);
+                        result = result.filter(function(j) { return !j.is_taken; });
                     } else if (this.filterStatus === 'taken') {
-                        result = result.filter(j => j.is_taken);
-                    }
+                        result = result.filter(function(j) { return j.is_taken; });
+                }
 
                     this.filteredJudul = result;
                 },
@@ -589,7 +585,7 @@
                 },
 
                 openModal(judul) {
-                    this.selectedJudul = judul;
+                this.selectedJudul = judul;
                     this.showModal = true;
                 }
             }

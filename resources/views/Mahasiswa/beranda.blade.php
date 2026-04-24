@@ -452,8 +452,8 @@
                         '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />';
 
                     toast.innerHTML =
-                        '<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
-                        iconPath + '</svg><span class="text-sm font-medium">' + message + '</span>';
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+                        iconPath + '</svg><span class="text-sm font-medium">' + message + '</span>;
 
                     const container = document.getElementById('toast-container');
                     container.appendChild(toast);
