@@ -13,7 +13,6 @@ class DosenPengajuanController extends Controller
 {
     public function index()
     {
-        // Get all pengajuan with relations
         $pengajuan = Pengajuan::with(['mahasiswa', 'judul.laboratorium'])
             ->orderBy('created_at', 'desc')
             ->get()
@@ -21,13 +20,11 @@ class DosenPengajuanController extends Controller
 
         $laboratorium = Laboratorium::all();
 
-        // Stats
         $totalPengajuan = Pengajuan::count();
         $pending = Pengajuan::where('status', 'pending')->count();
         $disetujui = Pengajuan::where('status', 'disetujui')->count();
         $ditolak = Pengajuan::where('status', 'ditolak')->count();
 
-        // Recent pending submissions
         $recentPending = Pengajuan::with(['mahasiswa', 'judul'])
             ->where('status', 'pending')
             ->latest()
@@ -50,7 +47,7 @@ class DosenPengajuanController extends Controller
     {
         $request->validate([
             'status' => 'required|in:disetujui,ditolak',
-            'catatan_dosen' => 'nullable|string|max:1000',
+            'catan_dosen' => 'nullable|string|max:1000',
             'laboratorium_id' => 'nullable|exists:laboratorium,id'
         ]);
 
@@ -58,8 +55,10 @@ class DosenPengajuanController extends Controller
             DB::transaction(function () use ($request, $id) {
 
                 $pengajuan = Pengajuan::with(['judul', 'mahasiswa'])->findOrFail($id);
-
                 $statusBaru = $request->status;
+                $namaJudul = $pengajuan->jenis === 'mandiri'
+                    ? $pengajuan->judul_mandiri
+                    : ($pengajuan->judul->nama_judul ?? '-');
 
                 // Check if student already has approved title
                 if ($statusBaru === 'disetujui') {
@@ -76,38 +75,49 @@ class DosenPengajuanController extends Controller
                 $pengajuan->status = $statusBaru;
                 $pengajuan->catatan_dosen = $request->catatan_dosen;
 
-                // MODE PILIH
+                // MODE PILIH - DISETUJUI
                 if ($statusBaru === 'disetujui' && $pengajuan->jenis === 'pilih') {
-
                     if ($pengajuan->judul) {
                         $pengajuan->judul->update([
                             'is_locked' => DB::raw('true')
                         ]);
                     }
 
-                    // Reject other submissions for this title
-                    Pengajuan::where('judul_id', $pengajuan->judul_id)
+                    // Reject other submissions & notify them
+                    $otherSubmissions = Pengajuan::where('judul_id', $pengajuan->judul_id)
                         ->where('id', '!=', $pengajuan->id)
-                        ->update([
+                        ->where('status', 'pending')
+                        ->get();
+
+                    foreach ($otherSubmissions as $other) {
+                        $other->update([
                             'status' => 'ditolak',
                             'catatan_dosen' => 'Judul sudah diambil oleh ' . $pengajuan->mahasiswa->name
                         ]);
+
+                        // Notif ke mahasiswa yang ditolak otomatis
+                        DB::table('aktivitas')->insert([
+                            'user_id' => $other->mahasiswa_id,
+                            'tipe' => 'penolakan',
+                            'pesan' => 'Pengajuan judul "' . $namaJudul . '" ditolak. Judul sudah diambil mahasiswa lain.',
+                            'is_read' => DB::raw('false'),
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                    }
                 }
 
-                // MODE MANDIRI
+                // MODE MANDIRI - DISETUJUI
                 if ($statusBaru === 'disetujui' && $pengajuan->jenis === 'mandiri') {
-
                     if (!$request->laboratorium_id) {
                         throw new \Exception('Laboratorium wajib dipilih untuk judul mandiri');
                     }
 
-                    // Generate kode
                     $lab = Laboratorium::find($request->laboratorium_id);
-                    $prefix = strtoupper(substr($lab->nama, 0, 6));
+                    $prefix = strtoupper($lab->nama);
                     $count = Judul::where('laboratorium_id', $request->laboratorium_id)->count();
                     $kode = $prefix . '-' . ($count + 1);
 
-                    // Create new judul
                     $judulBaru = Judul::create([
                         'kode' => $kode,
                         'nama_judul' => $pengajuan->judul_mandiri,
@@ -122,6 +132,35 @@ class DosenPengajuanController extends Controller
                 }
 
                 $pengajuan->save();
+
+                // ======== NOTIFIKASI KE MAHASISWA =========
+                if ($statusBaru === 'disetujui') {
+                    $pesan = 'Pengajuan judul "' . $namaJudul . '" telah disetujui!';
+                    $tipe = 'persetujuan';
+                } else {
+                    $catatan = $request->catatan_dosen ? ' Catatan: ' . $request->catatan_dosen : '';
+                    $pesan = 'Pengajuan judul "' . $namaJudul . '" ditolak.' . $catatan;
+                    $tipe = 'penolakan';
+                }
+
+                DB::table('aktivitas')->insert([
+                    'user_id' => $pengajuan->mahasiswa_id,
+                    'tipe' => $tipe,
+                    'pesan' => $pesan,
+                    'is_read' => DB::raw('false'),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                // ========== NOTIFIKASI KE DOSEN (SELF) ==========
+                DB::table('aktivitas')->insert([
+                    'user_id' => auth()->id(),
+                    'tipe' => $tipe,
+                    'pesan' => 'Anda telah ' . ($statusBaru === 'disetujui' ? 'menyetujui' : 'menolak') . ' pengajuan "' . $namaJudul . '" dari ' . $pengajuan->mahasiswa->name,
+                    'is_read' => DB::raw('false'),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
             });
 
             return back()->with('success', 'Pengajuan berhasil ' . ($request->status === 'disetujui' ? 'disetujui' : 'ditolak') . '!');

@@ -502,7 +502,7 @@
                         aktif: item.aktif,
                         is_locked: item.is_locked,
                         lab_id: item.laboratorium_id,
-                        lab_name: item.laboratorium?.nama || 'N/A',
+                        lab_name: item.lab_name || 'N/A',
                         total_peminat: item.total_peminat || 0,
                         total_disetujui: item.total_disetujui || 0,
                         can_edit: item.can_edit !== false,

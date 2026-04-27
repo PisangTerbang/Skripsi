@@ -90,35 +90,29 @@
                                     :class="!notif.is_read ? 'bg-emerald-50/50 hover:bg-emerald-50' : 'hover:bg-gray-50'"
                                     class="p-4 transition-all duration-200 cursor-pointer group">
                                     <div class="flex items-start gap-4">
-
-                                        {{-- Icon --}}
                                         <div :class="!notif.is_read ? 'bg-emerald-100' : 'bg-gray-100'"
                                             class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200 group-hover:scale-110">
-                                            <x-heroicon-o-bell class="w-4 h-4" />
+                                            <x-heroicon-o-bell class="w-5 h-5 text-emerald-600" />
                                         </div>
-
-                                        {{-- Content --}}
                                         <div class="flex-1 min-w-0">
                                             <p :class="!notif.is_read ? 'text-gray-900 font-medium' : 'text-gray-600'"
                                                 class="text-sm" x-text="notif.pesan"></p>
                                             <div class="flex items-center gap-2 mt-1">
                                                 <span class="text-xs text-gray-400" x-text="notif.waktu"></span>
                                                 <template x-if="!notif.is_read">
-                                                    <span class="text-xs text-emerald-600 font-medium"> Baru</span>
+                                                    <span class="text-xs text-emerald-600 font-medium">Baru</span>
                                                 </template>
                                             </div>
                                         </div>
-
-                                        {{-- Unread Indicator --}}
                                         <template x-if="!notif.is_read">
                                             <div class="w-2 h-2 bg-emerald-600 rounded-full flex-shrink-0 mt-2"></div>
                                         </template>
                                     </div>
+                                </div>
                             </template>
                         </div>
                     </template>
 
-                    {{-- Empty State --}}
                     <template x-if="filteredNotifications.length === 0">
                         <div class="text-center py-16">
                             <div
@@ -134,130 +128,172 @@
 
         </div>
 
+
     </div>
 
     {{-- Toast Container --}}
     <div id="toast-container-dosen" class="fixed bottom-4 right-4 z-50 space-y-2"></div>
 
     <script>
-function notifikasiDosenPage() {
-    return {
-        notifications: [],
-        loading: false,
-        filter: 'all',
-        unreadCount: 0,
-        readCount: 0,
-        totalCount: 0,
+        function notifikasiDosenPage() {
+            return {
+                notifications: [],
+                loading: false,
+                filter: 'all',
+                unreadCount: 0,
+                readCount: 0,
+                totalCount: 0,
 
-        get filteredNotifications() {
-            if (this.filter === 'all') return this.notifications;
-            if (this.filter === 'unread') return this.notifications.filter(function(n) { return !n.is_read; });
-            if (this.filter === 'read') return this.notifications.filter(function(n) { return n.is_read; });
-            return this.notifications;
-        },
+                get filteredNotifications() {
+                    if (this.filter === 'all') return this.notifications;
+                    if (this.filter === 'unread') return this.notifications.filter(function(n) {
+                        return !n.is_read;
+                    });
+                    if (this.filter === 'read') return this.notifications.filter(function(n) {
+                        return n.is_read;
+                    });
+                    return this.notifications;
+                },
 
-        init() {
-            this.notifications = [
-                @foreach ($aktivitas as $item)
-                {
-                    id: {{ $item->id }},
-                pesan: '{{ addslashes($item->pesan) }}',
-                    tipe: '{{ $item->tipe ?? "info" }}',
-                    is_read: {{ $item->is_read ? 'true' : 'false' }},
-                waktu: '{{ $item->created_at->diffForHumans() }}'
-                }{{ $loop->last ? '' : ',' }}
-                @endforeach
-            ];
-            this.updateCounts();
-            var self = this;
-            setInterval(function() { self.fetchNotifications(true); }, 1000);
-        },
+                init() {
+                    this.notifications = [
+                        @foreach ($aktivitas as $item)
+                            {
+                                id: {{ $item->id }},
+                                pesan: '{{ addslashes($item->pesan) }}',
+                                tipe: '{{ $item->tipe ?? 'info' }}',
+                                is_read: {{ $item->is_read ? 'true' : 'false' }},
+                                waktu: '{{ $item->created_at->diffForHumans() }}'
+                            }
+                            {{ $loop->last ? '' : ',' }}
+                        @endforeach
+                    ];
+                    this.updateCounts();
+                    var self = this;
+                    setInterval(function() {
+                        self.fetchNotifications(true);
+                    }, 1000);
+                },
 
-        updateCounts() {
-            this.totalCount = this.notifications.length;
-            this.unreadCount = this.notifications.filter(function(n) { return !n.is_read; }).length;
-            this.readCount = this.totalCount - this.unreadCount;
-        },
+                updateCounts() {
+                    this.totalCount = this.notifications.length;
+                    this.unreadCount = this.notifications.filter(function(n) {
+                        return !n.is_read;
+                    }).length;
+                    this.readCount = this.totalCount - this.unreadCount;
+                },
 
-        async fetchNotifications(silent) {
-            if (!silent) this.loading = true;
-            try {
-                var response = await fetch("{{ route('dosen.notifikasi.data') }}", { credentials: 'same-origin' });
-                if (!response.ok) throw new Error('Failed');
-                var data = await response.json();
-                this.notifications = data.data.map(function(item) {
-                    return { id: item.id, pesan: item.pesan, tipe: item.tipe, is_read: item.is_read, waktu: item.waktu };
-                });
-                this.unreadCount = data.unread;
-                this.totalCount = this.notifications.length;
-                this.readCount = this.totalCount - this.unreadCount;
-                if (this.$store.notifDosen) { this.$store.notifDosen.unread = data.unread; }
-                if (!silent) { this.showToast('Notifikasi diperbarui', 'success'); }
-            } catch (error) {
-                console.error('Fetch error:', error);
-                if (!silent) { this.showToast('Gagal memuat notifikasi', 'error'); }
-            } finally {
-                this.loading = false;
+                async fetchNotifications(silent) {
+                    if (!silent) this.loading = true;
+                    try {
+                        var response = await fetch("{{ route('dosen.notifikasi.data') }}", {
+                            credentials: 'same-origin'
+                        });
+                        if (!response.ok) throw new Error('Failed');
+                        var data = await response.json();
+                        this.notifications = data.data.map(function(item) {
+                            return {
+                                id: item.id,
+                                pesan: item.pesan,
+                                tipe: item.tipe,
+                                is_read: item.is_read,
+                                waktu: item.waktu
+                            };
+                        });
+                        this.unreadCount = data.unread;
+                        this.totalCount = this.notifications.length;
+                        this.readCount = this.totalCount - this.unreadCount;
+                        if (this.$store.notifDosen) {
+                            this.$store.notifDosen.unread = data.unread;
+                        }
+                        if (!silent) {
+                            this.showToast('Notifikasi diperbarui', 'success');
+                        }
+                    } catch (error) {
+                        console.error('Fetch error:', error);
+                        if (!silent) {
+                            this.showToast('Gagal memuat notifikasi', 'error');
+                        }
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                async markAsRead(id) {
+                    var notif = this.notifications.find(function(n) {
+                        return n.id === id;
+                    });
+                    if (!notif || notif.is_read) return;
+                    notif.is_read = true;
+                    this.updateCounts();
+                    try {
+                        var response = await fetch('/dosen/notifikasi/' + id + '/read', {
+                            method: 'POST',
+                            credentials: 'same-origin',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                'Accept': 'application/json'
+                            }
+                        });
+                        if (!response.ok) throw new Error('Failed');
+                        if (this.$store.notifDosen) {
+                            this.$store.notifDosen.unread = this.unreadCount;
+                        }
+                    } catch (error) {
+                        notif.is_read = false;
+                        this.updateCounts();
+                        this.showToast('Gagal menandai notifikasi', 'error');
+                    }
+                },
+
+                async markAllAsRead() {
+                    if (this.unreadCount === 0) return;
+                    this.loading = true;
+                    try {
+                        var response = await fetch("{{ route('dosen.notifikasi.read') }}", {
+                            method: 'POST',
+                            credentials: 'same-origin',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                'Accept': 'application/json'
+                            }
+                        });
+                        if (!response.ok) throw new Error('Failed');
+                        this.notifications.forEach(function(n) {
+                            n.is_read = true;
+                        });
+                        this.updateCounts();
+                        if (this.$store.notifDosen) {
+                            this.$store.notifDosen.unread = 0;
+                        }
+                        this.showToast('Semua notifikasi ditandai dibaca', 'success');
+                    } catch (error) {
+                        this.showToast('Gagal menandai notifikasi', 'error');
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                getEmptyMessage() {
+                    if (this.filter === 'unread') return 'Semua notifikasi sudah dibaca';
+                    if (this.filter === 'read') return 'Belum ada notifikasi yang dibaca';
+                    return 'Notifikasi akan muncul di sini';
+                },
+
+                showToast(message, type) {
+                    var bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+                    var toast = document.createElement('div');
+                    toast.className = 'flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg text-white ' + bgColor;
+                    toast.innerHTML = '<span class="text-sm font-medium">' + message + '</span>';
+                    var container = document.getElementById('toast-container-dosen');
+                    container.appendChild(toast);
+                    setTimeout(function() {
+                        toast.remove();
+                    }, 3000);
+                }
             }
-        },
-
-        async markAsRead(id) {
-            var notif = this.notifications.find(function(n) { return n.id === id; });
-            if (!notif || notif.is_read) return;
-            notif.is_read = true;
-            this.updateCounts();
-            try {
-                var response = await fetch('/dosen/notifikasi/' + id + '/read', {
-                    method: 'POST', credentials: 'same-origin',
-                    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }
-                });
-                if (!response.ok) throw new Error('Failed');
-                if (this.$store.notifDosen) { this.$store.notifDosen.unread = this.unreadCount; }
-            } catch (error) {
-                notif.is_read = false;
-                this.updateCounts();
-                this.showToast('Gagal menandai notifikasi', 'error');
-            }
-        },
-
-        async markAllAsRead() {
-            if (this.unreadCount === 0) return;
-            this.loading = true;
-            try {
-                var response = await fetch("{{ route('dosen.notifikasi.read') }}", {
-                    method: 'POST', credentials: 'same-origin',
-                    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }
-                });
-                if (!response.ok) throw new Error('Failed');
-                this.notifications.forEach(function(n) { n.is_read = true; });
-                this.updateCounts();
-                if (this.$store.notifDosen) { this.$store.notifDosen.unread = 0; }
-                this.showToast('Semua notifikasi ditandai dibaca', 'success');
-            } catch (error) {
-                this.showToast('Gagal menandai notifikasi', 'error');
-            } finally {
-                this.loading = false;
-            }
-        },
-
-        getEmptyMessage() {
-            if (this.filter === 'unread') return 'Semua notifikasi sudah dibaca';
-            if (this.filter === 'read') return 'Belum ada notifikasi yang dibaca';
-            return 'Notifikasi akan muncul di sini';
-        },
-
-        showToast(message, type) {
-            var bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
-            var toast = document.createElement('div');
-            toast.className = 'flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg text-white ' + bgColor;
-            toast.innerHTML = '<span class="text-sm font-medium">' + message + '</span>';
-            var container = document.getElementById('toast-container-dosen');
-            container.appendChild(toast);
-            setTimeout(function() { toast.remove(); }, 3000);
         }
-    }
-}
-</script>
+    </script>
 
 
 </x-layout-dosen>

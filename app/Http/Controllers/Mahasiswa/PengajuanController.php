@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Mahasiswa;
 use App\Http\Controllers\Controller;
 use App\Models\Judul;
 use App\Models\Pengajuan;
+use App\Models\Aktivitas;
 use App\Models\Laboratorium;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class PengajuanController extends Controller
 {
@@ -15,7 +17,6 @@ class PengajuanController extends Controller
     {
         $mahasiswaId = Auth::id();
 
-        // Get all active judul with relations
         $judul = Judul::aktif()
             ->with([
                 'laboratorium',
@@ -32,21 +33,17 @@ class PengajuanController extends Controller
             ])
             ->get();
 
-        // Count active submissions
         $jumlahPengajuan = Pengajuan::where('mahasiswa_id', $mahasiswaId)
             ->whereIn('status', ['pending', 'disetujui'])
             ->count();
 
-        // Get submitted judul IDs
         $pengajuanSaya = Pengajuan::where('mahasiswa_id', $mahasiswaId)
             ->pluck('judul_id')
             ->toArray();
 
-        // Get all labs for filter
         $laboratorium = Laboratorium::all();
 
-        // Get my submissions for display
-        $mySubmissions = Pengajuan::with(['judul', 'dosenPilihan'])
+        $mySubmissions = Pengajuan::with(['judul.laboratorium', 'dosenPilihan'])
             ->where('mahasiswa_id', $mahasiswaId)
             ->whereIn('status', ['pending', 'disetujui'])
             ->get();
@@ -63,13 +60,13 @@ class PengajuanController extends Controller
     public function store(Request $request)
     {
         $mahasiswaId = Auth::id();
+        $mahasiswaName = Auth::user()->name;
 
         $request->validate([
             'jenis' => 'required|in:pilih,mandiri',
             'prioritas' => 'required|integer|min:1|max:2',
         ]);
 
-        // Check slot limit
         $jumlahAktif = Pengajuan::where('mahasiswa_id', $mahasiswaId)
             ->whereIn('status', ['pending', 'disetujui'])
             ->count();
@@ -78,7 +75,6 @@ class PengajuanController extends Controller
             return back()->with('error', 'Maksimal 2 pengajuan aktif.');
         }
 
-        // Check priority conflict
         $prioritasTerpakai = Pengajuan::where('mahasiswa_id', $mahasiswaId)
             ->whereIn('status', ['pending', 'disetujui'])
             ->where('prioritas', $request->prioritas)
@@ -96,7 +92,6 @@ class PengajuanController extends Controller
                 'alasan' => 'nullable|string|max:500'
             ]);
 
-            // Check if already selected
             $sudahDipilih = Pengajuan::where('mahasiswa_id', $mahasiswaId)
                 ->whereIn('status', ['pending', 'disetujui'])
                 ->where('judul_id', $request->judul_id)
@@ -106,7 +101,6 @@ class PengajuanController extends Controller
                 return back()->with('error', 'Anda sudah mengajukan judul ini.');
             }
 
-            // Check if already taken
             $sudahDiambil = Pengajuan::where('judul_id', $request->judul_id)
                 ->where('status', 'disetujui')
                 ->exists();
@@ -115,7 +109,7 @@ class PengajuanController extends Controller
                 return back()->with('error', 'Judul sudah diambil mahasiswa lain.');
             }
 
-            Pengajuan::create([
+            $pengajuan = Pengajuan::create([
                 'mahasiswa_id' => $mahasiswaId,
                 'judul_id' => $request->judul_id,
                 'jenis' => 'pilih',
@@ -123,6 +117,19 @@ class PengajuanController extends Controller
                 'alasan' => $request->alasan,
                 'status' => 'pending'
             ]);
+
+            // Notifikasi ke dosen pemilik judul
+            $judul = Judul::find($request->judul_id);
+            if ($judul && $judul->dosen_id) {
+                DB::table('aktivitas')->insert([
+                    'user_id' => $judul->dosen_id,
+                    'tipe' => 'pengajuan_baru',
+                    'pesan' => $mahasiswaName . ' mengajukan judul: ' . $judul->nama_judul,
+                    'is_read' => DB::raw('false'),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
 
             return back()->with('success', 'Pengajuan judul berhasil dikirim! Menunggu review dosen.');
         }
@@ -135,7 +142,7 @@ class PengajuanController extends Controller
                 'deskripsi_mandiri' => 'required|string|max:1000'
             ]);
 
-            Pengajuan::create([
+            $pengajuan = Pengajuan::create([
                 'mahasiswa_id' => $mahasiswaId,
                 'jenis' => 'mandiri',
                 'judul_mandiri' => $request->judul_mandiri,
@@ -143,6 +150,19 @@ class PengajuanController extends Controller
                 'prioritas' => $request->prioritas,
                 'status' => 'pending'
             ]);
+
+            // Notifikasi ke semua dosen (judul mandiri belum punya dosen)
+            $dosenIds = \App\Models\User::where('role', 'dosen')->pluck('id');
+            foreach ($dosenIds as $dosenId) {
+                DB::table('aktivitas')->insert([
+                    'user_id' => $dosenId,
+                    'tipe' => 'pengajuan_baru',
+                'pesan' => $mahasiswaName . ' mengajukan judul mandiri: ' . $request->judul_mandiri,
+                    'is_read' => DB::raw('false'),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
 
             return back()->with('success', 'Judul mandiri berhasil diajukan! Menunggu review dosen.');
         }

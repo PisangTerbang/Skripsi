@@ -39,15 +39,11 @@
         <div class="flex items-center gap-2">
 
             {{-- Notification Bell --}}
-            <a href="{{ route('dosen.notifikasi') }}"
-                x-data="{ hover: false }"
-                @mousenter="hover = true"
+            <a href="{{ route('dosen.notifikasi') }}" x-data="{ hover: false }" @mousenter="hover = true"
                 @mouseleave="hover = false"
                 class="relative p-2.5 text-gray-400 hover:text-emerald-600 rounded-xl hover:bg-emerald-50 transition-all duration-200 active:scale-95">
                 <x-heroicon-o-bell class="w-5 h-5" />
-                <span x-cloak
-                    x-show="$store.notifDosen.unread > 0"
-                    x-transition
+                <span x-cloak x-show="$store.notifDosen.unread > 0" x-transition
                     x-text="$store.notifDosen.unread > 9 ? '9+' : $store.notifDosen.unread"
                     class="absolute -top-0.5 -right-0.5 min-w-[1.25rem] h-5 flex items-center justify-center bg-red-500 text-white text-[10px] font-bold px-1.5 rounded-full ring-2 ring-white animate-pulse">
                 </span>
@@ -60,18 +56,21 @@
             <div x-data="{ open: false }" class="relative">
                 <button @click="open = !open"
                     class="flex items-center gap-2.5 p-1.5 pr-3 rounded-xl hover:bg-gray-100 transition-all duration-200 active:scale-95">
-                    @if($avatarUrl)
+                    @if ($avatarUrl)
                         <img src="{{ $avatarUrl }}" alt="Avatar" class="w-8 h-8 rounded-lg object-cover shadow-sm">
                     @else
-                <div class="w-8 h-8 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-lg flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                        <div
+                            class="w-8 h-8 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-lg flex items-center justify-center text-white text-xs font-bold shadow-sm">
                             {{ $initials }}
                         </div>
                     @endif
                     <div class="hidden md:block text-left">
-                        <p class="text-sm font-semibold text-gray-700 leading-tight">{{ Str::limit(auth()->user()->name, 15) }}</p>
+                        <p class="text-sm font-semibold text-gray-700 leading-tight">
+                            {{ Str::limit(auth()->user()->name, 15) }}</p>
                         <p class="text-[11px] text-gray-400 leading-tight">Dosen</p>
                     </div>
-                    <x-heroicon-o-chevron-down class="hidden md:block w-4 h-4 text-gray-400 transition-transform duration-200" ::class="open ? 'rotate-180' : '" />
+                    <x-heroicon-o-chevron-down class="hidden md:block w-4 h-4 text-gray-400" />
+
                 </button>
 
                 {{-- Dropdown Menu --}}
@@ -86,11 +85,12 @@
 
                     {{-- User Info --}}
                     <div class="px-4 py-3 border-b border-gray-100">
-                <div class="flex items-center gap-3">
-                            @if($avatarUrl)
-                <img src="{{ $avatarUrl }}" alt="Avatar" class="w-10 h-10 rounded-lg object-cover">
+                        <div class="flex items-center gap-3">
+                            @if ($avatarUrl)
+                                <img src="{{ $avatarUrl }}" alt="Avatar" class="w-10 h-10 rounded-lg object-cover">
                             @else
-                                <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-lg flex items-center justify-center text-white text-sm font-bold">
+                                <div
+                                    class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-lg flex items-center justify-center text-white text-sm font-bold">
                                     {{ $initials }}
                                 </div>
                             @endif
@@ -103,9 +103,10 @@
 
                     {{-- Menu Items --}}
                     <div class="py-1.5">
-                        <a href="{{ route('dosen.pengaturan') }}" class="flex items-center gap-3 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
+                        <a href="{{ route('dosen.pengaturan') }}"
+                            class="flex items-center gap-3 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
                             <x-heroicon-o-cog-6-tooth class="w-4 h-4" />
-                Pengaturan
+                            Pengaturan
                         </a>
                     </div>
 
@@ -113,7 +114,8 @@
                     <div class="border-t border-gray-100 pt-1.5">
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
-                            <button type="submit" class="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-500 hover:bg-red-50 hover:text-red-700 transition-colors">
+                            <button type="submit"
+                                class="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-500 hover:bg-red-50 hover:text-red-700 transition-colors">
                                 <x-heroicon-o-arrow-right-on-rectangle class="w-4 h-4" />
                                 Keluar
                             </button>

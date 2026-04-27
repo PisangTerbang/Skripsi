@@ -8,7 +8,6 @@ use App\Models\Laboratorium;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class DosenJudulController extends Controller
 {
@@ -16,7 +15,6 @@ class DosenJudulController extends Controller
     {
         $user = Auth::user();
 
-        // Get all judul by this dosen (user_id)
         $judul = Judul::where('dosen_id', $user->id)
             ->with('laboratorium')
             ->withCount([
@@ -28,21 +26,17 @@ class DosenJudulController extends Controller
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($item) {
-                // Judul bisa diedit jika:
-                // 1. Tidak terkunci (is_locked = false)
-                // 2. Belum ada mahasiswa yang disetujui (total_disetujui = 0)
                 $item->can_edit = !$item->is_locked && $item->total_disetujui == 0;
                 $item->can_delete = !$item->is_locked && $item->total_disetujui == 0;
                 $item->can_toggle = !$item->is_locked;
+                $item->lab_name = $item->laboratorium ? $item->laboratorium->nama : 'N/A';
                 return $item;
             });
 
-        // Stats
         $totalJudul = $judul->count();
         $aktif = $judul->where('aktif', true)->where('is_locked', false)->count();
         $terkunci = $judul->where('is_locked', true)->count();
 
-        // Get all laboratorium for dropdown
         $laboratorium = Laboratorium::orderBy('nama')->get();
 
         return view('dosen.judul', [
@@ -54,6 +48,7 @@ class DosenJudulController extends Controller
             'terkunci' => $terkunci,
         ]);
     }
+
 
     public function store(Request $request)
     {
@@ -72,10 +67,16 @@ class DosenJudulController extends Controller
 
         $user = Auth::user();
 
-        // Generate kode unik
-        $kode = 'JDL-' . strtoupper(Str::random(6));
+        // Generate kode berdasarkan nama lab + nomor urut
+        $lab = Laboratorium::find($validated['laboratorium_id']);
+        $prefix = strtoupper($lab->nama);
+        $lastNumber = Judul::where('laboratorium_id', $validated['laboratorium_id'])->count();
+        $kode = $prefix . '-' . ($lastNumber + 1);
+
+        // Pastikan kode unik
         while (Judul::where('kode', $kode)->exists()) {
-            $kode = 'JDL-' . strtoupper(Str::random(6));
+            $lastNumber++;
+            $kode = $prefix . '-' . ($lastNumber + 1);
         }
 
         // Insert dengan raw SQL untuk PostgreSQL boolean compatibility
@@ -104,7 +105,7 @@ class DosenJudulController extends Controller
         ], [
             'laboratorium_id.required' => 'Laboratorium harus dipilih',
             'laboratorium_id.exists' => 'Laboratorium tidak valid',
-            'nama_judul.required' => 'Nama judul harus diisi',
+            'nama_judul.required' => 'Nama judul harus disi',
             'nama_judul.max' => 'Nama judul maksimal 255 karakter',
             'deskripsi.required' => 'Deskripsi harus diisi',
             'deskripsi.max' => 'Deskripsi maksimal 1000 karakter',
@@ -120,13 +121,11 @@ class DosenJudulController extends Controller
             ])
             ->firstOrFail();
 
-        // Check if locked
         if ($judul->is_locked) {
             return redirect()->route('dosen.judul.index')
                 ->with('error', 'Judul terkunci tidak dapat diubah!');
         }
 
-        // Check if has approved students
         if ($judul->total_disetujui > 0) {
             return redirect()->route('dosen.judul.index')
                 ->with('error', 'Judul tidak dapat diubah karena sudah ada mahasiswa yang disetujui!');
@@ -149,18 +148,14 @@ class DosenJudulController extends Controller
             ->where('dosen_id', $user->id)
             ->firstOrFail();
 
-        // Cek apakah judul terkunci
         if ($judul->is_locked) {
             return redirect()->route('dosen.judul.index')
                 ->with('error', 'Judul terkunci tidak dapat diubah statusnya!');
         }
 
-        // Toggle status dengan raw SQL untuk PostgreSQL compatibility
         DB::statement("UPDATE judul SET aktif = NOT aktif, updated_at = NOW() WHERE id = ?", [$id]);
 
-        // Refresh model untuk mendapatkan nilai terbaru
         $judul->refresh();
-
         $statusText = $judul->aktif ? 'diaktifkan' : 'dinonaktifkan';
 
         return redirect()->route('dosen.judul.index')
@@ -179,13 +174,11 @@ class DosenJudulController extends Controller
             ])
             ->firstOrFail();
 
-        // Check if locked
         if ($judul->is_locked) {
             return redirect()->route('dosen.judul.index')
                 ->with('error', 'Judul terkunci tidak dapat dihapus!');
         }
 
-        // Check if has approved students
         if ($judul->total_disetujui > 0) {
             return redirect()->route('dosen.judul.index')
                 ->with('error', 'Judul tidak dapat dihapus karena sudah ada mahasiswa yang disetujui!');
