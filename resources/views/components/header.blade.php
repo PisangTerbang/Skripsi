@@ -29,7 +29,7 @@
             <div>
                 <h1 class="text-xl md:text-2xl font-bold text-gray-800 tracking-tight">{{ $slot }}</h1>
                 <p class="text-xs md:text-sm text-gray-400 mt-0.5">
-                    {{ $greeting }}, {{ $namaDepan }} &bull; {{ $tanggal }}
+                    {{ $tanggal }}
                 </p>
             </div>
         </div>

@@ -1,14 +1,4 @@
 @php
-    $hour = (int) now()->format('H');
-    if ($hour >= 5 && $hour < 12) {
-        $greeting = 'Selamat Pagi';
-    } elseif ($hour >= 12 && $hour < 15) {
-        $greeting = 'Selamat Siang';
-    } elseif ($hour >= 15 && $hour < 18) {
-        $greeting = 'Selamat Sore';
-    } else {
-        $greeting = 'Selamat Malam';
-    }
     $tanggal = now()->locale('id')->isoFormat('dddd, D MMMM YYYY');
     $namaDepan = Str::before(auth()->user()->name, ' ');
     $avatarUrl = auth()->user()->avatar ? asset('storage/' . auth()->user()->avatar) : null;
@@ -30,7 +20,7 @@
             <div>
                 <h1 class="text-xl md:text-2xl font-bold text-gray-800 tracking-tight">{{ $slot }}</h1>
                 <p class="text-xs md:text-sm text-gray-400 mt-0.5">
-                    {{ $greeting }}, {{ $namaDepan }} &bull; {{ $tanggal }}
+                     {{ $tanggal }}
                 </p>
             </div>
         </div>

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Dosen;
 use App\Http\Controllers\Controller;
 use App\Models\Pengajuan;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\Laboratorium;
 use App\Models\Judul;
@@ -13,7 +14,10 @@ class DosenPengajuanController extends Controller
 {
     public function index()
     {
-        $pengajuan = Pengajuan::with(['mahasiswa', 'judul.laboratorium'])
+        $user = Auth::user();
+
+        // Load pengajuan dengan relasi judul.dosen untuk cek kepemilikan
+        $pengajuan = Pengajuan::with(['mahasiswa', 'judul.laboratorium', 'judul.dosen'])
             ->orderBy('created_at', 'desc')
             ->get()
             ->groupBy('judul_id');
@@ -39,6 +43,7 @@ class DosenPengajuanController extends Controller
             'disetujui' => $disetujui,
             'ditolak' => $ditolak,
             'recentPending' => $recentPending,
+            'dosenId' => $user->id,
             'title' => 'Review Pengajuan Mahasiswa'
         ]);
     }
@@ -47,7 +52,7 @@ class DosenPengajuanController extends Controller
     {
         $request->validate([
             'status' => 'required|in:disetujui,ditolak',
-            'catan_dosen' => 'nullable|string|max:1000',
+            'catatan_dosen' => 'nullable|string|max:1000',
             'laboratorium_id' => 'nullable|exists:laboratorium,id'
         ]);
 
@@ -56,11 +61,19 @@ class DosenPengajuanController extends Controller
 
                 $pengajuan = Pengajuan::with(['judul', 'mahasiswa'])->findOrFail($id);
                 $statusBaru = $request->status;
+
+                // CEK KEPEMILIKAN: Hanya dosen pemilik judul yang bisa approve/reject
+                if ($pengajuan->jenis === 'pilih' && $pengajuan->judul) {
+                    if ($pengajuan->judul->dosen_id !== auth()->id()) {
+                        throw new \Exception('Anda tidak memiliki hak untuk menindaklanjuti pengajuan ini.');
+                    }
+                }
+
                 $namaJudul = $pengajuan->jenis === 'mandiri'
                     ? $pengajuan->judul_mandiri
                     : ($pengajuan->judul->nama_judul ?? '-');
 
-                // Check if student already has approved title
+                // Cek mahasiswa sudah punya judul disetujui
                 if ($statusBaru === 'disetujui') {
                     $sudahPunya = Pengajuan::where('mahasiswa_id', $pengajuan->mahasiswa_id)
                         ->where('status', 'disetujui')
@@ -71,7 +84,7 @@ class DosenPengajuanController extends Controller
                     }
                 }
 
-                // Update status and notes
+                // Update status dan catatan
                 $pengajuan->status = $statusBaru;
                 $pengajuan->catatan_dosen = $request->catatan_dosen;
 
@@ -83,7 +96,7 @@ class DosenPengajuanController extends Controller
                         ]);
                     }
 
-                    // Reject other submissions & notify them
+                    // Tolak pengajuan lain untuk judul ini
                     $otherSubmissions = Pengajuan::where('judul_id', $pengajuan->judul_id)
                         ->where('id', '!=', $pengajuan->id)
                         ->where('status', 'pending')
@@ -133,7 +146,7 @@ class DosenPengajuanController extends Controller
 
                 $pengajuan->save();
 
-                // ======== NOTIFIKASI KE MAHASISWA =========
+                // NOTIFIKASI KE MAHASISWA
                 if ($statusBaru === 'disetujui') {
                     $pesan = 'Pengajuan judul "' . $namaJudul . '" telah disetujui!';
                     $tipe = 'persetujuan';
@@ -152,7 +165,7 @@ class DosenPengajuanController extends Controller
                     'updated_at' => now(),
                 ]);
 
-                // ========== NOTIFIKASI KE DOSEN (SELF) ==========
+                // NOTIFIKASI KE DOSEN (SELF)
                 DB::table('aktivitas')->insert([
                     'user_id' => auth()->id(),
                     'tipe' => $tipe,

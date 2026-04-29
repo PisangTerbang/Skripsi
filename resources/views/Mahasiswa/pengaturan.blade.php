@@ -177,15 +177,16 @@
                             class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
                     </div>
 
-                    {{-- NIM --}}
+                    {{-- NIM (Read Only) --}}
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">
                             NIM (Nomor Induk Mahasiswa)
                         </label>
-                        <input type="text" name="nim" value="{{ old('nim', $user->nim) }}" maxlength="20"
-                            placeholder="Contoh: 2021110001"
-                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                        <input type="text" value="{{ $user->nim ?? '-' }}" disabled
+                            class="w-full px-4 py-3 border-gray-300 rounded-xl bg-gray-100 text-gray-600 cursor-not-allowed">
+                        <p class="text-xs text-gray-500 mt-1">NIM tidak dapat diubah</p>
                     </div>
+
 
                     {{-- Role (Read Only) --}}
                     <div>
