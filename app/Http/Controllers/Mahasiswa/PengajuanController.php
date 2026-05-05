@@ -17,7 +17,9 @@ class PengajuanController extends Controller
     {
         $mahasiswaId = Auth::id();
 
-        $judul = Judul::aktif()
+        // Hanya tampilkan judul yang sudah berstatus 'ditawarkan' (los validasi Kepala Lab)
+        $judul = Judul::where('status_judul', 'ditawarkan')
+            ->where('is_locked', '=', DB::raw('false'))
             ->with([
                 'laboratorium',
                 'dosen',
@@ -151,13 +153,13 @@ class PengajuanController extends Controller
                 'status' => 'pending'
             ]);
 
-            // Notifikasi ke semua dosen (judul mandiri belum punya dosen)
+            // Notifikasi ke semua dosen
             $dosenIds = \App\Models\User::where('role', 'dosen')->pluck('id');
             foreach ($dosenIds as $dosenId) {
                 DB::table('aktivitas')->insert([
                     'user_id' => $dosenId,
                     'tipe' => 'pengajuan_baru',
-                'pesan' => $mahasiswaName . ' mengajukan judul mandiri: ' . $request->judul_mandiri,
+                    'pesan' => $mahasiswaName . ' mengajukan judul mandiri: ' . $request->judul_mandiri,
                     'is_read' => DB::raw('false'),
                     'created_at' => now(),
                     'updated_at' => now(),

@@ -50,4 +50,10 @@ class Judul extends Model
     {
         return $this->hasMany(Pengajuan::class);
     }
+
+    public function koorLab()
+{
+    return $this->belongsTo(User::class, 'koor_lab_id');
+}
+
 }

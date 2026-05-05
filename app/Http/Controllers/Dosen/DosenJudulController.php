@@ -36,6 +36,9 @@ class DosenJudulController extends Controller
         $totalJudul = $judul->count();
         $aktif = $judul->where('aktif', true)->where('is_locked', false)->count();
         $terkunci = $judul->where('is_locked', true)->count();
+        $pendingKoor = $judul->where('status_judul', 'pending_koor')->count();
+        $pendingKalab = $judul->where('status_judul', 'pending_kalab')->count();
+        $ditawarkan = $judul->where('status_judul', 'ditawarkan')->count();
 
         $laboratorium = Laboratorium::orderBy('nama')->get();
 
@@ -46,9 +49,11 @@ class DosenJudulController extends Controller
             'totalJudul' => $totalJudul,
             'aktif' => $aktif,
             'terkunci' => $terkunci,
+            'pendingKoor' => $pendingKoor,
+            'pendingKalab' => $pendingKalab,
+            'ditawarkan' => $ditawarkan,
         ]);
     }
-
 
     public function store(Request $request)
     {
@@ -73,27 +78,40 @@ class DosenJudulController extends Controller
         $lastNumber = Judul::where('laboratorium_id', $validated['laboratorium_id'])->count();
         $kode = $prefix . '-' . ($lastNumber + 1);
 
-        // Pastikan kode unik
         while (Judul::where('kode', $kode)->exists()) {
             $lastNumber++;
             $kode = $prefix . '-' . ($lastNumber + 1);
         }
 
-        // Insert dengan raw SQL untuk PostgreSQL boolean compatibility
+        // Status awal: pending_koor (masuk ke workflow koor lab)
         DB::table('judul')->insert([
             'kode' => $kode,
             'nama_judul' => $validated['nama_judul'],
             'deskripsi' => $validated['deskripsi'],
             'dosen_id' => $user->id,
             'laboratorium_id' => $validated['laboratorium_id'],
-            'aktif' => DB::raw('true'),
+            'aktif' => DB::raw('false'),
             'is_locked' => DB::raw('false'),
+            'status_judul' => 'pending_koor',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Log
+        $judulId = DB::table('judul')->where('kode', $kode)->value('id');
+        DB::table('judul_logs')->insert([
+            'judul_id' => $judulId,
+            'user_id' => $user->id,
+            'aksi' => 'diajukan',
+            'dari_status' => null,
+            'ke_status' => 'pending_koor',
+            'catatan' => 'Judul diajukan oleh dosen',
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
         return redirect()->route('dosen.judul.index')
-            ->with('success', 'Judul berhasil ditambahkan!');
+            ->with('success', 'Judul berhasil diajukan! Menunggu review Koordinator Lab.');
     }
 
     public function update(Request $request, $id)
@@ -107,7 +125,7 @@ class DosenJudulController extends Controller
             'laboratorium_id.exists' => 'Laboratorium tidak valid',
             'nama_judul.required' => 'Nama judul harus disi',
             'nama_judul.max' => 'Nama judul maksimal 255 karakter',
-            'deskripsi.required' => 'Deskripsi harus diisi',
+            'deskripsi.required' => 'Deskripsi harus disi',
             'deskripsi.max' => 'Deskripsi maksimal 1000 karakter',
         ]);
 

@@ -9,11 +9,12 @@ class PeriodeSeeder extends Seeder
 {
     public function run(): void
     {
+        DB::table('periode')->truncate();
+
         DB::table('periode')->insert([
             [
-                'semester' => 'Ganjil',
+                'semester' => 'genap',
                 'tahun_ajaran' => '2025/2026',
-                // 🔥 pakai literal boolean PostgreSQL
                 'aktif' => DB::raw('true'),
                 'ditutup' => DB::raw('false'),
                 'created_at' => now(),

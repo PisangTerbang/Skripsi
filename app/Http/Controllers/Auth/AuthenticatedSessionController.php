@@ -35,9 +35,12 @@ class AuthenticatedSessionController extends Controller
 
         // 🔀 Role-based redirect (case-safe)
         return match ($user->role) {
-            'dosen' => redirect()->route('dosen.dashboard'),
-            'mahasiswa' => redirect()->route('mahasiswa.beranda'),
-            default => redirect('/'),
+        'dosen' => redirect()->route('dosen.dashboard'),
+        'mahasiswa' => redirect()->route('mahasiswa.beranda'),
+        'koor_lab' => redirect()->route('koor-lab.dashboard'),
+        'kepala_lab' => redirect()->route('kepala-lab.dashboard'),
+        'kaprodi' => redirect()->route('kaprodi.dashboard'),
+        default => redirect('/'),
         };
     }
 

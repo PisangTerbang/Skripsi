@@ -34,15 +34,14 @@ Route::get('/', function () {
 Route::get('/dashboard', function () {
     $user = auth()->user();
 
-    if ($user->role === 'mahasiswa') {
-        return redirect()->route('mahasiswa.beranda');
-    }
-
-    if ($user->role === 'dosen') {
-        return redirect()->route('dosen.dashboard');
-    }
-
-    return redirect()->route('login');
+    return match ($user->role) {
+        'mahasiswa' => redirect()->route('mahasiswa.beranda'),
+        'dosen' => redirect()->route('dosen.dashboard'),
+        'koor_lab' => redirect()->route('koor-lab.dashboard'),
+        'kepala_lab' => redirect()->route('kepala-lab.dashboard'),
+        'kaprodi' => redirect()->route('kaprodi.dashboard'),
+        default => redirect()->route('login'),
+    };
 })->middleware('auth')->name('dashboard');
 
 /*
@@ -180,6 +179,74 @@ Route::middleware(['auth', 'role:dosen'])
         Route::delete('/pengaturan/avatar', [DosenPengaturanController::class, 'removeAvatar'])
             ->name('pengaturan.avatar.remove');
     });
+
+
+/*
+|--------------------------------------------------------------------------
+| KOORDINATOR LAB AREA
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'role:koor_lab'])
+    ->prefix('koor-lab')
+    ->name('koor-lab.')
+    ->group(function () {
+        Route::get('/', [\App\Http\Controllers\KoorLab\DashboardController::class, 'index'])
+            ->name('dashboard');
+
+        Route::get('/judul', [\App\Http\Controllers\KoorLab\JudulController::class, 'index'])
+            ->name('judul');
+
+        Route::put('/judul/{id}/kelompokan', [\App\Http\Controllers\KoorLab\JudulController::class, 'kelompokkan'])
+            ->name('judul.kelompokkan');
+    });
+
+/*
+|--------------------------------------------------------------------------
+| KEPALA LAB AREA
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'role:kepala_lab'])
+    ->prefix('kepala-lab')
+    ->name('kepala-lab.')
+    ->group(function () {
+        Route::get('/', [\App\Http\Controllers\KepalaLab\DashboardController::class, 'index'])
+            ->name('dashboard');
+
+        Route::get('/validasi', [\App\Http\Controllers\KepalaLab\ValidasiController::class, 'index'])
+            ->name('validasi');
+
+        Route::put('/validasi/{id}/approve', [\App\Http\Controllers\KepalaLab\ValidasiController::class, 'approve'])
+            ->name('validasi.approve');
+
+        Route::put('/validasi/{id}/reject', [\App\Http\Controllers\KepalaLab\ValidasiController::class, 'reject'])
+            ->name('validasi.reject');
+    });
+
+/*
+|--------------------------------------------------------------------------
+| KAPRODI AREA
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'role:kaprodi'])
+    ->prefix('kaprodi')
+    ->name('kaprodi.')
+    ->group(function () {
+        Route::get('/', [\App\Http\Controllers\Kaprodi\DashboardController::class, 'index'])
+            ->name('dashboard');
+
+        Route::get('/monitoring', [\App\Http\Controllers\Kaprodi\MonitoringController::class, 'index'])
+            ->name('monitoring');
+
+        Route::put('/monitoring/{id}/approve', [\App\Http\Controllers\Kaprodi\MonitoringController::class, 'approve'])
+            ->name('monitoring.approve');
+
+        Route::put('/monitoring/{id}/reject', [\App\Http\Controllers\Kaprodi\MonitoringController::class, 'reject'])
+            ->name('monitoring.reject');
+    });
+
 
 /*
 |--------------------------------------------------------------------------

@@ -25,7 +25,8 @@ class User extends Authenticatable
         'password',
         'role',
         'nim',
-        'avatar'
+        'avatar',
+        'laboratorium_id'
     ];
 
     /**
@@ -75,4 +76,25 @@ class User extends Authenticatable
     {
         return $this->role === 'dosen';
     }
+
+    public function laboratorium()
+    {
+        return $this->belongsTo(Laboratorium::class);
+    }
+
+    public function isKoorLab()
+    {
+        return $this->role === 'koor_lab';
+    }
+
+    public function isKepalaLab()
+    {
+        return $this->role === 'kepala_lab';
+    }
+
+    public function isKaprodi()
+    {
+        return $this->role === 'kaprodi';
+    }
+
 }
