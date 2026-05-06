@@ -68,6 +68,30 @@ class JudulController extends Controller
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+        // NOTIFIKASI KE KEPALA LAB
+        $kepalaLab = \App\Models\User::where('role', 'kepala_lab')->first();
+        if ($kepalaLab) {
+            DB::table('aktivitas')->insert([
+                'user_id' => $kepalaLab->id,
+                'tipe' => 'judul_dikelompokkan',
+                'pesan' => 'Judul "' . $judul->nama_judul . '" telah dikelompokan ke lab ' . $request->laboratorium_id . ' oleh ' . $user->name,
+                'is_read' => DB::raw('false'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        // NOTIFIKASI KE DOSEN (pemilik judul)
+        if ($judul->dosen_id) {
+            DB::table('aktivitas')->insert([
+                'user_id' => $judul->dosen_id,
+                'tipe' => 'judul_dikelompokkan',
+                'pesan' => 'Judul "' . $judul->nama_judul . '" sedang diproses oleh Koordinator Lab.',
+                'is_read' => DB::raw('false'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
         return back()->with('success', 'Judul berhasil dikelompokkan!');
     }

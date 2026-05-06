@@ -65,6 +65,19 @@ class MonitoringController extends Controller
             'updated_at' => now(),
         ]);
 
+        // NOTIFIKASI KE DOSEN (pemilik judul)
+        if ($pengajuan->judul && $pengajuan->judul->dosen_id) {
+            DB::table('aktivitas')->insert([
+                'user_id' => $pengajuan->judul->dosen_id,
+                'tipe' => 'final_approval',
+                'pesan' => 'Pengajuan judul oleh ' . $pengajuan->mahasiswa->name . ' telah mendapat persetujuan final. Mahasiswa dapat memulai pengerjaan.',
+                'is_read' => DB::raw('false'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+
         return back()->with('success', 'Pengajuan disetujui! Mahasiswa dapat memulai pengerjaan.');
     }
 
@@ -93,6 +106,20 @@ class MonitoringController extends Controller
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+
+        // NOTIFIKASI KE DOSEN
+        $pengajuanData = Pengajuan::with(['judul', 'mahasiswa'])->find($id);
+        if ($pengajuanData && $pengajuanData->judul && $pengajuanData->judul->dosen_id) {
+            DB::table('aktivitas')->insert([
+                'user_id' => $pengajuanData->judul->dosen_id,
+                'tipe' => 'penolakan',
+                'pesan' => 'Pengajuan judul oleh ' . $pengajuanData->mahasiswa->name . ' ditolak oleh Kaprodi. Catan: ' . $request->catan_kaprodi,
+                'is_read' => DB::raw('false'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
 
         return back()->with('success', 'Pengajuan ditolak dan dikembalikan.');
     }

@@ -61,6 +61,32 @@ class ValidasiController extends Controller
             'updated_at' => now(),
         ]);
 
+        // NOTIFIKASI KE DOSEN (pemilik judul)
+        $judul = \App\Models\Judul::find($id);
+        if ($judul && $judul->dosen_id) {
+            DB::table('aktivitas')->insert([
+                'user_id' => $judul->dosen_id,
+                'tipe' => 'judul_divalidasi',
+                'pesan' => 'Judul "' . $judul->nama_judul . '" telah divalidasi dan ditawarkan ke mahasiswa.',
+                'is_read' => DB::raw('false'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        // NOTIFIKASI KE KOOR LAB yang mengelompokan
+        if ($judul && $judul->koor_lab_id) {
+            DB::table('aktivitas')->insert([
+                'user_id' => $judul->koor_lab_id,
+                'tipe' => 'judul_divalidasi',
+                'pesan' => 'Judul "' . $judul->nama_judul . '" yang Anda kelompokan telah divalidasi Kepala Lab.',
+                'is_read' => DB::raw('false'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+
         return back()->with('success', 'Judul berhasil divalidasi dan ditawarkan!');
     }
 
@@ -89,6 +115,32 @@ class ValidasiController extends Controller
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+
+        // NOTIFIKASI KE KOOR LAB
+        $judul = \App\Models\Judul::find($id);
+        if ($judul && $judul->koor_lab_id) {
+            DB::table('aktivitas')->insert([
+                'user_id' => $judul->koor_lab_id,
+                'tipe' => 'judul_ditolak',
+                'pesan' => 'Judul "' . $judul->nama_judul . '" ditolak oleh Kepala Lab. Catatan: ' . $request->catan_kalab,
+                'is_read' => DB::raw('false'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        // NOTIFIKASI KE DOSEN
+        if ($judul && $judul->dosen_id) {
+            DB::table('aktivitas')->insert([
+                'user_id' => $judul->dosen_id,
+                'tipe' => 'judul_ditolak',
+                'pesan' => 'Judul "' . $judul->nama_judul . '" ditolak oleh Kepala Lab. Catatan: ' . $request->catatan_kalab,
+                'is_read' => DB::raw('false'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
 
         return back()->with('success', 'Judul dikembalikan ke Koordinator Lab.');
     }

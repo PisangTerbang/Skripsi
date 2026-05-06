@@ -232,6 +232,32 @@
                                     </div>
                                 </div>
 
+                                {{-- Status Kaprodi (jika sudah di-approve dosen) --}}
+                                <div x-show="item.status === 'disetujui'" class="mb-4">
+                                    <div class="flex items-center gap-2 p-3 rounded-lg"
+                                        :class="{
+                                            'bg-purple-50 border border-purple-200': item
+                                                .status_kaprodi === 'pending',
+                                            'bg-green-50 border border-green-200': item.status_kaprodi === 'disetujui',
+                                            'bg-red-50 border border-red-200': item.status_kaprodi === 'ditolak'
+                                        }">
+                                        <x-heroicon-o-academic-cap class="w-5 h-5 text-purple-600" />
+                                        <div>
+                                            <p class="text-xs font-semibold"
+                                                :class="{
+                                                    'text-purple-700': item.status_kaprodi === 'pending',
+                                                    'text-green-700': item.status_kaprodi === 'disetujui',
+                                                    'text-red-700': item.status_kaprodi === 'ditolak'
+                                                }">
+                                                Status Kaprodi:
+                                                <span
+                                                    x-text="item.status_kaprodi === 'pending' ? 'Menunggu Persetujuan Final' : (item.status_kaprodi === 'disetujui' ? 'Disetujui - Mahasiswa Boleh Mulai' : 'Ditolak')"></span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+
                                 {{-- Action Buttons --}}
                                 <div x-show="item.status === 'pending'">
                                     <template x-if="!item.is_owner">
@@ -410,7 +436,9 @@
                                             catatan_dosen: '{{ addslashes($p->catatan_dosen ?? '') }}',
                                             waktu: '{{ $p->created_at->diffForHumans() }}',
                                             sudah_punya_judul: {{ $sudahPunyaJudul ? 'true' : 'false' }},
-                                            is_owner: {{ $itemIsOwner ? 'true' : 'false' }}
+                                            is_owner: {{ $itemIsOwner ? 'true' : 'false' }},
+                                            status_kaprodi: '{{ $p->status_kaprodi ?? "" }}',
+
                                         }
                                         {{ $loop->last ? '' : ',' }}
                                     @endforeach

@@ -62,51 +62,68 @@
         </div>
 
         {{-- ================= STATS CARDS ================= --}}
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-            {{-- Total Judul --}}
-            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
-                        <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                        </svg>
-                    </div>
-                </div>
-                <p class="text-gray-500 text-sm font-medium mb-1">Total Judul</p>
-                <p class="text-3xl font-bold text-gray-800">{{ $totalJudul }}</p>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div class="bg-white rounded-2xl shadow-lg border-gray-100 p-4">
+                <x-heroicon-o-document-text class="w-8 h-8 text-indigo-600 mb-2" />
+                <p class="text-gray-500 text-xs font-medium">Total</p>
+                <p class="text-2xl font-bold text-gray-800">{{ $totalJudul }}</p>
             </div>
-
-            {{-- Aktif --}}
-            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
-                </div>
-                <p class="text-gray-500 text-sm font-medium mb-1">Judul Aktif</p>
-                <p class="text-3xl font-bold text-gray-800">{{ $aktif }}</p>
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4">
+                <x-heroicon-o-clock class="w-8 h-8 text-yellow-600 mb-2" />
+                <p class="text-gray-500 text-xs font-medium">Pending Koor</p>
+                <p class="text-2xl font-bold text-gray-800">{{ $pendingKoor }}</p>
             </div>
-
-            {{-- Terkunci --}}
-            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-                        <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
-                    </div>
-                </div>
-                <p class="text-gray-500 text-sm font-medium mb-1">Terkunci</p>
-                <p class="text-3xl font-bold text-gray-800">{{ $terkunci }}</p>
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4">
+                <x-heroicon-o-shield-check class="w-8 h-8 text-amber-600 mb-2" />
+                <p class="text-gray-500 text-xs font-medium">Pending Kalab</p>
+                <p class="text-2xl font-bold text-gray-800">{{ $pendingKalab }}</p>
             </div>
-
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4">
+                <x-heroicon-o-check-circle class="w-8 h-8 text-green-600 mb-2" />
+                <p class="text-gray-500 text-xs font-medium">Ditawarkan</p>
+                <p class="text-2xl font-bold text-gray-800">{{ $ditawarkan }}</p>
+            </div>
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4">
+                <x-heroicon-o-bolt class="w-8 h-8 text-blue-600 mb-2" />
+                <p class="text-gray-500 text-xs font-medium">Aktif</p>
+                <p class="text-2xl font-bold text-gray-800">{{ $aktif }}</p>
+            </div>
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4">
+                <x-heroicon-o-lock-closed class="w-8 h-8 text-orange-600 mb-2" />
+                <p class="text-gray-500 text-xs font-medium">Terkunci</p>
+                <p class="text-2xl font-bold text-gray-800">{{ $terkunci }}</p>
+            </div>
         </div>
+
+
+        {{-- Aktif --}}
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+            </div>
+            <p class="text-gray-500 text-sm font-medium mb-1">Judul Aktif</p>
+            <p class="text-3xl font-bold text-gray-800">{{ $aktif }}</p>
+        </div>
+
+        {{-- Terkunci --}}
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                    <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                </div>
+            </div>
+            <p class="text-gray-500 text-sm font-medium mb-1">Terkunci</p>
+            <p class="text-3xl font-bold text-gray-800">{{ $terkunci }}</p>
+        </div>
+
 
         {{-- ================= ADD BUTTON (Mobile) ================= --}}
         <div class="md:hidden">
@@ -223,19 +240,28 @@
 
                     {{-- Status Badges --}}
                     <div class="flex flex-wrap gap-2 mb-4">
-                        <span x-show="item.aktif"
-                            class="px-2 py-1 text-xs font-semibold bg-green-100 text-green-700 rounded-full">
-                            Aktif
+                        <span x-show="item.status_judul === 'pending_koor'"
+                            class="px-2 py-1 text-xs font-semibold bg-yellow-100 text-yellow-700 rounded-full">
+                            Menunggu Koor Lab
                         </span>
-                        <span x-show="!item.aktif"
-                            class="px-2 py-1 text-xs font-semibold bg-gray-100 text-gray-700 rounded-full">
-                            Non-Aktif
+                        <span x-show="item.status_judul === 'pending_kalab'"
+                            class="px-2 py-1 text-xs font-semibold bg-amber-100 text-amber-700 rounded-full">
+                            Menunggu Kepala Lab
+                        </span>
+                        <span x-show="item.status_judul === 'ditawarkan'"
+                            class="px-2 py-1 text-xs font-semibold bg-green-100 text-green-700 rounded-full">
+                            Ditawarkan
+                        </span>
+                        <span x-show="item.status_judul === 'ditolak_kalab'"
+                            class="px-2 py-1 text-xs font-semibold bg-red-100 text-red-700 rounded-full">
+                            Ditolak Kalab
                         </span>
                         <span x-show="item.is_locked"
                             class="px-2 py-1 text-xs font-semibold bg-orange-100 text-orange-700 rounded-full">
                             Terkunci
                         </span>
                     </div>
+
 
                     {{-- Actions --}}
                     <div class="flex items-center justify-end gap-2">
@@ -463,157 +489,157 @@
 
         </div>
 
-    </div>
+        {{-- ================= ALPINE.JS SCRIPT ================= --}}
+        <script>
+            function judulPage() {
+                return {
+                    // Data
+                    allData: @json($judul),
+                    filteredData: [],
 
-    {{-- ================= ALPINE.JS SCRIPT ================= --}}
-    <script>
-        function judulPage() {
-            return {
-                // Data
-                allData: @json($judul),
-                filteredData: [],
+                    // Filter
+                    searchQuery: '',
+                    filterLab: 'all',
+                    filterStatus: 'all',
 
-                // Filter
-                searchQuery: '',
-                filterLab: 'all',
-                filterStatus: 'all',
+                    // Modal
+                    showModal: false,
+                    showDeleteModal: false,
+                    editMode: false,
+                    selectedItem: null,
+                    deleteId: null,
 
-                // Modal
-                showModal: false,
-                showDeleteModal: false,
-                editMode: false,
-                selectedItem: null,
-                deleteId: null,
-
-                // Form Data
-                formData: {
-                    laboratorium_id: '',
-                    nama_judul: '',
-                    deskripsi: ''
-                },
-
-                init() {
-                    // Transform data
-                    this.allData = this.allData.map(item => ({
-                        id: item.id,
-                        kode: item.kode,
-                        nama_judul: item.nama_judul,
-                        deskripsi: item.deskripsi,
-                        aktif: item.aktif,
-                        is_locked: item.is_locked,
-                        lab_id: item.laboratorium_id,
-                        lab_name: item.lab_name || 'N/A',
-                        total_peminat: item.total_peminat || 0,
-                        total_disetujui: item.total_disetujui || 0,
-                        can_edit: item.can_edit !== false,
-                        can_toggle: item.can_toggle !== false,
-                        can_delete: item.can_delete !== false
-                    }));
-
-                    this.applyFilter();
-                },
-
-                applyFilter() {
-                    let result = this.allData;
-
-                    // Search
-                    if (this.searchQuery) {
-                        const query = this.searchQuery.toLowerCase();
-                        result = result.filter(item =>
-                            item.nama_judul.toLowerCase().includes(query) ||
-                            item.deskripsi.toLowerCase().includes(query) ||
-                            item.kode.toLowerCase().includes(query)
-                        );
-                    }
-
-                    // Filter Lab
-                    if (this.filterLab !== 'all') {
-                        result = result.filter(item => item.lab_id == this.filterLab);
-                    }
-
-                    // Filter Status
-                    if (this.filterStatus === 'aktif') {
-                        result = result.filter(item => item.aktif && !item.is_locked);
-                    } else if (this.filterStatus === 'nonaktif') {
-                        result = result.filter(item => !item.aktif);
-                    } else if (this.filterStatus === 'terkunci') {
-                        result = result.filter(item => item.is_locked);
-                    }
-
-                    this.filteredData = result;
-                },
-
-                openCreateModal() {
-                    this.editMode = false;
-                    this.selectedItem = null;
-                    this.formData = {
+                    // Form Data
+                    formData: {
                         laboratorium_id: '',
                         nama_judul: '',
                         deskripsi: ''
-                    };
-                    this.showModal = true;
-                },
+                    },
 
-                openEditModal(item) {
-                    this.editMode = true;
-                    this.selectedItem = item;
-                    this.formData = {
-                        laboratorium_id: item.lab_id,
-                        nama_judul: item.nama_judul,
-                        deskripsi: item.deskripsi
-                    };
-                    this.showModal = true;
-                },
+                    init() {
+                        // Transform data
+                        this.allData = this.allData.map(item => ({
+                            id: item.id,
+                            kode: item.kode,
+                            nama_judul: item.nama_judul,
+                            deskripsi: item.deskripsi,
+                            aktif: item.aktif,
+                            is_locked: item.is_locked,
+                            lab_id: item.laboratorium_id,
+                            lab_name: item.lab_name || 'N/A',
+                            total_peminat: item.total_peminat || 0,
+                            total_disetujui: item.total_disetujui || 0,
+                            can_edit: item.can_edit !== false,
+                            can_toggle: item.can_toggle !== false,
+                            can_delete: item.can_delete !== false,
+                            status_judul: item.status_judul || 'draft',
 
-                confirmDelete(id) {
-                    this.deleteId = id;
-                    this.showDeleteModal = true;
-                },
+                        }));
 
-                toggleStatus(id) {
-                    if (confirm('Ubah status judul ini?')) {
-                        const form = document.createElement('form');
-                        form.method = 'POST';
-                        form.action = `/dosen/judul/${id}/toggle`;
+                        this.applyFilter();
+                    },
 
-                        const csrfInput = document.createElement('input');
-                        csrfInput.type = 'hidden';
-                        csrfInput.name = '_token';
-                        csrfInput.value = '{{ csrf_token() }}';
+                    applyFilter() {
+                        let result = this.allData;
 
-                        const methodInput = document.createElement('input');
-                        methodInput.type = 'hidden';
-                        methodInput.name = '_method';
-                        methodInput.value = 'PATCH';
+                        // Search
+                        if (this.searchQuery) {
+                            const query = this.searchQuery.toLowerCase();
+                            result = result.filter(item =>
+                                item.nama_judul.toLowerCase().includes(query) ||
+                                item.deskripsi.toLowerCase().includes(query) ||
+                                item.kode.toLowerCase().includes(query)
+                            );
+                        }
 
-                        form.appendChild(csrfInput);
-                        form.appendChild(methodInput);
-                        document.body.appendChild(form);
-                        form.submit();
+                        // Filter Lab
+                        if (this.filterLab !== 'all') {
+                            result = result.filter(item => item.lab_id == this.filterLab);
+                        }
+
+                        // Filter Status
+                        if (this.filterStatus === 'aktif') {
+                            result = result.filter(item => item.aktif && !item.is_locked);
+                        } else if (this.filterStatus === 'nonaktif') {
+                            result = result.filter(item => !item.aktif);
+                        } else if (this.filterStatus === 'terkunci') {
+                            result = result.filter(item => item.is_locked);
+                        }
+
+                        this.filteredData = result;
+                    },
+
+                    openCreateModal() {
+                        this.editMode = false;
+                        this.selectedItem = null;
+                        this.formData = {
+                            laboratorium_id: '',
+                            nama_judul: '',
+                            deskripsi: ''
+                        };
+                        this.showModal = true;
+                    },
+
+                    openEditModal(item) {
+                        this.editMode = true;
+                        this.selectedItem = item;
+                        this.formData = {
+                            laboratorium_id: item.lab_id,
+                            nama_judul: item.nama_judul,
+                            deskripsi: item.deskripsi
+                        };
+                        this.showModal = true;
+                    },
+
+                    confirmDelete(id) {
+                        this.deleteId = id;
+                        this.showDeleteModal = true;
+                    },
+
+                    toggleStatus(id) {
+                        if (confirm('Ubah status judul ini?')) {
+                            const form = document.createElement('form');
+                            form.method = 'POST';
+                            form.action = `/dosen/judul/${id}/toggle`;
+
+                            const csrfInput = document.createElement('input');
+                            csrfInput.type = 'hidden';
+                            csrfInput.name = '_token';
+                            csrfInput.value = '{{ csrf_token() }}';
+
+                            const methodInput = document.createElement('input');
+                            methodInput.type = 'hidden';
+                            methodInput.name = '_method';
+                            methodInput.value = 'PATCH';
+
+                            form.appendChild(csrfInput);
+                            form.appendChild(methodInput);
+                            document.body.appendChild(form);
+                            form.submit();
+                        }
                     }
                 }
             }
-        }
-    </script>
+        </script>
 
-    <style>
-        [x-cloak] {
-            display: none !important;
-        }
+        <style>
+            [x-cloak] {
+                display: none !important;
+            }
 
-        .line-clamp-2 {
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
+            .line-clamp-2 {
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+            }
 
-        .line-clamp-3 {
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-    </style>
+            .line-clamp-3 {
+                display: -webkit-box;
+                -webkit-line-clamp: 3;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+            }
+        </style>
 
 </x-layout-dosen>

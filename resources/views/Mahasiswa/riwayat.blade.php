@@ -287,106 +287,108 @@
 
         </div>
 
-    </div>
 
-    {{-- ================= DETAIL MODAL ================= --}}
-    <div x-show="showModal" x-cloak @click.self="showModal = false"
-        class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
 
-        <div @click.away="showModal = false" x-transition:enter="transition ease-out duration-200"
-            x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-            x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100"
-            x-transition:leave-end="opacity-0 scale-95"
-            class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        {{-- ================= DETAIL MODAL ================= --}}
+        <div x-show="showModal" x-cloak @click.self="showModal = false"
+            class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
 
-            {{-- Modal Header --}}
-            <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-                <h3 class="text-xl font-bold text-gray-800">Detail Pengajuan</h3>
-                <button @click="showModal = false" class="text-gray-400 hover:text-gray-600 transition-colors">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
+            <div @click.away="showModal = false" x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100"
+                x-transition:leave-end="opacity-0 scale-95"
+                class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
 
-            {{-- Modal Body --}}
-            <div class="p-6 space-y-6">
-
-                {{-- Status Badge --}}
-                <div class="flex items-center gap-3">
-                    <span class="px-4 py-2 text-sm font-bold rounded-full"
-                        :class="{
-                            'bg-yellow-100 text-yellow-700': selectedItem.status === 'pending',
-                            'bg-green-100 text-green-700': selectedItem.status === 'disetujui',
-                            'bg-red-100 text-red-700': selectedItem.status === 'ditolak'
-                        }"
-                        x-text="selectedItem.status === 'pending' ? 'Menunggu Review' : selectedItem.status === 'disetujui' ? 'Disetujui' : 'Ditolak'">
-                    </span>
-                    <span class="px-4 py-2 text-sm font-bold bg-indigo-100 text-indigo-700 rounded-full">
-                        Prioritas <span x-text="selectedItem.prioritas"></span>
-                    </span>
+                {{-- Modal Header --}}
+                <div
+                    class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+                    <h3 class="text-xl font-bold text-gray-800">Detail Pengajuan</h3>
+                    <button @click="showModal = false" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
                 </div>
 
-                {{-- Judul --}}
-                <div>
-                    <h4 class="text-2xl font-bold text-gray-800 mb-2" x-text="selectedItem.judul"></h4>
-                    <p class="text-sm text-gray-500" x-text="selectedItem.waktu"></p>
-                </div>
+                {{-- Modal Body --}}
+                <div class="p-6 space-y-6">
 
-                {{-- Details Grid --}}
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-gray-50 rounded-xl p-4">
-                        <p class="text-xs text-gray-500 mb-1">Jenis Pengajuan</p>
-                        <p class="font-semibold text-gray-800"
-                            x-text="selectedItem.jenis === 'mandiri' ? 'Judul Mandiri' : 'Pilih Judul Dosen'"></p>
-                    </div>
-                    <div class="bg-gray-50 rounded-xl p-4">
-                        <p class="text-xs text-gray-500 mb-1">Tanggal Pengajuan</p>
-                        <p class="font-semibold text-gray-800" x-text="selectedItem.tanggal"></p>
-                    </div>
-                </div>
-
-                {{-- Full Details --}}
-                <div class="space-y-4">
-                    <div x-show="selectedItem.kode">
-                        <p class="text-sm font-semibold text-gray-700 mb-1">Kode Judul</p>
-                        <p class="text-gray-800 font-mono" x-text="selectedItem.kode"></p>
-                    </div>
-
-                    <div x-show="selectedItem.deskripsi">
-                        <p class="text-sm font-semibold text-gray-700 mb-1">Deskripsi</p>
-                        <p class="text-gray-800" x-text="selectedItem.deskripsi"></p>
-                    </div>
-
-                    <div x-show="selectedItem.lab">
-                        <p class="text-sm font-semibold text-gray-700 mb-1">Laboratorium</p>
-                        <p class="text-gray-800" x-text="selectedItem.lab"></p>
-                    </div>
-
-                    <div x-show="selectedItem.alasan">
-                        <p class="text-sm font-semibold text-gray-700 mb-1">Alasan Anda</p>
-                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                            <p class="text-gray-800" x-text="selectedItem.alasan"></p>
-                        </div>
-                    </div>
-
-                    <div x-show="selectedItem.catatan_dosen">
-                        <p class="text-sm font-semibold text-gray-700 mb-1">Catatan Dosen</p>
-                        <div class="rounded-lg p-4"
+                    {{-- Status Badge --}}
+                    <div class="flex items-center gap-3">
+                        <span class="px-4 py-2 text-sm font-bold rounded-full"
                             :class="{
-                                'bg-green-50 border border-green-200': selectedItem.status === 'disetujui',
-                                'bg-red-50 border border-red-200': selectedItem.status === 'ditolak'
-                            }">
-                            <p class="text-gray-800" x-text="selectedItem.catatan_dosen"></p>
+                                'bg-yellow-100 text-yellow-700': selectedItem.status === 'pending',
+                                'bg-green-100 text-green-700': selectedItem.status === 'disetujui',
+                                'bg-red-100 text-red-700': selectedItem.status === 'ditolak'
+                            }"
+                            x-text="selectedItem.status === 'pending' ? 'Menunggu Review' : selectedItem.status === 'disetujui' ? 'Disetujui' : 'Ditolak'">
+                        </span>
+                        <span class="px-4 py-2 text-sm font-bold bg-indigo-100 text-indigo-700 rounded-full">
+                            Prioritas <span x-text="selectedItem.prioritas"></span>
+                        </span>
+                    </div>
+
+                    {{-- Judul --}}
+                    <div>
+                        <h4 class="text-2xl font-bold text-gray-800 mb-2" x-text="selectedItem.judul"></h4>
+                        <p class="text-sm text-gray-500" x-text="selectedItem.waktu"></p>
+                    </div>
+
+                    {{-- Details Grid --}}
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-gray-50 rounded-xl p-4">
+                            <p class="text-xs text-gray-500 mb-1">Jenis Pengajuan</p>
+                            <p class="font-semibold text-gray-800"
+                                x-text="selectedItem.jenis === 'mandiri' ? 'Judul Mandiri' : 'Pilih Judul Dosen'"></p>
+                        </div>
+                        <div class="bg-gray-50 rounded-xl p-4">
+                            <p class="text-xs text-gray-500 mb-1">Tanggal Pengajuan</p>
+                            <p class="font-semibold text-gray-800" x-text="selectedItem.tanggal"></p>
                         </div>
                     </div>
+
+                    {{-- Full Details --}}
+                    <div class="space-y-4">
+                        <div x-show="selectedItem.kode">
+                            <p class="text-sm font-semibold text-gray-700 mb-1">Kode Judul</p>
+                            <p class="text-gray-800 font-mono" x-text="selectedItem.kode"></p>
+                        </div>
+
+                        <div x-show="selectedItem.deskripsi">
+                            <p class="text-sm font-semibold text-gray-700 mb-1">Deskripsi</p>
+                            <p class="text-gray-800" x-text="selectedItem.deskripsi"></p>
+                        </div>
+
+                        <div x-show="selectedItem.lab">
+                            <p class="text-sm font-semibold text-gray-700 mb-1">Laboratorium</p>
+                            <p class="text-gray-800" x-text="selectedItem.lab"></p>
+                        </div>
+
+                        <div x-show="selectedItem.alasan">
+                            <p class="text-sm font-semibold text-gray-700 mb-1">Alasan Anda</p>
+                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                <p class="text-gray-800" x-text="selectedItem.alasan"></p>
+                            </div>
+                        </div>
+
+                        <div x-show="selectedItem.catatan_dosen">
+                            <p class="text-sm font-semibold text-gray-700 mb-1">Catatan Dosen</p>
+                            <div class="rounded-lg p-4"
+                                :class="{
+                                    'bg-green-50 border border-green-200': selectedItem.status === 'disetujui',
+                                    'bg-red-50 border border-red-200': selectedItem.status === 'ditolak'
+                                }">
+                                <p class="text-gray-800" x-text="selectedItem.catatan_dosen"></p>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
 
             </div>
 
         </div>
-
     </div>
 
     {{-- ================= ALPINE SCRIPT ================= --}}

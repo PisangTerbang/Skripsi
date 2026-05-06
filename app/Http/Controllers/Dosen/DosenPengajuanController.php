@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\Laboratorium;
 use App\Models\Judul;
+use App\Models\User;
 
 class DosenPengajuanController extends Controller
 {
@@ -16,7 +17,6 @@ class DosenPengajuanController extends Controller
     {
         $user = Auth::user();
 
-        // Load pengajuan dengan relasi judul.dosen untuk cek kepemilikan
         $pengajuan = Pengajuan::with(['mahasiswa', 'judul.laboratorium', 'judul.dosen'])
             ->orderBy('created_at', 'desc')
             ->get()
@@ -52,7 +52,7 @@ class DosenPengajuanController extends Controller
     {
         $request->validate([
             'status' => 'required|in:disetujui,ditolak',
-            'catatan_dosen' => 'nullable|string|max:1000',
+            'catan_dosen' => 'nullable|string|max:1000',
             'laboratorium_id' => 'nullable|exists:laboratorium,id'
         ]);
 
@@ -62,7 +62,7 @@ class DosenPengajuanController extends Controller
                 $pengajuan = Pengajuan::with(['judul', 'mahasiswa'])->findOrFail($id);
                 $statusBaru = $request->status;
 
-                // CEK KEPEMILIKAN: Hanya dosen pemilik judul yang bisa approve/reject
+                // CEK KEPEMILIKAN
                 if ($pengajuan->jenis === 'pilih' && $pengajuan->judul) {
                     if ($pengajuan->judul->dosen_id !== auth()->id()) {
                         throw new \Exception('Anda tidak memiliki hak untuk menindaklanjuti pengajuan ini.');
@@ -91,8 +91,9 @@ class DosenPengajuanController extends Controller
                 // MODE PILIH - DISETUJUI
                 if ($statusBaru === 'disetujui' && $pengajuan->jenis === 'pilih') {
                     if ($pengajuan->judul) {
-                        $pengajuan->judul->update([
-                            'is_locked' => DB::raw('true')
+                        DB::table('judul')->where('id', $pengajuan->judul_id)->update([
+                            'is_locked' => DB::raw('true'),
+                            'updated_at' => now(),
                         ]);
                     }
 
@@ -108,7 +109,6 @@ class DosenPengajuanController extends Controller
                             'catatan_dosen' => 'Judul sudah diambil oleh ' . $pengajuan->mahasiswa->name
                         ]);
 
-                        // Notif ke mahasiswa yang ditolak otomatis
                         DB::table('aktivitas')->insert([
                             'user_id' => $other->mahasiswa_id,
                             'tipe' => 'penolakan',
@@ -131,24 +131,33 @@ class DosenPengajuanController extends Controller
                     $count = Judul::where('laboratorium_id', $request->laboratorium_id)->count();
                     $kode = $prefix . '-' . ($count + 1);
 
-                    $judulBaru = Judul::create([
+                    DB::table('judul')->insert([
                         'kode' => $kode,
                         'nama_judul' => $pengajuan->judul_mandiri,
                         'deskripsi' => $pengajuan->deskripsi_mandiri,
                         'laboratorium_id' => $request->laboratorium_id,
                         'dosen_id' => auth()->id(),
                         'aktif' => DB::raw('true'),
-                        'is_locked' => DB::raw('true')
+                        'is_locked' => DB::raw('true'),
+                        'status_judul' => 'ditawarkan',
+                        'created_at' => now(),
+                        'updated_at' => now(),
                     ]);
 
-                    $pengajuan->judul_id = $judulBaru->id;
+                    $judulBaruId = DB::table('judul')->where('kode', $kode)->value('id');
+                    $pengajuan->judul_id = $judulBaruId;
+                }
+
+                // SET STATUS KAPRODI = PENDING (jika disetujui dosen)
+                if ($statusBaru === 'disetujui') {
+                    $pengajuan->status_kaprodi = 'pending';
                 }
 
                 $pengajuan->save();
 
                 // NOTIFIKASI KE MAHASISWA
                 if ($statusBaru === 'disetujui') {
-                    $pesan = 'Pengajuan judul "' . $namaJudul . '" telah disetujui!';
+                    $pesan = 'Pengajuan judul "' . $namaJudul . '" telah disetujui dosen! Menunggu persetujuan final Kaprodi.';
                     $tipe = 'persetujuan';
                 } else {
                     $catatan = $request->catatan_dosen ? ' Catatan: ' . $request->catatan_dosen : '';
@@ -174,6 +183,21 @@ class DosenPengajuanController extends Controller
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
+
+                // NOTIFIKASI KE KAPRODI (jika disetujui)
+                if ($statusBaru === 'disetujui') {
+                    $kaprodi = User::where('role', 'kaprodi')->first();
+                    if ($kaprodi) {
+                        DB::table('aktivitas')->insert([
+                            'user_id' => $kaprodi->id,
+                            'tipe' => 'pending_approval',
+                            'pesan' => 'Pengajuan judul "' . $namaJudul . '" oleh ' . $pengajuan->mahasiswa->name . ' telah disetujui dosen dan menunggu persetujuan final Anda.',
+                            'is_read' => DB::raw('false'),
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                    }
+                }
             });
 
             return back()->with('success', 'Pengajuan berhasil ' . ($request->status === 'disetujui' ? 'disetujui' : 'ditolak') . '!');

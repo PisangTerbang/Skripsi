@@ -8,6 +8,7 @@ use App\Models\Laboratorium;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Models\User;
 
 class DosenJudulController extends Controller
 {
@@ -203,6 +204,23 @@ class DosenJudulController extends Controller
         }
 
         $judul->delete();
+
+        // NOTIFIKASI KE KOOR LAB (sesuai lab yang dipilih)
+        $koorLab = User::where('role', 'koor_lab')
+            ->where('laboratorium_id', $validated['laboratorium_id'])
+            ->first();
+
+        if ($koorLab) {
+            DB::table('aktivitas')->insert([
+                'user_id' => $koorLab->id,
+                'tipe' => 'judul_baru',
+                'pesan' => auth()->user()->name . ' mengajukan judul baru: ' . $validated['nama_judul'],
+                'is_read' => DB::raw('false'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
 
         return redirect()->route('dosen.judul.index')
             ->with('success', 'Judul berhasil dihapus!');

@@ -263,107 +263,108 @@
                 </div>
             </div>
         </div>
+    </div>
 
-        <script>
-            function kelompokkanPage() {
-                return {
-                    allData: [],
-                    filteredData: [],
-                    paginatedData: [],
-                    search: '',
-                    filterLab: 'all',
-                    filterStatus: 'pending',
-                    showModal: false,
-                    selectedItem: {},
-                    currentPage: 1,
-                    perPage: 10,
-                    totalPages: 1,
+    <script>
+        function kelompokkanPage() {
+            return {
+                allData: [],
+                filteredData: [],
+                paginatedData: [],
+                search: '',
+                filterLab: 'all',
+                filterStatus: 'pending',
+                showModal: false,
+                selectedItem: {},
+                currentPage: 1,
+                perPage: 10,
+                totalPages: 1,
 
-                    init() {
-                        this.allData = [
-                            @foreach ($judulPending as $j)
-                                {
-                                    id: {{ $j->id }},
-                                    kode: '{{ $j->kode }}',
-                                    nama_judul: '{{ addslashes($j->nama_judul) }}',
-                                    deskripsi: '{{ addslashes($j->deskripsi) }}',
-                                    dosen: '{{ addslashes($j->dosen->name ?? '-') }}',
-                                    lab: '{{ $j->laboratorium->nama ?? '-' }}',
-                                    lab_id: {{ $j->laboratorium_id }},
-                                    skills: '{{ addslashes($j->relevant_skills ?? '') }}',
-                                    status: 'pending_koor',
-                                    status_label: 'Menunggu'
-                                }
-                                {{ $loop->last ? '' : ',' }}
-                            @endforeach
-                            @if ($judulPending->count() > 0 && $judulSelesai->count() > 0)
-                                ,
-                            @endif
-                            @foreach ($judulSelesai as $j)
-                                {
-                                    id: {{ $j->id }},
-                                    kode: '{{ $j->kode }}',
-                                    nama_judul: '{{ addslashes($j->nama_judul) }}',
-                                    deskripsi: '{{ addslashes($j->deskripsi) }}',
-                                    dosen: '{{ addslashes($j->dosen->name ?? '-') }}',
-                                    lab: '{{ $j->laboratorium->nama ?? '-' }}',
-                                    lab_id: {{ $j->laboratorium_id }},
-                                    skills: '{{ addslashes($j->relevant_skills ?? '') }}',
-                                    status: '{{ $j->status_judul }}',
-                                    status_label: '{{ $j->status_judul === 'ditawarkan' ? 'Ditawarkan' : ($j->status_judul === 'pending_kalab' ? 'Menunggu Kalab' : ucfirst(str_replace('_', ' ', $j->status_judul))) }}'
-                                }
-                                {{ $loop->last ? '' : ',' }}
-                            @endforeach
-                        ];
-                        this.filterData();
-                    },
+                init() {
+                    this.allData = [
+                        @foreach ($judulPending as $j)
+                            {
+                                id: {{ $j->id }},
+                                kode: '{{ $j->kode }}',
+                                nama_judul: '{{ addslashes($j->nama_judul) }}',
+                                deskripsi: '{{ addslashes($j->deskripsi) }}',
+                                dosen: '{{ addslashes($j->dosen->name ?? '-') }}',
+                                lab: '{{ $j->laboratorium->nama ?? '-' }}',
+                                lab_id: {{ $j->laboratorium_id }},
+                                skills: '{{ addslashes($j->relevant_skills ?? '') }}',
+                                status: 'pending_koor',
+                                status_label: 'Menunggu'
+                            }
+                            {{ $loop->last ? '' : ',' }}
+                        @endforeach
+                        @if ($judulPending->count() > 0 && $judulSelesai->count() > 0)
+                            ,
+                        @endif
+                        @foreach ($judulSelesai as $j)
+                            {
+                                id: {{ $j->id }},
+                                kode: '{{ $j->kode }}',
+                                nama_judul: '{{ addslashes($j->nama_judul) }}',
+                                deskripsi: '{{ addslashes($j->deskripsi) }}',
+                                dosen: '{{ addslashes($j->dosen->name ?? '-') }}',
+                                lab: '{{ $j->laboratorium->nama ?? '-' }}',
+                                lab_id: {{ $j->laboratorium_id }},
+                                skills: '{{ addslashes($j->relevant_skills ?? '') }}',
+                                status: '{{ $j->status_judul }}',
+                                status_label: '{{ $j->status_judul === 'ditawarkan' ? 'Ditawarkan' : ($j->status_judul === 'pending_kalab' ? 'Menunggu Kalab' : ucfirst(str_replace('_', ' ', $j->status_judul))) }}'
+                            }
+                            {{ $loop->last ? '' : ',' }}
+                        @endforeach
+                    ];
+                    this.filterData();
+                },
 
-                    filterData() {
-                        var self = this;
-                        var result = this.allData;
+                filterData() {
+                    var self = this;
+                    var result = this.allData;
 
-                        if (this.search) {
-                            var q = this.search.toLowerCase();
-                            result = result.filter(function(item) {
-                                return item.nama_judul.toLowerCase().includes(q) ||
-                                    item.dosen.toLowerCase().includes(q) ||
-                                    item.kode.toLowerCase().includes(q);
-                            });
-                        }
-
-                        if (this.filterLab !== 'all') {
-                            result = result.filter(function(item) {
-                                return item.lab_id == self.filterLab;
-                            });
-                        }
-
-                        if (this.filterStatus === 'pending') {
-                            result = result.filter(function(item) {
-                                return item.status === 'pending_koor';
-                            });
-                        } else if (this.filterStatus === 'selesai') {
-                            result = result.filter(function(item) {
-                                return item.status !== 'pending_koor';
-                            });
-                        }
-
-                        this.filteredData = result;
-                        this.currentPage = 1;
-                        this.paginate();
-                    },
-
-                    paginate() {
-                        this.totalPages = Math.ceil(this.filteredData.length / this.perPage) || 1;
-                        var start = (this.currentPage - 1) * this.perPage;
-                        this.paginatedData = this.filteredData.slice(start, start + this.perPage);
-                    },
-
-                    openModal(item) {
-                        this.selectedItem = item;
-                        this.showModal = true;
+                    if (this.search) {
+                        var q = this.search.toLowerCase();
+                        result = result.filter(function(item) {
+                            return item.nama_judul.toLowerCase().includes(q) ||
+                                item.dosen.toLowerCase().includes(q) ||
+                                item.kode.toLowerCase().includes(q);
+                        });
                     }
+
+                    if (this.filterLab !== 'all') {
+                        result = result.filter(function(item) {
+                            return item.lab_id == self.filterLab;
+                        });
+                    }
+
+                    if (this.filterStatus === 'pending') {
+                        result = result.filter(function(item) {
+                            return item.status === 'pending_koor';
+                        });
+                    } else if (this.filterStatus === 'selesai') {
+                        result = result.filter(function(item) {
+                            return item.status !== 'pending_koor';
+                        });
+                    }
+
+                    this.filteredData = result;
+                    this.currentPage = 1;
+                    this.paginate();
+                },
+
+                paginate() {
+                    this.totalPages = Math.ceil(this.filteredData.length / this.perPage) || 1;
+                    var start = (this.currentPage - 1) * this.perPage;
+                    this.paginatedData = this.filteredData.slice(start, start + this.perPage);
+                },
+
+                openModal(item) {
+                    this.selectedItem = item;
+                    this.showModal = true;
                 }
             }
-        </script>
+        }
+    </script>
 
 </x-layout-koorlab>
