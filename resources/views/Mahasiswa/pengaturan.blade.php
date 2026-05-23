@@ -3,430 +3,401 @@
 
     <div x-data="pengaturanPage()" class="space-y-6">
 
-        {{-- ================= ALERTS ================= --}}
+        {{-- Alert --}}
         @if (session('success'))
-            <div x-data="{ show: true }" x-show="show" x-transition
-                class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>{{ session('success') }}</span>
-                </div>
-                <button @click="show = false" class="text-green-700 hover:text-green-900">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+            <div x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 4000)"
+                class="flex items-center gap-3 rounded-2xl border-2 border-green-200 bg-green-50 px-5 py-4 text-sm text-green-800 shadow-sm">
+                <x-heroicon-o-check-circle class="h-5 w-5 shrink-0 text-green-500" />
+                <span class="font-semibold">{{ session('success') }}</span>
+                <button @click="show = false" class="ml-auto rounded-lg p-1 text-green-400 hover:bg-green-100 transition">
+                    <x-heroicon-o-x-mark class="h-4 w-4" />
                 </button>
             </div>
         @endif
 
         @if (session('error'))
-            <div x-data="{ show: true }" x-show="show" x-transition
-                class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>{{ session('error') }}</span>
-                </div>
-                <button @click="show = false" class="text-red-700 hover:text-red-900">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+            <div x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 4000)"
+                class="flex items-center gap-3 rounded-2xl border-2 border-red-200 bg-red-50 px-5 py-4 text-sm text-red-800 shadow-sm">
+                <x-heroicon-o-x-circle class="h-5 w-5 shrink-0 text-red-500" />
+                <span class="font-semibold">{{ session('error') }}</span>
+                <button @click="show = false" class="ml-auto rounded-lg p-1 text-red-400 hover:bg-red-100 transition">
+                    <x-heroicon-o-x-mark class="h-4 w-4" />
                 </button>
             </div>
         @endif
 
         @if ($errors->any())
             <div x-data="{ show: true }" x-show="show" x-transition
-                class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl">
+                class="rounded-2xl border-2 border-red-200 bg-red-50 px-5 py-4 text-sm text-red-800 shadow-sm">
                 <div class="flex items-start gap-3">
-                    <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                    <x-heroicon-o-exclamation-circle class="h-5 w-5 shrink-0 text-red-500 mt-0.5" />
                     <div class="flex-1">
-                        <p class="font-semibold mb-2">Terjadi kesalahan:</p>
-                        <ul class="list-disc list-inside space-y-1 text-sm">
+                        <p class="font-black mb-2">Terjadi kesalahan:</p>
+                        <ul class="space-y-1 list-disc list-inside">
                             @foreach ($errors->all() as $error)
                                 <li>{{ $error }}</li>
                             @endforeach
                         </ul>
                     </div>
-                    <button @click="show = false" class="text-red-700 hover:text-red-900">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+                    <button @click="show = false" class="rounded-lg p-1 text-red-400 hover:bg-red-100 transition">
+                        <x-heroicon-o-x-mark class="h-4 w-4" />
                     </button>
                 </div>
             </div>
         @endif
 
-        {{-- ================= HEADER ================= --}}
-        <div class="bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-2xl shadow-xl p-6">
-            <div class="flex items-center justify-between">
-                <div class="flex-1">
-                    <h2 class="text-2xl font-bold mb-2">Pengaturan Akun</h2>
-                    <p class="text-indigo-100 text-sm">Kelola informasi profil dan keamanan akun Anda</p>
+        {{-- ===== WELCOME BANNER ===== --}}
+        <div
+            class="relative overflow-hidden rounded-2xl border-2 border-indigo-300 bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 p-7 shadow-xl">
+            <div class="absolute -right-10 -top-10 h-48 w-48 rounded-full bg-white/10"></div>
+            <div class="absolute -bottom-12 -left-6 h-40 w-40 rounded-full bg-white/5"></div>
+            <div class="relative flex items-center gap-5">
+                {{-- Avatar --}}
+                <div class="shrink-0">
+                    @if ($user->avatar)
+                        <img src="{{ asset('storage/' . $user->avatar) }}" alt="Avatar"
+                            class="h-20 w-20 rounded-2xl border-4 border-white/30 object-cover shadow-lg">
+                    @else
+                        <div
+                            class="flex h-20 w-20 items-center justify-center rounded-2xl border-4 border-white/30 bg-white/20 text-2xl font-black text-white shadow-lg backdrop-blur-sm">
+                            {{ strtoupper(substr($user->name, 0, 2)) }}
+                        </div>
+                    @endif
                 </div>
-                <div class="hidden md:block">
-                    <svg class="w-16 h-16 text-white/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-widest text-indigo-300">Pengaturan Akun</p>
+                    <h2 class="mt-1 text-2xl font-black text-white leading-tight">{{ $user->name }}</h2>
+                    <p class="mt-1 text-sm text-indigo-200">{{ $user->email }}</p>
+                    <div class="mt-2 flex items-center gap-2">
+                        <span
+                            class="inline-flex items-center rounded-full border border-white/20 bg-white/15 px-3 py-1 text-xs font-semibold text-white">
+                            {{ ucfirst($user->role) }}
+                        </span>
+                        @if ($user->nim)
+                            <span
+                                class="inline-flex items-center rounded-full border border-white/20 bg-white/15 px-3 py-1 text-xs font-semibold text-white">
+                                NIM: {{ $user->nim }}
+                            </span>
+                        @endif
+                    </div>
                 </div>
             </div>
         </div>
 
-        {{-- ================= PROFILE SECTION ================= --}}
-        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
 
-            {{-- Section Header --}}
-            <div class="bg-gradient-to-r from-indigo-50 to-purple-50 px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
-                    <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                    Informasi Profil
-                </h3>
+            {{-- ===== KOLOM KIRI: INFO AKUN ===== --}}
+            <div class="space-y-4">
+
+                {{-- Info Akun --}}
+                <div class="overflow-hidden rounded-2xl border-2 border-gray-200 bg-white shadow-md">
+                    <div
+                        class="flex items-center gap-3 border-b-4 border-indigo-200 bg-gradient-to-r from-indigo-600 to-purple-700 px-5 py-4">
+                        <div
+                            class="flex h-8 w-8 items-center justify-center rounded-xl border-2 border-white/30 bg-white/20">
+                            <x-heroicon-o-information-circle class="h-4 w-4 text-white" />
+                        </div>
+                        <h3 class="font-extrabold text-white text-sm">Informasi Akun</h3>
+                    </div>
+                    <div class="p-4 space-y-3">
+                        <div class="rounded-xl border-2 border-gray-100 bg-gray-50 px-4 py-3">
+                            <p class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-1">Akun Dibuat</p>
+                            <p class="text-sm font-black text-gray-800">{{ $user->created_at->format('d M Y') }}</p>
+                        </div>
+                        <div class="rounded-xl border-2 border-gray-100 bg-gray-50 px-4 py-3">
+                            <p class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-1">Terakhir
+                                Diperbarui</p>
+                            <p class="text-sm font-black text-gray-800">{{ $user->updated_at->diffForHumans() }}</p>
+                        </div>
+                        <div class="rounded-xl border-2 border-indigo-100 bg-indigo-50 px-4 py-3">
+                            <p class="text-xs font-bold uppercase tracking-widest text-indigo-400 mb-1">Role</p>
+                            <p class="text-sm font-black text-indigo-800">{{ ucfirst($user->role) }}</p>
+                        </div>
+                        @if ($user->nim)
+                            <div class="rounded-xl border-2 border-violet-100 bg-violet-50 px-4 py-3">
+                                <p class="text-xs font-bold uppercase tracking-widest text-violet-400 mb-1">NIM</p>
+                                <p class="text-sm font-black text-violet-800">{{ $user->nim }}</p>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+                {{-- Tips --}}
+                <div class="overflow-hidden rounded-2xl border-2 border-blue-200 bg-blue-50 shadow-sm">
+                    <div class="px-5 py-4">
+                        <div class="flex items-center gap-2 mb-3">
+                            <x-heroicon-o-light-bulb class="h-5 w-5 text-blue-500" />
+                            <p class="text-sm font-black text-blue-700">Tips Keamanan</p>
+                        </div>
+                        <ul class="space-y-2 text-xs text-blue-600">
+                            <li class="flex items-start gap-2">
+                                <span class="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-400"></span>
+                                Gunakan password minimal 8 karakter
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-400"></span>
+                                Kombinasikan huruf besar, kecil, dan angka
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-400"></span>
+                                Jangan bagikan password ke siapapun
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
             </div>
 
-            {{-- Form --}}
-            <form method="POST" action="{{ route('mahasiswa.pengaturan.profile') }}" enctype="multipart/form-data"
-                class="p-6">
-                @csrf
-                @method('PUT')
+            {{-- ===== KOLOM KANAN: FORM ===== --}}
+            <div class="space-y-6 lg:col-span-2">
 
-                <div class="space-y-6">
-
-                    {{-- Avatar Section --}}
-                    <div class="flex items-start gap-6 pb-6 border-b border-gray-200">
-                        {{-- Current Avatar --}}
-                        <div class="relative">
-                            @if ($user->avatar)
-                                <img src="{{ asset('storage/' . $user->avatar) }}" alt="Avatar"
-                                    class="w-24 h-24 rounded-full object-cover border-4 border-indigo-100">
-                            @else
-                                <div
-                                    class="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-3xl font-bold border-4 border-indigo-100">
-                                    {{ strtoupper(substr($user->name, 0, 2)) }}
-                                </div>
-                            @endif
-
-                            {{-- Remove Button --}}
-                            @if ($user->avatar)
-                                <button type="button" @click="removeAvatar()"
-                                    class="absolute -top-2 -right-2 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg transition-all">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
-                            @endif
+                {{-- ===== FORM PROFIL ===== --}}
+                <div class="overflow-hidden rounded-2xl border-2 border-gray-200 bg-white shadow-md">
+                    <div
+                        class="flex items-center gap-3 border-b-4 border-indigo-200 bg-gradient-to-r from-indigo-600 to-purple-700 px-6 py-4">
+                        <div
+                            class="flex h-9 w-9 items-center justify-center rounded-xl border-2 border-white/30 bg-white/20">
+                            <x-heroicon-o-user class="h-5 w-5 text-white" />
                         </div>
+                        <div>
+                            <h3 class="font-extrabold text-white">Informasi Profil</h3>
+                            <p class="text-xs text-indigo-200">Perbarui nama dan email Anda</p>
+                        </div>
+                    </div>
 
-                        {{-- Upload Section --}}
-                        <div class="flex-1">
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">
-                                Foto Profil
-                            </label>
-                            <div class="flex items-center gap-4">
+                    <form method="POST" action="{{ route('mahasiswa.pengaturan.profile') }}"
+                        enctype="multipart/form-data" class="p-6 space-y-5">
+                        @csrf
+                        @method('PUT')
+
+                        {{-- Avatar --}}
+                        <div class="flex items-center gap-5 rounded-xl border-2 border-gray-100 bg-gray-50 p-4">
+                            <div class="relative shrink-0">
+                                @if ($user->avatar)
+                                    <img src="{{ asset('storage/' . $user->avatar) }}" alt="Avatar"
+                                        class="h-16 w-16 rounded-full border-4 border-indigo-100 object-cover shadow-sm">
+                                    <button type="button" @click="removeAvatar()"
+                                        class="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white shadow-md transition hover:bg-red-600">
+                                        <x-heroicon-o-x-mark class="h-3.5 w-3.5" />
+                                    </button>
+                                @else
+                                    <div
+                                        class="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-xl font-black text-white shadow-sm border-4 border-indigo-100">
+                                        {{ strtoupper(substr($user->name, 0, 2)) }}
+                                    </div>
+                                @endif
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm font-bold text-gray-700 mb-2">Foto Profil</p>
                                 <label class="cursor-pointer">
                                     <input type="file" name="avatar" accept="image/jpeg,image/png,image/jpg"
-                                        @change="previewAvatar($event)" class="hidden">
+                                        @change="previewAvatar($event)" class="hidden" />
                                     <span
-                                        class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-all shadow-sm hover:shadow-md">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor"
-                                            viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                        </svg>
+                                        class="inline-flex items-center gap-2 rounded-xl border-2 border-indigo-300 bg-indigo-600 px-4 py-2 text-xs font-black text-white shadow-sm transition hover:bg-indigo-700">
+                                        <x-heroicon-o-photo class="h-3.5 w-3.5" />
                                         Pilih Foto
                                     </span>
                                 </label>
-                                <span x-show="avatarName" x-text="avatarName" class="text-sm text-gray-600"></span>
+                                <p x-show="avatarName" x-text="avatarName" class="mt-1.5 text-xs text-gray-500"></p>
+                                <p class="mt-1 text-xs text-gray-400">JPG, PNG — Maks. 2MB</p>
                             </div>
-                            <p class="text-xs text-gray-500 mt-2">JPG, PNG. Maksimal 2MB</p>
                         </div>
-                    </div>
 
-                    {{-- Name --}}
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            Nama Lengkap <span class="text-red-500">*</span>
-                        </label>
-                        <input type="text" name="name" value="{{ old('name', $user->name) }}" required
-                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
-                    </div>
+                        {{-- Nama --}}
+                        <div>
+                            <label class="mb-1.5 block text-sm font-bold text-gray-700">
+                                Nama Lengkap <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" name="name" value="{{ old('name', $user->name) }}" required
+                                class="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-sm text-gray-800 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition
+                                    {{ $errors->has('name') ? 'border-red-400 bg-red-50' : '' }}" />
+                            @error('name')
+                                <p class="mt-1.5 text-xs font-semibold text-red-500">{{ $message }}</p>
+                            @enderror
+                        </div>
 
-                    {{-- Email --}}
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            Email <span class="text-red-500">*</span>
-                        </label>
-                        <input type="email" name="email" value="{{ old('email', $user->email) }}" required
-                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
-                    </div>
+                        {{-- Email --}}
+                        <div>
+                            <label class="mb-1.5 block text-sm font-bold text-gray-700">
+                                Email <span class="text-red-500">*</span>
+                            </label>
+                            <input type="email" name="email" value="{{ old('email', $user->email) }}" required
+                                class="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-sm text-gray-800 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition
+                                    {{ $errors->has('email') ? 'border-red-400 bg-red-50' : '' }}" />
+                            @error('email')
+                                <p class="mt-1.5 text-xs font-semibold text-red-500">{{ $message }}</p>
+                            @enderror
+                        </div>
 
-                    {{-- NIM (Read Only) --}}
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            NIM (Nomor Induk Mahasiswa)
-                        </label>
-                        <input type="text" value="{{ $user->nim ?? '-' }}" disabled
-                            class="w-full px-4 py-3 border-gray-300 rounded-xl bg-gray-100 text-gray-600 cursor-not-allowed">
-                        <p class="text-xs text-gray-500 mt-1">NIM tidak dapat diubah</p>
-                    </div>
+                        {{-- NIM (readonly) --}}
+                        <div>
+                            <label class="mb-1.5 block text-sm font-bold text-gray-700">NIM</label>
+                            <input type="text" value="{{ $user->nim ?? '-' }}" disabled
+                                class="w-full rounded-xl border-2 border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-500 cursor-not-allowed" />
+                            <p class="mt-1 text-xs text-gray-400">NIM tidak dapat diubah</p>
+                        </div>
 
+                        {{-- Submit --}}
+                        <div class="border-t-2 border-gray-100 pt-4">
+                            <button type="submit"
+                                class="inline-flex items-center gap-2 rounded-xl border-2 border-indigo-300 bg-indigo-600 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-indigo-700 hover:shadow-md">
+                                <x-heroicon-o-check class="h-4 w-4" />
+                                Simpan Perubahan
+                            </button>
+                        </div>
 
-                    {{-- Role (Read Only) --}}
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            Role
-                        </label>
-                        <input type="text" value="{{ ucfirst($user->role) }}" disabled
-                            class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-100 text-gray-600 cursor-not-allowed">
-                    </div>
-
-                    {{-- Submit Button --}}
-                    <div class="flex gap-4 pt-4">
-                        <button type="submit"
-                            class="flex-1 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl">
-                            Simpan Perubahan
-                        </button>
-                    </div>
-
+                    </form>
                 </div>
 
-            </form>
-
-        </div>
-
-        {{-- ================= PASSWORD SECTION ================= --}}
-        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-
-            {{-- Section Header --}}
-            <div class="bg-gradient-to-r from-red-50 to-pink-50 px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
-                    <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
-                    Keamanan & Password
-                </h3>
-            </div>
-
-            {{-- Form --}}
-            <form method="POST" action="{{ route('mahasiswa.pengaturan.password') }}" class="p-6">
-                @csrf
-                @method('PUT')
-
-                <div class="space-y-6">
-
-                    {{-- Current Password --}}
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            Password Lama <span class="text-red-500">*</span>
-                        </label>
-                        <div class="relative">
-                            <input :type="showCurrentPassword ? 'text' : 'password'" name="current_password" required
-                                class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent">
-                            <button type="button" @click="showCurrentPassword = !showCurrentPassword"
-                                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                                <svg x-show="!showCurrentPassword" class="w-5 h-5" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                </svg>
-                                <svg x-show="showCurrentPassword" class="w-5 h-5" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                                </svg>
-                            </button>
+                {{-- ===== FORM PASSWORD ===== --}}
+                <div class="overflow-hidden rounded-2xl border-2 border-gray-200 bg-white shadow-md">
+                    <div
+                        class="flex items-center gap-3 border-b-4 border-red-200 bg-gradient-to-r from-red-600 to-rose-700 px-6 py-4">
+                        <div
+                            class="flex h-9 w-9 items-center justify-center rounded-xl border-2 border-white/30 bg-white/20">
+                            <x-heroicon-o-lock-closed class="h-5 w-5 text-white" />
+                        </div>
+                        <div>
+                            <h3 class="font-extrabold text-white">Keamanan & Password</h3>
+                            <p class="text-xs text-red-200">Ubah password akun Anda</p>
                         </div>
                     </div>
 
-                    {{-- New Password --}}
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            Password Baru <span class="text-red-500">*</span>
-                        </label>
-                        <div class="relative">
-                            <input :type="showNewPassword ? 'text' : 'password'" name="password" required
-                                @input="checkPasswordStrength($event.target.value)"
-                                class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent">
-                            <button type="button" @click="showNewPassword = !showNewPassword"
-                                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                                <svg x-show="!showNewPassword" class="w-5 h-5" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                </svg>
-                                <svg x-show="showNewPassword" class="w-5 h-5" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                                </svg>
-                            </button>
+                    <form method="POST" action="{{ route('mahasiswa.pengaturan.password') }}"
+                        class="p-6 space-y-5">
+                        @csrf
+                        @method('PUT')
+
+                        {{-- Password Lama --}}
+                        <div x-data="{ show: false }">
+                            <label class="mb-1.5 block text-sm font-bold text-gray-700">
+                                Password Lama <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <input x-bind:type="show ? 'text' : 'password'" name="current_password" required
+                                    class="w-full rounded-xl border-2 border-gray-200 px-4 py-3 pr-12 text-sm text-gray-800 focus:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-100 transition" />
+                                <button type="button" @click="show = !show"
+                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition">
+                                    <x-heroicon-o-eye x-show="!show" class="h-5 w-5" />
+                                    <x-heroicon-o-eye-slash x-show="show" x-cloak class="h-5 w-5" />
+                                </button>
+                            </div>
                         </div>
 
-                        {{-- Password Strength Indicator --}}
-                        <div x-show="passwordStrength > 0" class="mt-2">
-                            <div class="flex items-center gap-2 mb-1">
-                                <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                                    <div class="h-full transition-all duration-300"
-                                        :class="{
-                                            'bg-red-500': passwordStrength === 1,
-                                            'bg-yellow-500': passwordStrength === 2,
-                                            'bg-green-500': passwordStrength === 3
-                                        }"
-                                        :style="`width: ${passwordStrength * 33.33}%`">
+                        {{-- Password Baru --}}
+                        <div x-data="{ show: false }">
+                            <label class="mb-1.5 block text-sm font-bold text-gray-700">
+                                Password Baru <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <input x-bind:type="show ? 'text' : 'password'" name="password" required
+                                    @input="checkPasswordStrength($event.target.value)"
+                                    class="w-full rounded-xl border-2 border-gray-200 px-4 py-3 pr-12 text-sm text-gray-800 focus:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-100 transition" />
+                                <button type="button" @click="show = !show"
+                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition">
+                                    <x-heroicon-o-eye x-show="!show" class="h-5 w-5" />
+                                    <x-heroicon-o-eye-slash x-show="show" x-cloak class="h-5 w-5" />
+                                </button>
+                            </div>
+
+                            {{-- Strength Indicator --}}
+                            <div x-show="passwordStrength > 0" class="mt-2">
+                                <div class="flex items-center gap-2">
+                                    <div class="flex-1 h-2 overflow-hidden rounded-full bg-gray-200">
+                                        <div class="h-full rounded-full transition-all duration-300"
+                                            x-bind:class="{
+                                                'bg-red-500': passwordStrength === 1,
+                                                'bg-yellow-500': passwordStrength === 2,
+                                                'bg-emerald-500': passwordStrength === 3
+                                            }"
+                                            x-bind:style="`width: ${passwordStrength * 33.33}%`">
+                                        </div>
                                     </div>
+                                    <span class="text-xs font-black"
+                                        x-bind:class="{
+                                            'text-red-600': passwordStrength === 1,
+                                            'text-yellow-600': passwordStrength === 2,
+                                            'text-emerald-600': passwordStrength === 3
+                                        }"
+                                        x-text="passwordStrength === 1 ? 'Lemah' : passwordStrength === 2 ? 'Sedang' : 'Kuat'">
+                                    </span>
                                 </div>
-                                <span class="text-xs font-medium"
-                                    :class="{
-                                        'text-red-600': passwordStrength === 1,
-                                        'text-yellow-600': passwordStrength === 2,
-                                        'text-green-600': passwordStrength === 3
-                                    }"
-                                    x-text="passwordStrength === 1 ? 'Lemah' : passwordStrength === 2 ? 'Sedang' : 'Kuat'">
-                                </span>
+                            </div>
+                            <p class="mt-1 text-xs text-gray-400">Minimal 8 karakter</p>
+                        </div>
+
+                        {{-- Konfirmasi Password --}}
+                        <div x-data="{ show: false }">
+                            <label class="mb-1.5 block text-sm font-bold text-gray-700">
+                                Konfirmasi Password Baru <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <input x-bind:type="show ? 'text' : 'password'" name="password_confirmation" required
+                                    class="w-full rounded-xl border-2 border-gray-200 px-4 py-3 pr-12 text-sm text-gray-800 focus:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-100 transition" />
+                                <button type="button" @click="show = !show"
+                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition">
+                                    <x-heroicon-o-eye x-show="!show" class="h-5 w-5" />
+                                    <x-heroicon-o-eye-slash x-show="show" x-cloak class="h-5 w-5" />
+                                </button>
                             </div>
                         </div>
 
-                        <p class="text-xs text-gray-500 mt-2">Minimal 8 karakter</p>
-                    </div>
-
-                    {{-- Confirm Password --}}
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            Konfirmasi Password Baru <span class="text-red-500">*</span>
-                        </label>
-                        <div class="relative">
-                            <input :type="showConfirmPassword ? 'text' : 'password'" name="password_confirmation"
-                                required
-                                class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent">
-                            <button type="button" @click="showConfirmPassword = !showConfirmPassword"
-                                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                                <svg x-show="!showConfirmPassword" class="w-5 h-5" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                </svg>
-                                <svg x-show="showConfirmPassword" class="w-5 h-5" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                                </svg>
+                        {{-- Submit --}}
+                        <div class="border-t-2 border-gray-100 pt-4">
+                            <button type="submit"
+                                class="inline-flex items-center gap-2 rounded-xl border-2 border-red-300 bg-red-600 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-red-700 hover:shadow-md">
+                                <x-heroicon-o-lock-closed class="h-4 w-4" />
+                                Ubah Password
                             </button>
                         </div>
-                    </div>
 
-                    {{-- Submit Button --}}
-                    <div class="flex gap-4 pt-4">
-                        <button type="submit"
-                            class="flex-1 px-6 py-3 bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl">
-                            Ubah Password
-                        </button>
-                    </div>
-
+                    </form>
                 </div>
 
-            </form>
-
-        </div>
-
-        {{-- ================= ACCOUNT INFO ================= --}}
-        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-            <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Informasi Akun
-            </h3>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="bg-gray-50 rounded-xl p-4">
-                    <p class="text-xs text-gray-500 mb-1">Akun Dibuat</p>
-                    <p class="font-semibold text-gray-800">{{ $user->created_at->format('d M Y') }}</p>
-                </div>
-                <div class="bg-gray-50 rounded-xl p-4">
-                    <p class="text-xs text-gray-500 mb-1">Terakhir Diperbarui</p>
-                    <p class="font-semibold text-gray-800">{{ $user->updated_at->diffForHumans() }}</p>
-                </div>
             </div>
         </div>
 
     </div>
 
-    {{-- ================= ALPINE SCRIPT ================= --}}
-    <script>
-        function pengaturanPage() {
-            return {
-                showCurrentPassword: false,
-                showNewPassword: false,
-                showConfirmPassword: false,
-                passwordStrength: 0,
-                avatarName: '',
+    @push('scripts')
+        <script>
+            function pengaturanPage() {
+                return {
+                    passwordStrength: 0,
+                    avatarName: '',
 
-                previewAvatar(event) {
-                    const file = event.target.files[0];
-                    if (file) {
-                        this.avatarName = file.name;
-                    }
-                },
+                    previewAvatar(event) {
+                        const file = event.target.files[0];
+                        if (file) this.avatarName = file.name;
+                    },
 
-                checkPasswordStrength(password) {
-                    let strength = 0;
+                    checkPasswordStrength(password) {
+                        let strength = 0;
+                        if (password.length >= 8) strength++;
+                        if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength++;
+                        if (password.match(/[0-9]/) && password.match(/[^a-zA-Z0-9]/)) strength++;
+                        this.passwordStrength = strength;
+                    },
 
-                    if (password.length >= 8) strength++;
-                    if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength++;
-                    if (password.match(/[0-9]/) && password.match(/[^a-zA-Z0-9]/)) strength++;
-
-                    this.passwordStrength = strength;
-                },
-
-                async removeAvatar() {
-                    if (!confirm('Yakin ingin menghapus foto profil?')) return;
-
-                    try {
-                        const response = await fetch("{{ route('mahasiswa.pengaturan.avatar.remove') }}", {
-                            method: 'DELETE',
-                            headers: {
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                                'Accept': 'application/json'
-                            }
-                        });
-
-                        if (response.ok) {
-                            window.location.reload();
-                        } else {
-                            alert('Gagal menghapus foto profil');
+                    async removeAvatar() {
+                        if (!confirm('Yakin ingin menghapus foto profil?')) return;
+                        try {
+                            const res = await fetch("{{ route('mahasiswa.pengaturan.avatar.remove') }}", {
+                                method: 'DELETE',
+                                headers: {
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                    'Accept': 'application/json'
+                                }
+                            });
+                            if (res.ok) window.location.reload();
+                            else alert('Gagal menghapus foto profil');
+                        } catch (e) {
+                            alert('Terjadi kesalahan');
                         }
-                    } catch (error) {
-                        console.error('Error:', error);
-                        alert('Terjadi kesalahan');
                     }
                 }
             }
-        }
-    </script>
+        </script>
+    @endpush
 
 </x-layout>

@@ -1,404 +1,420 @@
 <x-layout-dosen>
     <x-slot:title>{{ $title }}</x-slot>
 
-    <div x-data="judulPage()" x-init="init()" class="space-y-6">
+    <div x-data="judulPage()" x-init="init()">
+        <div class="min-h-screen bg-slate-100">
+            <div class="px-6 py-6 space-y-6">
 
-        {{-- ================= ALERTS ================= --}}
-        @if (session('success'))
-            <div x-data="{ show: true }" x-show="show" x-transition
-                class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl flex items-center justify-between">
+                {{-- ===== TOP BAR ===== --}}
+                <div class="sticky top-0 z-10 border-b-2 border-emerald-100 bg-white px-6 py-4 shadow-sm -mx-6 -mt-6">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="flex h-10 w-10 items-center justify-center rounded-xl border-2 border-emerald-200 bg-emerald-50">
+                                <x-heroicon-o-book-open class="h-5 w-5 text-emerald-600" />
+                            </div>
+                            <div class="h-8 w-px bg-gray-200"></div>
+                            <div>
+                                <h1 class="text-lg font-extrabold text-gray-900">Manajemen Judul TA</h1>
+                                <p class="mt-0.5 text-xs text-gray-400">Kelola judul yang Anda tawarkan kepada mahasiswa
+                                </p>
+                            </div>
+                        </div>
+                        <button @click="openCreateModal()"
+                            class="inline-flex items-center gap-2 rounded-xl border-2 border-emerald-300 bg-emerald-600 px-4 py-2 text-xs font-black text-white shadow-sm transition hover:bg-emerald-700 hover:shadow-md">
+                            <x-heroicon-o-plus class="h-3.5 w-3.5" />
+                            Tambah Judul
+                        </button>
+                    </div>
+                </div>
+
+                {{-- Alert --}}
+                @if (session('success'))
+                    <div x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 4000)"
+                        class="flex items-center gap-3 rounded-2xl border-2 border-green-200 bg-green-50 px-5 py-4 text-sm text-green-800 shadow-sm">
+                        <x-heroicon-o-check-circle class="h-5 w-5 shrink-0 text-green-500" />
+                        <span class="font-semibold">{{ session('success') }}</span>
+                        <button @click="show = false"
+                            class="ml-auto rounded-lg p-1 text-green-400 hover:bg-green-100 transition">
+                            <x-heroicon-o-x-mark class="h-4 w-4" />
+                        </button>
+                    </div>
+                @endif
+
+                @if (session('error'))
+                    <div x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 4000)"
+                        class="flex items-center gap-3 rounded-2xl border-2 border-red-200 bg-red-50 px-5 py-4 text-sm text-red-800 shadow-sm">
+                        <x-heroicon-o-x-circle class="h-5 w-5 shrink-0 text-red-500" />
+                        <span class="font-semibold">{{ session('error') }}</span>
+                        <button @click="show = false"
+                            class="ml-auto rounded-lg p-1 text-red-400 hover:bg-red-100 transition">
+                            <x-heroicon-o-x-mark class="h-4 w-4" />
+                        </button>
+                    </div>
+                @endif
+
+                {{-- ===== STATS ===== --}}
                 <div class="flex items-center gap-3">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>{{ session('success') }}</span>
+                    <div class="h-px flex-1 bg-gradient-to-r from-transparent to-gray-200"></div>
+                    <span
+                        class="flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-bold uppercase tracking-widest text-gray-400 shadow-sm">
+                        <x-heroicon-o-chart-bar class="h-3 w-3" />
+                        Ringkasan
+                    </span>
+                    <div class="h-px flex-1 bg-gradient-to-l from-transparent to-gray-200"></div>
                 </div>
-                <button @click="show = false" class="text-green-700 hover:text-green-900">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-        @endif
 
-        @if (session('error'))
-            <div x-data="{ show: true }" x-show="show" x-transition
-                class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center justify-between">
+                <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+
+                    {{-- Total --}}
+                    <div
+                        class="relative overflow-hidden rounded-2xl border-2 border-indigo-300 bg-gradient-to-br from-indigo-600 to-blue-700 p-4 shadow-lg transition hover:-translate-y-0.5">
+                        <div class="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-white/10"></div>
+                        <div class="relative">
+                            <x-heroicon-o-document-text class="h-6 w-6 text-indigo-200 mb-2" />
+                            <p class="text-xs font-bold uppercase tracking-widest text-indigo-200">Total</p>
+                            <p class="mt-1 text-3xl font-black text-white">{{ $totalJudul }}</p>
+                        </div>
+                    </div>
+
+                    {{-- Draft --}}
+                    <div
+                        class="relative overflow-hidden rounded-2xl border-2 border-gray-300 bg-gradient-to-br from-gray-500 to-gray-700 p-4 shadow-lg transition hover:-translate-y-0.5">
+                        <div class="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-white/10"></div>
+                        <div class="relative">
+                            <x-heroicon-o-document class="h-6 w-6 text-gray-200 mb-2" />
+                            <p class="text-xs font-bold uppercase tracking-widest text-gray-200">Draft</p>
+                            <p class="mt-1 text-3xl font-black text-white">{{ $draft }}</p>
+                        </div>
+                    </div>
+
+                    {{-- Tersedia --}}
+                    <div
+                        class="relative overflow-hidden rounded-2xl border-2 border-emerald-300 bg-gradient-to-br from-emerald-500 to-green-600 p-4 shadow-lg transition hover:-translate-y-0.5">
+                        <div class="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-white/10"></div>
+                        <div class="relative">
+                            <x-heroicon-o-check-circle class="h-6 w-6 text-emerald-100 mb-2" />
+                            <p class="text-xs font-bold uppercase tracking-widest text-emerald-100">Tersedia</p>
+                            <p class="mt-1 text-3xl font-black text-white">{{ $tersedia }}</p>
+                        </div>
+                    </div>
+
+                    {{-- Non-Aktif --}}
+                    <div
+                        class="relative overflow-hidden rounded-2xl border-2 border-orange-300 bg-gradient-to-br from-orange-500 to-red-600 p-4 shadow-lg transition hover:-translate-y-0.5">
+                        <div class="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-white/10"></div>
+                        <div class="relative">
+                            <x-heroicon-o-pause-circle class="h-6 w-6 text-orange-100 mb-2" />
+                            <p class="text-xs font-bold uppercase tracking-widest text-orange-100">Non-Aktif</p>
+                            <p class="mt-1 text-3xl font-black text-white">{{ $nonaktif }}</p>
+                        </div>
+                    </div>
+
+                    {{-- Total Peminat --}}
+                    <div
+                        class="relative overflow-hidden rounded-2xl border-2 border-violet-300 bg-gradient-to-br from-violet-500 to-purple-700 p-4 shadow-lg transition hover:-translate-y-0.5">
+                        <div class="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-white/10"></div>
+                        <div class="relative">
+                            <x-heroicon-o-users class="h-6 w-6 text-violet-100 mb-2" />
+                            <p class="text-xs font-bold uppercase tracking-widest text-violet-100">Peminat</p>
+                            <p class="mt-1 text-3xl font-black text-white">{{ $totalPeminat }}</p>
+                        </div>
+                    </div>
+
+                </div>
+
+                {{-- ===== FILTER ===== --}}
                 <div class="flex items-center gap-3">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>{{ session('error') }}</span>
-                </div>
-                <button @click="show = false" class="text-red-700 hover:text-red-900">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-        @endif
-
-        {{-- ================= HEADER ================= --}}
-        <div class="bg-gradient-to-br from-emerald-500 to-green-600 text-white rounded-2xl shadow-xl p-6">
-            <div class="flex items-center justify-between">
-                <div class="flex-1">
-                    <h2 class="text-2xl font-bold mb-2">Manajemen Judul Skripsi</h2>
-                    <p class="text-emerald-100 text-sm">Kelola judul skripsi yang Anda tawarkan kepada mahasiswa</p>
-                </div>
-                <div class="hidden md:block">
-                    <button @click="openCreateModal()"
-                        class="bg-white text-emerald-600 px-6 py-3 rounded-xl font-semibold hover:bg-emerald-50 transition-all shadow-lg hover:shadow-xl flex items-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                        </svg>
-                        Tambah Judul Baru
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        {{-- ================= STATS CARDS ================= --}}
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <div class="bg-white rounded-2xl shadow-lg border-gray-100 p-4">
-                <x-heroicon-o-document-text class="w-8 h-8 text-indigo-600 mb-2" />
-                <p class="text-gray-500 text-xs font-medium">Total</p>
-                <p class="text-2xl font-bold text-gray-800">{{ $totalJudul }}</p>
-            </div>
-            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4">
-                <x-heroicon-o-clock class="w-8 h-8 text-yellow-600 mb-2" />
-                <p class="text-gray-500 text-xs font-medium">Pending Koor</p>
-                <p class="text-2xl font-bold text-gray-800">{{ $pendingKoor }}</p>
-            </div>
-            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4">
-                <x-heroicon-o-shield-check class="w-8 h-8 text-amber-600 mb-2" />
-                <p class="text-gray-500 text-xs font-medium">Pending Kalab</p>
-                <p class="text-2xl font-bold text-gray-800">{{ $pendingKalab }}</p>
-            </div>
-            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4">
-                <x-heroicon-o-check-circle class="w-8 h-8 text-green-600 mb-2" />
-                <p class="text-gray-500 text-xs font-medium">Ditawarkan</p>
-                <p class="text-2xl font-bold text-gray-800">{{ $ditawarkan }}</p>
-            </div>
-            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4">
-                <x-heroicon-o-bolt class="w-8 h-8 text-blue-600 mb-2" />
-                <p class="text-gray-500 text-xs font-medium">Aktif</p>
-                <p class="text-2xl font-bold text-gray-800">{{ $aktif }}</p>
-            </div>
-            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4">
-                <x-heroicon-o-lock-closed class="w-8 h-8 text-orange-600 mb-2" />
-                <p class="text-gray-500 text-xs font-medium">Terkunci</p>
-                <p class="text-2xl font-bold text-gray-800">{{ $terkunci }}</p>
-            </div>
-        </div>
-
-
-        {{-- Aktif --}}
-        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all">
-            <div class="flex items-center justify-between mb-4">
-                <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                </div>
-            </div>
-            <p class="text-gray-500 text-sm font-medium mb-1">Judul Aktif</p>
-            <p class="text-3xl font-bold text-gray-800">{{ $aktif }}</p>
-        </div>
-
-        {{-- Terkunci --}}
-        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all">
-            <div class="flex items-center justify-between mb-4">
-                <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-                    <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
-                </div>
-            </div>
-            <p class="text-gray-500 text-sm font-medium mb-1">Terkunci</p>
-            <p class="text-3xl font-bold text-gray-800">{{ $terkunci }}</p>
-        </div>
-
-
-        {{-- ================= ADD BUTTON (Mobile) ================= --}}
-        <div class="md:hidden">
-            <button @click="openCreateModal()"
-                class="w-full bg-gradient-to-r from-emerald-600 to-green-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl flex items-center justify-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                </svg>
-                Tambah Judul Baru
-            </button>
-        </div>
-
-        {{-- ================= SEARCH & FILTER ================= --}}
-        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-            <div class="flex flex-col md:flex-row gap-4">
-
-                {{-- Search --}}
-                <div class="flex-1 relative">
-                    <input type="text" x-model="searchQuery" @input="applyFilter()" placeholder="Cari judul..."
-                        class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
-                    <svg class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
+                    <div class="h-px flex-1 bg-gradient-to-r from-transparent to-gray-200"></div>
+                    <span
+                        class="flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-bold uppercase tracking-widest text-gray-400 shadow-sm">
+                        <x-heroicon-o-table-cells class="h-3 w-3" />
+                        Daftar Judul
+                    </span>
+                    <div class="h-px flex-1 bg-gradient-to-l from-transparent to-gray-200"></div>
                 </div>
 
-                {{-- Filter Lab --}}
-                <select x-model="filterLab" @change="applyFilter()"
-                    class="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
-                    <option value="all">Semua Lab</option>
-                    @foreach ($laboratorium as $lab)
-                        <option value="{{ $lab->id }}">{{ $lab->nama }}</option>
-                    @endforeach
-                </select>
+                <div class="flex flex-wrap items-center gap-3">
 
-                {{-- Filter Status --}}
-                <select x-model="filterStatus" @change="applyFilter()"
-                    class="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
-                    <option value="all">Semua Status</option>
-                    <option value="aktif">Aktif</option>
-                    <option value="nonaktif">Non-Aktif</option>
-                    <option value="terkunci">Terkunci</option>
-                </select>
+                    {{-- Status Filter Pills --}}
+                    <div class="flex items-center gap-1 rounded-2xl border-2 border-gray-200 bg-white p-1.5 shadow-sm">
+                        @foreach ([
+        'all' => 'Semua',
+        'available' => 'Tersedia',
+        'draft' => 'Draft',
+        'inactive' => 'Non-Aktif',
+    ] as $val => $label)
+                            <button type="button" @click="filterStatus = '{{ $val }}'; applyFilter()"
+                                x-bind:class="filterStatus === '{{ $val }}'
+                                    ?
+                                    '{{ $val === 'draft' ? 'bg-gray-600' : ($val === 'inactive' ? 'bg-orange-500' : ($val === 'available' ? 'bg-emerald-600' : 'bg-indigo-600')) }} text-white shadow-sm' :
+                                    'text-gray-500 hover:bg-gray-100 hover:text-gray-700'"
+                                class="rounded-xl px-3 py-1.5 text-xs font-bold transition-all">
+                                {{ $label }}
+                            </button>
+                            @if (!$loop->last)
+                                <div class="h-5 w-px bg-gray-200"></div>
+                            @endif
+                        @endforeach
+                    </div>
 
-                {{-- Result Count --}}
-                <div class="flex items-center px-4 py-3 bg-emerald-50 text-emerald-700 rounded-xl font-medium text-sm">
-                    <span x-text="filteredData.length"></span> judul
+                    {{-- Lab Filter --}}
+                    <select x-model="filterLab" @change="applyFilter()"
+                        class="rounded-2xl border-2 border-gray-200 bg-white px-4 py-2 text-xs font-bold text-gray-600 shadow-sm focus:border-emerald-400 focus:outline-none transition">
+                        <option value="all">Semua Lab</option>
+                        @foreach ($laboratorium as $lab)
+                            <option value="{{ $lab->id }}">{{ $lab->nama }}</option>
+                        @endforeach
+                    </select>
+
+                    {{-- Search --}}
+                    <div
+                        class="flex flex-1 items-center gap-2 rounded-2xl border-2 border-gray-200 bg-white px-4 py-2 shadow-sm min-w-[200px]">
+                        <x-heroicon-o-magnifying-glass class="h-4 w-4 shrink-0 text-gray-400" />
+                        <input type="text" x-model="searchQuery" @input="applyFilter()"
+                            placeholder="Cari judul, kode..."
+                            class="flex-1 bg-transparent text-sm text-gray-700 placeholder-gray-400 focus:outline-none" />
+                        <template x-if="searchQuery !== ''">
+                            <button @click="searchQuery = ''; applyFilter()"
+                                class="text-gray-400 hover:text-gray-600 transition">
+                                <x-heroicon-o-x-mark class="h-4 w-4" />
+                            </button>
+                        </template>
+                    </div>
+
+                    {{-- Count --}}
+                    <div
+                        class="flex items-center gap-1.5 rounded-2xl border-2 border-gray-200 bg-white px-4 py-2 shadow-sm text-xs font-bold text-gray-600">
+                        <span x-text="filteredData.length"></span>
+                        <span>judul</span>
+                    </div>
+
                 </div>
 
-            </div>
-        </div>
+                {{-- ===== JUDUL GRID ===== --}}
+                <div class="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
 
-        {{-- ================= JUDUL GRID ================= --}}
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <template x-for="item in filteredData" :key="item.id">
+                        <div class="group relative overflow-hidden rounded-2xl border-2 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
+                            x-bind:class="{
+                                'border-emerald-200 hover:border-emerald-300': item.status === 'available' && item
+                                    .is_available,
+                                'border-yellow-200 hover:border-yellow-300': item.status === 'available' && !item
+                                    .is_available,
+                                'border-gray-200 hover:border-gray-300': item.status === 'draft',
+                                'border-orange-200 hover:border-orange-300': item.status === 'inactive',
+                                'border-red-200 hover:border-red-300': item.status === 'ditolak_kalab'
+                            }">
 
-            <template x-for="item in filteredData" :key="item.id">
-                <div
-                    class="bg-white border-2 border-gray-200 rounded-2xl p-6 hover:border-emerald-300 hover:shadow-xl transition-all group">
+                            {{-- Color bar top --}}
+                            <div class="h-1.5 w-full"
+                                x-bind:class="{
+                                    'bg-gradient-to-r from-emerald-500 to-green-500': item.status === 'available' &&
+                                        item.is_available,
+                                    'bg-gradient-to-r from-yellow-400 to-orange-400': item.status === 'available' && !
+                                        item.is_available,
+                                    'bg-gradient-to-r from-gray-300 to-gray-400': item.status === 'draft',
+                                    'bg-gradient-to-r from-orange-500 to-red-500': item.status === 'inactive',
+                                    'bg-gradient-to-r from-red-500 to-rose-500': item.status === 'ditolak_kalab'
+                                }">
+                            </div>
 
-                    {{-- Header --}}
-                    <div class="flex items-start justify-between mb-4">
-                        <span class="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full font-mono font-semibold"
-                            x-text="item.kode"></span>
-                        <div class="flex items-center gap-2">
-                            <span x-show="item.aktif && !item.is_locked"
-                                class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                            <span x-show="!item.aktif" class="w-2 h-2 bg-gray-400 rounded-full"></span>
-                            <span x-show="item.is_locked" class="text-orange-500">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                </svg>
-                            </span>
+                            <div class="p-5">
+
+                                {{-- Header --}}
+                                <div class="flex items-start justify-between mb-3">
+                                    <span
+                                        class="rounded-lg border-2 border-gray-200 bg-gray-50 px-2.5 py-1 font-mono text-xs font-black text-gray-600"
+                                        x-text="item.kode">
+                                    </span>
+                                    <div class="flex items-center gap-1.5">
+                                        <span x-show="item.status === 'available' && item.is_available"
+                                            class="inline-flex items-center gap-1 rounded-full border-2 border-emerald-200 bg-emerald-100 px-2 py-0.5 text-[10px] font-black text-emerald-700">
+                                            <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500"></span>
+                                            Tersedia
+                                        </span>
+                                        <span x-show="item.status === 'available' && !item.is_available"
+                                            class="inline-flex items-center gap-1 rounded-full border-2 border-yellow-200 bg-yellow-100 px-2 py-0.5 text-[10px] font-black text-yellow-700">
+                                            <span class="h-1.5 w-1.5 rounded-full bg-yellow-500"></span>
+                                            Ditutup
+                                        </span>
+                                        <span x-show="item.status === 'draft'"
+                                            class="inline-flex items-center gap-1 rounded-full border-2 border-gray-200 bg-gray-100 px-2 py-0.5 text-[10px] font-black text-gray-600">
+                                            <span class="h-1.5 w-1.5 rounded-full bg-gray-400"></span>
+                                            Draft
+                                        </span>
+                                        <span x-show="item.status === 'inactive'"
+                                            class="inline-flex items-center gap-1 rounded-full border-2 border-orange-200 bg-orange-100 px-2 py-0.5 text-[10px] font-black text-orange-700">
+                                            <span class="h-1.5 w-1.5 rounded-full bg-orange-500"></span>
+                                            Non-Aktif
+                                        </span>
+                                        <span x-show="item.is_locked"
+                                            class="inline-flex items-center gap-1 rounded-full border-2 border-red-200 bg-red-100 px-2 py-0.5 text-[10px] font-black text-red-700">
+                                            <x-heroicon-o-lock-closed class="h-3 w-3" />
+                                            Terkunci
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {{-- Lab Badge --}}
+                                <div class="mb-3">
+                                    <span
+                                        class="inline-flex items-center gap-1 rounded-lg border-2 border-indigo-200 bg-indigo-50 px-2.5 py-1 text-xs font-black text-indigo-700">
+                                        <x-heroicon-o-building-office class="h-3 w-3" />
+                                        <span x-text="item.lab_name"></span>
+                                    </span>
+                                </div>
+
+                                {{-- Title --}}
+                                <h3 class="mb-2 line-clamp-2 text-sm font-black text-gray-800 leading-relaxed group-hover:text-emerald-700 transition-colors"
+                                    x-text="item.nama_judul">
+                                </h3>
+
+                                {{-- Description --}}
+                                <p class="mb-4 line-clamp-2 text-xs text-gray-500 leading-relaxed"
+                                    x-text="item.deskripsi">
+                                </p>
+
+                                {{-- Stats --}}
+                                <div class="mb-4 flex items-center gap-3 border-t-2 border-gray-100 pt-3">
+                                    <span class="flex items-center gap-1 text-xs font-semibold text-gray-500">
+                                        <x-heroicon-o-users class="h-3.5 w-3.5" />
+                                        <span x-text="item.total_peminat"></span> peminat
+                                    </span>
+                                    <span x-show="item.jumlah_ditetapkan > 0"
+                                        class="flex items-center gap-1 text-xs font-black text-emerald-600">
+                                        <x-heroicon-o-check class="h-3.5 w-3.5" />
+                                        <span x-text="item.jumlah_ditetapkan"></span> ditetapkan
+                                    </span>
+                                </div>
+
+                                {{-- Actions --}}
+                                <div class="flex items-center justify-end gap-1.5 border-t-2 border-gray-100 pt-3">
+
+                                    {{-- Edit --}}
+                                    <button x-show="item.can_edit" @click="openEditModal(item)"
+                                        class="inline-flex items-center gap-1 rounded-xl border-2 border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-black text-blue-700 transition hover:bg-blue-100">
+                                        <x-heroicon-o-pencil-square class="h-3.5 w-3.5" />
+                                        Edit
+                                    </button>
+                                    <button x-show="!item.can_edit" disabled
+                                        class="inline-flex items-center gap-1 rounded-xl border-2 border-gray-100 bg-gray-50 px-3 py-1.5 text-xs font-black text-gray-300 cursor-not-allowed">
+                                        <x-heroicon-o-pencil-square class="h-3.5 w-3.5" />
+                                        Edit
+                                    </button>
+
+                                    {{-- Toggle --}}
+                                    <button x-show="item.can_toggle" @click="toggleStatus(item.id)"
+                                        x-bind:class="item.status === 'available' ?
+                                            'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100' :
+                                            'border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100'"
+                                        class="inline-flex items-center gap-1 rounded-xl border-2 px-3 py-1.5 text-xs font-black transition"
+                                        x-bind:title="item.status === 'available' ? 'Nonaktifkan' : 'Aktifkan'">
+                                        <x-heroicon-o-arrow-path class="h-3.5 w-3.5" />
+                                        <span x-text="item.status === 'available' ? 'Aktif' : 'Nonaktif'"></span>
+                                    </button>
+                                    <button x-show="!item.can_toggle" disabled
+                                        class="inline-flex items-center gap-1 rounded-xl border-2 border-gray-100 bg-gray-50 px-3 py-1.5 text-xs font-black text-gray-300 cursor-not-allowed">
+                                        <x-heroicon-o-lock-closed class="h-3.5 w-3.5" />
+                                    </button>
+
+                                    {{-- Delete --}}
+                                    <button x-show="item.can_delete" @click="confirmDelete(item.id)"
+                                        class="inline-flex items-center gap-1 rounded-xl border-2 border-red-200 bg-red-50 px-3 py-1.5 text-xs font-black text-red-700 transition hover:bg-red-100">
+                                        <x-heroicon-o-trash class="h-3.5 w-3.5" />
+                                    </button>
+                                    <button x-show="!item.can_delete" disabled
+                                        class="inline-flex items-center gap-1 rounded-xl border-2 border-gray-100 bg-gray-50 px-3 py-1.5 text-xs font-black text-gray-300 cursor-not-allowed">
+                                        <x-heroicon-o-trash class="h-3.5 w-3.5" />
+                                    </button>
+
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                    </template>
 
-                    {{-- Lab Badge --}}
-                    <div class="mb-3">
-                        <span
-                            class="inline-flex items-center gap-1 text-xs bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full font-semibold">
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                            </svg>
-                            <span x-text="item.lab_name"></span>
-                        </span>
-                    </div>
-
-                    {{-- Title --}}
-                    <h3 class="font-bold text-gray-800 mb-2 line-clamp-2 group-hover:text-emerald-600 transition-colors"
-                        x-text="item.nama_judul"></h3>
-
-                    {{-- Description --}}
-                    <p class="text-sm text-gray-600 mb-4 line-clamp-3" x-text="item.deskripsi"></p>
-
-                    {{-- Stats --}}
-                    <div class="flex items-center gap-4 text-sm text-gray-600 mb-4 pb-4 border-b border-gray-200">
-                        <div class="flex items-center gap-1">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                            </svg>
-                            <span x-text="item.total_peminat"></span> peminat
+                    {{-- Empty State --}}
+                    <template x-if="filteredData.length === 0">
+                        <div class="col-span-full flex flex-col items-center justify-center py-24 text-center">
+                            <div
+                                class="flex h-24 w-24 items-center justify-center rounded-3xl border-2 border-emerald-100 bg-gradient-to-br from-emerald-50 to-teal-100 shadow-inner mb-6">
+                                <x-heroicon-o-book-open class="h-12 w-12 text-emerald-300" />
+                            </div>
+                            <p class="text-lg font-extrabold text-gray-800">
+                                <span x-show="searchQuery || filterLab !== 'all' || filterStatus !== 'all'">Tidak ada
+                                    judul yang sesuai filter</span>
+                                <span x-show="!searchQuery && filterLab === 'all' && filterStatus === 'all'">Belum ada
+                                    judul</span>
+                            </p>
+                            <p class="mt-2 text-sm text-gray-400">
+                                <span x-show="searchQuery || filterLab !== 'all' || filterStatus !== 'all'">Coba ubah
+                                    filter atau kata kunci pencarian</span>
+                                <span x-show="!searchQuery && filterLab === 'all' && filterStatus === 'all'">Mulai
+                                    tambahkan judul TA untuk mahasiswa</span>
+                            </p>
+                            <button @click="openCreateModal()"
+                                x-show="!searchQuery && filterLab === 'all' && filterStatus === 'all'"
+                                class="mt-6 inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-sm font-bold text-white shadow-md transition hover:bg-emerald-700">
+                                <x-heroicon-o-plus class="h-4 w-4" />
+                                Tambah Judul Pertama
+                            </button>
                         </div>
-                        <div x-show="item.total_disetujui > 0" class="flex items-center gap-1 text-green-600">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M5 13l4 4L19 7" />
-                            </svg>
-                            <span x-text="item.total_disetujui"></span> disetujui
-                        </div>
-                    </div>
-
-                    {{-- Status Badges --}}
-                    <div class="flex flex-wrap gap-2 mb-4">
-                        <span x-show="item.status_judul === 'pending_koor'"
-                            class="px-2 py-1 text-xs font-semibold bg-yellow-100 text-yellow-700 rounded-full">
-                            Menunggu Koor Lab
-                        </span>
-                        <span x-show="item.status_judul === 'pending_kalab'"
-                            class="px-2 py-1 text-xs font-semibold bg-amber-100 text-amber-700 rounded-full">
-                            Menunggu Kepala Lab
-                        </span>
-                        <span x-show="item.status_judul === 'ditawarkan'"
-                            class="px-2 py-1 text-xs font-semibold bg-green-100 text-green-700 rounded-full">
-                            Ditawarkan
-                        </span>
-                        <span x-show="item.status_judul === 'ditolak_kalab'"
-                            class="px-2 py-1 text-xs font-semibold bg-red-100 text-red-700 rounded-full">
-                            Ditolak Kalab
-                        </span>
-                        <span x-show="item.is_locked"
-                            class="px-2 py-1 text-xs font-semibold bg-orange-100 text-orange-700 rounded-full">
-                            Terkunci
-                        </span>
-                    </div>
-
-
-                    {{-- Actions --}}
-                    <div class="flex items-center justify-end gap-2">
-
-                        {{-- Edit Button --}}
-                        <button x-show="item.can_edit" @click="openEditModal(item)"
-                            class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            title="Edit Judul">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                        </button>
-
-                        <button x-show="!item.can_edit" disabled
-                            class="p-2 text-gray-300 cursor-not-allowed rounded-lg"
-                            title="Tidak dapat diedit (sudah ada mahasiswa yang disetujui)">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                        </button>
-
-                        {{-- Toggle Status --}}
-                        <button x-show="item.can_toggle" @click="toggleStatus(item.id)"
-                            :class="item.aktif ? 'text-green-600 hover:bg-green-50' : 'text-gray-400 hover:bg-gray-50'"
-                            class="p-2 rounded-lg transition-colors" :title="item.aktif ? 'Nonaktifkan' : 'Aktifkan'">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </button>
-
-                        <button x-show="!item.can_toggle" disabled
-                            class="p-2 text-gray-300 cursor-not-allowed rounded-lg" title="Status terkunci">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                            </svg>
-                        </button>
-
-                        {{-- Delete Button --}}
-                        <button x-show="item.can_delete" @click="confirmDelete(item.id)"
-                            class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Hapus Judul">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                        </button>
-
-                        <button x-show="!item.can_delete" disabled
-                            class="p-2 text-gray-300 cursor-not-allowed rounded-lg"
-                            title="Tidak dapat dihapus (sudah ada mahasiswa yang disetujui)">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                        </button>
-
-                    </div>
+                    </template>
 
                 </div>
-            </template>
 
-            {{-- Empty State --}}
-            <template x-if="filteredData.length === 0">
-                <div class="col-span-full bg-white rounded-2xl shadow-lg border border-gray-100 p-12 text-center">
-                    <svg class="w-24 h-24 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                    </svg>
-                    <p class="text-gray-500 text-lg font-medium">
-                        <span x-show="searchQuery || filterLab !== 'all' || filterStatus !== 'all'">Tidak ada judul
-                            yang sesuai filter</span>
-                        <span x-show="!searchQuery && filterLab === 'all' && filterStatus === 'all'">Belum ada
-                            judul</span>
-                    </p>
-                    <p class="text-gray-400 text-sm mt-1">
-                        <span x-show="searchQuery || filterLab !== 'all' || filterStatus !== 'all'">Coba ubah filter
-                            atau kata kunci pencarian</span>
-                        <span x-show="!searchQuery && filterLab === 'all' && filterStatus === 'all'">Mulai tambahkan
-                            judul skripsi untuk mahasiswa</span>
-                    </p>
-                    <button @click="openCreateModal()"
-                        x-show="!searchQuery && filterLab === 'all' && filterStatus === 'all'"
-                        class="mt-6 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl">
-                        Tambah Judul Pertama
-                    </button>
-                </div>
-            </template>
-
+            </div>
         </div>
 
-        {{-- ================= CREATE/EDIT MODAL ================= --}}
+        {{-- ===== CREATE/EDIT MODAL ===== --}}
         <div x-show="showModal" x-cloak @click.self="showModal = false"
-            class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <div x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95"
+                x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+                class="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border-2 border-gray-200 bg-white shadow-2xl">
 
-            <div @click.away="showModal = false" x-transition:enter="transition ease-out duration-200"
-                x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-                x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100"
-                x-transition:leave-end="opacity-0 scale-95"
-                class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-
-                {{-- Modal Header --}}
                 <div
-                    class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-                    <h3 class="text-xl font-bold text-gray-800">
-                        <span x-show="!editMode">Tambah Judul Baru</span>
-                        <span x-show="editMode">Edit Judul</span>
-                    </h3>
-                    <button @click="showModal = false" class="text-gray-400 hover:text-gray-600 transition-colors">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+                    class="sticky top-0 z-10 flex items-center justify-between border-b-4 border-emerald-200 bg-gradient-to-r from-emerald-600 to-teal-700 px-6 py-4">
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="flex h-9 w-9 items-center justify-center rounded-xl border-2 border-white/30 bg-white/20">
+                            <template x-if="!editMode">
+                                <x-heroicon-o-plus class="h-5 w-5 text-white" />
+                            </template>
+                            <template x-if="editMode">
+                                <x-heroicon-o-pencil-square class="h-5 w-5 text-white" />
+                            </template>
+                        </div>
+                        <div>
+                            <h3 class="font-extrabold text-white">
+                                <span x-show="!editMode">Tambah Judul Baru</span>
+                                <span x-show="editMode">Edit Judul</span>
+                            </h3>
+                            <p class="text-xs text-emerald-200">Isi semua field yang diperlukan</p>
+                        </div>
+                    </div>
+                    <button @click="showModal = false"
+                        class="flex h-8 w-8 items-center justify-center rounded-xl border-2 border-white/30 bg-white/20 text-white transition hover:bg-white/30">
+                        <x-heroicon-o-x-mark class="h-5 w-5" />
                     </button>
                 </div>
 
-                {{-- Modal Body --}}
                 <form method="POST"
-                    :action="editMode ? '/dosen/judul/' + selectedItem.id : '{{ route('dosen.judul.store') }}'"
-                    class="p-6 space-y-6">
+                    x-bind:action="editMode ? '/dosen/judul/' + selectedItem.id : '{{ route('dosen.judul.store') }}'"
+                    class="p-6 space-y-5">
                     @csrf
-
-                    {{-- Method Spoofing for Edit --}}
                     <template x-if="editMode">
-                        <input type="hidden" name="_method" value="PUT">
+                        <input type="hidden" name="_method" value="PUT" />
                     </template>
 
                     {{-- Laboratorium --}}
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <label class="mb-1.5 block text-sm font-bold text-gray-700">
                             Laboratorium <span class="text-red-500">*</span>
                         </label>
                         <select name="laboratorium_id" required x-model="formData.laboratorium_id"
-                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                            class="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-sm text-gray-800 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 transition">
                             <option value="">-- Pilih Laboratorium --</option>
                             @foreach ($laboratorium as $lab)
                                 <option value="{{ $lab->id }}">{{ $lab->nama }}</option>
@@ -406,240 +422,239 @@
                         </select>
                     </div>
 
-                    {{-- Nama Judul --}}
+                    {{-- ✅ fix: field name 'judul' sesuai controller --}}
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <label class="mb-1.5 block text-sm font-bold text-gray-700">
                             Nama Judul <span class="text-red-500">*</span>
                         </label>
-                        <input type="text" name="nama_judul" required maxlength="255"
-                            x-model="formData.nama_judul"
+                        <input type="text" name="judul" required maxlength="500" x-model="formData.judul"
                             placeholder="Contoh: Sistem Informasi Manajemen Perpustakaan"
-                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
-                        <p class="text-xs text-gray-500 mt-1">Maksimal 255 karakter</p>
+                            class="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 transition" />
+                        <p class="mt-1 text-xs text-gray-400">Maksimal 500 karakter</p>
                     </div>
 
                     {{-- Deskripsi --}}
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <label class="mb-1.5 block text-sm font-bold text-gray-700">
                             Deskripsi <span class="text-red-500">*</span>
                         </label>
-                        <textarea name="deskripsi" required rows="6" maxlength="1000" x-model="formData.deskripsi"
+                        <textarea name="deskripsi" required rows="5" maxlength="1000" x-model="formData.deskripsi"
                             placeholder="Jelaskan latar belakang, tujuan, dan ruang lingkup penelitian..."
-                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent"></textarea>
-                        <p class="text-xs text-gray-500 mt-1">Maksimal 1000 karakter</p>
+                            class="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 resize-none transition">
+                    </textarea>
+                        <p class="mt-1 text-xs text-gray-400">Maksimal 1000 karakter</p>
+                    </div>
+
+                    {{-- Status (hanya saat create) --}}
+                    <div x-show="!editMode">
+                        <label class="mb-1.5 block text-sm font-bold text-gray-700">
+                            Status Awal
+                        </label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <label
+                                class="flex items-center gap-3 rounded-xl border-2 border-gray-200 p-3 cursor-pointer transition hover:border-gray-300"
+                                x-bind:class="formData.status === 'draft' ? 'border-gray-400 bg-gray-50' : ''">
+                                <input type="radio" name="status" value="draft" x-model="formData.status"
+                                    class="h-4 w-4 text-gray-600 border-gray-300 focus:ring-gray-500" />
+                                <div>
+                                    <p class="text-sm font-bold text-gray-700">Draft</p>
+                                    <p class="text-xs text-gray-400">Simpan dulu, belum ditawarkan</p>
+                                </div>
+                            </label>
+                            <label
+                                class="flex items-center gap-3 rounded-xl border-2 border-gray-200 p-3 cursor-pointer transition hover:border-emerald-300"
+                                x-bind:class="formData.status === 'available' ? 'border-emerald-400 bg-emerald-50' : ''">
+                                <input type="radio" name="status" value="available" x-model="formData.status"
+                                    class="h-4 w-4 text-emerald-600 border-gray-300 focus:ring-emerald-500" />
+                                <div>
+                                    <p class="text-sm font-bold text-emerald-700">Langsung Tersedia</p>
+                                    <p class="text-xs text-gray-400">Langsung ditawarkan ke mahasiswa</p>
+                                </div>
+                            </label>
+                        </div>
                     </div>
 
                     {{-- Actions --}}
-                    <div class="flex gap-4 pt-4">
+                    <div class="flex items-center gap-3 border-t-2 border-gray-100 pt-4">
                         <button type="button" @click="showModal = false"
-                            class="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-all">
+                            class="flex-1 rounded-xl border-2 border-gray-200 bg-white px-5 py-3 text-sm font-bold text-gray-600 transition hover:bg-gray-50">
                             Batal
                         </button>
                         <button type="submit"
-                            class="flex-1 px-6 py-3 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl">
+                            class="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border-2 border-emerald-300 bg-emerald-600 px-5 py-3 text-sm font-black text-white shadow-sm transition hover:bg-emerald-700 hover:shadow-md">
+                            <template x-if="!editMode">
+                                <x-heroicon-o-plus class="h-4 w-4" />
+                            </template>
+                            <template x-if="editMode">
+                                <x-heroicon-o-check class="h-4 w-4" />
+                            </template>
                             <span x-show="!editMode">Tambah Judul</span>
                             <span x-show="editMode">Simpan Perubahan</span>
                         </button>
                     </div>
 
                 </form>
-
             </div>
-
         </div>
 
-        {{-- ================= DELETE CONFIRMATION MODAL ================= --}}
+        {{-- ===== DELETE MODAL ===== --}}
         <div x-show="showDeleteModal" x-cloak @click.self="showDeleteModal = false"
-            class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <div x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95"
+                x-transition:enter-end="opacity-100 scale-100"
+                class="w-full max-w-md rounded-2xl border-2 border-gray-200 bg-white shadow-2xl overflow-hidden">
 
-            <div @click.away="showDeleteModal = false" x-transition:enter="transition ease-out duration-200"
-                x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-                class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+                <div
+                    class="flex items-center gap-3 border-b-4 border-red-200 bg-gradient-to-r from-red-600 to-rose-700 px-6 py-4">
+                    <div
+                        class="flex h-9 w-9 items-center justify-center rounded-xl border-2 border-white/30 bg-white/20">
+                        <x-heroicon-o-trash class="h-5 w-5 text-white" />
+                    </div>
+                    <h3 class="font-extrabold text-white">Hapus Judul?</h3>
+                </div>
 
-                <div class="text-center">
-                    <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
+                <div class="p-6 space-y-5">
+                    <div class="flex items-start gap-3 rounded-xl border-2 border-red-200 bg-red-50 p-4">
+                        <x-heroicon-o-exclamation-triangle class="h-5 w-5 shrink-0 text-red-500 mt-0.5" />
+                        <p class="text-sm font-semibold text-red-700 leading-relaxed">
+                            Apakah Anda yakin ingin menghapus judul ini? Tindakan ini tidak dapat dibatalkan.
+                        </p>
                     </div>
 
-                    <h3 class="text-xl font-bold text-gray-800 mb-2">Hapus Judul?</h3>
-                    <p class="text-gray-600 mb-6">
-                        Apakah Anda yakin ingin menghapus judul ini? Tindakan ini tidak dapat dibatalkan.
-                    </p>
-
-                    <div class="flex gap-4">
+                    <div class="flex items-center gap-3">
                         <button type="button" @click="showDeleteModal = false"
-                            class="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-all">
+                            class="flex-1 rounded-xl border-2 border-gray-200 bg-white px-5 py-3 text-sm font-bold text-gray-600 transition hover:bg-gray-50">
                             Batal
                         </button>
-                        <form method="POST" :action="'/dosen/judul/' + deleteId" class="flex-1">
+                        <form method="POST" x-bind:action="'/dosen/judul/' + deleteId" class="flex-1">
                             @csrf
                             @method('DELETE')
                             <button type="submit"
-                                class="w-full px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl">
+                                class="w-full inline-flex items-center justify-center gap-2 rounded-xl border-2 border-red-300 bg-red-600 px-5 py-3 text-sm font-black text-white shadow-sm transition hover:bg-red-700 hover:shadow-md">
+                                <x-heroicon-o-trash class="h-4 w-4" />
                                 Ya, Hapus
                             </button>
                         </form>
                     </div>
                 </div>
-
             </div>
-
         </div>
 
-        {{-- ================= ALPINE.JS SCRIPT ================= --}}
-        <script>
-            function judulPage() {
-                return {
-                    // Data
-                    allData: @json($judul),
-                    filteredData: [],
+    </div>{{-- ✅ closing x-data --}}
 
-                    // Filter
-                    searchQuery: '',
-                    filterLab: 'all',
-                    filterStatus: 'all',
+    <script>
+        function judulPage() {
+            return {
+                allData: @json($judul),
+                filteredData: [],
+                searchQuery: '',
+                filterLab: 'all',
+                filterStatus: 'all',
+                showModal: false,
+                showDeleteModal: false,
+                editMode: false,
+                selectedItem: null,
+                deleteId: null,
+                formData: {
+                    laboratorium_id: '',
+                    judul: '',
+                    deskripsi: '',
+                    status: 'draft',
+                },
 
-                    // Modal
-                    showModal: false,
-                    showDeleteModal: false,
-                    editMode: false,
-                    selectedItem: null,
-                    deleteId: null,
+                init() {
+                    this.allData = this.allData.map(item => ({
+                        id: item.id,
+                        kode: item.kode ?? '-',
+                        nama_judul: item.nama_judul ?? item.judul ?? '-',
+                        deskripsi: item.deskripsi ?? '',
+                        status: item.status ?? 'draft',
+                        is_available: item.is_available ?? false,
+                        is_locked: item.is_locked ?? false,
+                        lab_id: item.laboratorium_id,
+                        lab_name: item.lab_name ?? 'N/A',
+                        total_peminat: item.total_peminat ?? 0,
+                        jumlah_ditetapkan: item.jumlah_ditetapkan ?? 0,
+                        can_edit: item.can_edit !== false,
+                        can_toggle: item.can_toggle !== false,
+                        can_delete: item.can_delete !== false,
+                    }));
+                    this.applyFilter();
+                },
 
-                    // Form Data
-                    formData: {
+                applyFilter() {
+                    let result = this.allData;
+
+                    if (this.searchQuery) {
+                        const q = this.searchQuery.toLowerCase();
+                        result = result.filter(item =>
+                            item.nama_judul.toLowerCase().includes(q) ||
+                            item.deskripsi.toLowerCase().includes(q) ||
+                            (item.kode && item.kode.toLowerCase().includes(q))
+                        );
+                    }
+
+                    if (this.filterLab !== 'all') {
+                        result = result.filter(item => item.lab_id == this.filterLab);
+                    }
+
+                    if (this.filterStatus !== 'all') {
+                        result = result.filter(item => item.status === this.filterStatus);
+                    }
+
+                    this.filteredData = result;
+                },
+
+                openCreateModal() {
+                    this.editMode = false;
+                    this.selectedItem = null;
+                    this.formData = {
                         laboratorium_id: '',
-                        nama_judul: '',
-                        deskripsi: ''
-                    },
+                        judul: '',
+                        deskripsi: '',
+                        status: 'draft',
+                    };
+                    this.showModal = true;
+                },
 
-                    init() {
-                        // Transform data
-                        this.allData = this.allData.map(item => ({
-                            id: item.id,
-                            kode: item.kode,
-                            nama_judul: item.nama_judul,
-                            deskripsi: item.deskripsi,
-                            aktif: item.aktif,
-                            is_locked: item.is_locked,
-                            lab_id: item.laboratorium_id,
-                            lab_name: item.lab_name || 'N/A',
-                            total_peminat: item.total_peminat || 0,
-                            total_disetujui: item.total_disetujui || 0,
-                            can_edit: item.can_edit !== false,
-                            can_toggle: item.can_toggle !== false,
-                            can_delete: item.can_delete !== false,
-                            status_judul: item.status_judul || 'draft',
+                openEditModal(item) {
+                    this.editMode = true;
+                    this.selectedItem = item;
+                    this.formData = {
+                        laboratorium_id: item.lab_id,
+                        judul: item.nama_judul,
+                        deskripsi: item.deskripsi,
+                        status: item.status,
+                    };
+                    this.showModal = true;
+                },
 
-                        }));
+                confirmDelete(id) {
+                    this.deleteId = id;
+                    this.showDeleteModal = true;
+                },
 
-                        this.applyFilter();
-                    },
-
-                    applyFilter() {
-                        let result = this.allData;
-
-                        // Search
-                        if (this.searchQuery) {
-                            const query = this.searchQuery.toLowerCase();
-                            result = result.filter(item =>
-                                item.nama_judul.toLowerCase().includes(query) ||
-                                item.deskripsi.toLowerCase().includes(query) ||
-                                item.kode.toLowerCase().includes(query)
-                            );
-                        }
-
-                        // Filter Lab
-                        if (this.filterLab !== 'all') {
-                            result = result.filter(item => item.lab_id == this.filterLab);
-                        }
-
-                        // Filter Status
-                        if (this.filterStatus === 'aktif') {
-                            result = result.filter(item => item.aktif && !item.is_locked);
-                        } else if (this.filterStatus === 'nonaktif') {
-                            result = result.filter(item => !item.aktif);
-                        } else if (this.filterStatus === 'terkunci') {
-                            result = result.filter(item => item.is_locked);
-                        }
-
-                        this.filteredData = result;
-                    },
-
-                    openCreateModal() {
-                        this.editMode = false;
-                        this.selectedItem = null;
-                        this.formData = {
-                            laboratorium_id: '',
-                            nama_judul: '',
-                            deskripsi: ''
-                        };
-                        this.showModal = true;
-                    },
-
-                    openEditModal(item) {
-                        this.editMode = true;
-                        this.selectedItem = item;
-                        this.formData = {
-                            laboratorium_id: item.lab_id,
-                            nama_judul: item.nama_judul,
-                            deskripsi: item.deskripsi
-                        };
-                        this.showModal = true;
-                    },
-
-                    confirmDelete(id) {
-                        this.deleteId = id;
-                        this.showDeleteModal = true;
-                    },
-
-                    toggleStatus(id) {
-                        if (confirm('Ubah status judul ini?')) {
-                            const form = document.createElement('form');
-                            form.method = 'POST';
-                            form.action = `/dosen/judul/${id}/toggle`;
-
-                            const csrfInput = document.createElement('input');
-                            csrfInput.type = 'hidden';
-                            csrfInput.name = '_token';
-                            csrfInput.value = '{{ csrf_token() }}';
-
-                            const methodInput = document.createElement('input');
-                            methodInput.type = 'hidden';
-                            methodInput.name = '_method';
-                            methodInput.value = 'PATCH';
-
-                            form.appendChild(csrfInput);
-                            form.appendChild(methodInput);
-                            document.body.appendChild(form);
-                            form.submit();
-                        }
+                toggleStatus(id) {
+                    if (confirm('Ubah status judul ini?')) {
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = `/dosen/judul/${id}/toggle`;
+                        const csrf = document.createElement('input');
+                        csrf.type = 'hidden';
+                        csrf.name = '_token';
+                        csrf.value = '{{ csrf_token() }}';
+                        const method = document.createElement('input');
+                        method.type = 'hidden';
+                        method.name = '_method';
+                        method.value = 'PATCH';
+                        form.appendChild(csrf);
+                        form.appendChild(method);
+                        document.body.appendChild(form);
+                        form.submit();
                     }
                 }
             }
-        </script>
-
-        <style>
-            [x-cloak] {
-                display: none !important;
-            }
-
-            .line-clamp-2 {
-                display: -webkit-box;
-                -webkit-line-clamp: 2;
-                -webkit-box-orient: vertical;
-                overflow: hidden;
-            }
-
-            .line-clamp-3 {
-                display: -webkit-box;
-                -webkit-line-clamp: 3;
-                -webkit-box-orient: vertical;
-                overflow: hidden;
-            }
-        </style>
+        }
+    </script>
 
 </x-layout-dosen>

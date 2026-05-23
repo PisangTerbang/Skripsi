@@ -3,456 +3,602 @@
 
     <div x-data="riwayatPage()" x-init="init()" class="space-y-6">
 
-        {{-- ================= HEADER CARD ================= --}}
-        <div class="bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-2xl shadow-xl p-6">
-            <div class="flex items-center justify-between">
-                <div class="flex-1">
-                    <h2 class="text-2xl font-bold mb-2">Riwayat Pengajuan</h2>
-                    <p class="text-indigo-100 text-sm">Lihat semua pengajuan judul skripsi Anda</p>
+        {{-- ===== HEADER BANNER ===== --}}
+        <div
+            class="relative overflow-hidden rounded-2xl border-2 border-indigo-300 bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 p-7 shadow-xl">
+            <div class="absolute -right-10 -top-10 h-48 w-48 rounded-full bg-white/10"></div>
+            <div class="absolute -bottom-12 -left-6 h-40 w-40 rounded-full bg-white/5"></div>
+            <div class="relative flex items-center justify-between gap-6">
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-widest text-indigo-300">Mahasiswa</p>
+                    <h2 class="mt-1 text-2xl font-black text-white">Riwayat Pengajuan</h2>
+                    <p class="mt-1 text-sm text-indigo-200">Lihat semua pengajuan judul skripsi Anda</p>
                 </div>
-                <div class="hidden md:block">
-                    <div class="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center">
-                        <p class="text-3xl font-bold">{{ $pengajuan->count() }}</p>
-                        <p class="text-xs text-indigo-100 mt-1">Total Pengajuan</p>
+                <div class="hidden lg:flex shrink-0 gap-3">
+                    <div
+                        class="rounded-2xl border-2 border-white/20 bg-white/15 px-5 py-4 text-center backdrop-blur-sm">
+                        <p class="text-xs font-bold uppercase tracking-widest text-indigo-200">Total</p>
+                        <p class="mt-1 text-4xl font-black text-white">{{ $pengajuan->count() }}</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        {{-- ================= STATS SUMMARY ================= --}}
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {{-- ===== STATS ===== --}}
+        <div class="flex items-center gap-3">
+            <div class="h-px flex-1 bg-gradient-to-r from-transparent to-gray-200"></div>
+            <span
+                class="flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-bold uppercase tracking-widest text-gray-400 shadow-sm">
+                <x-heroicon-o-chart-bar class="h-3 w-3" />
+                Ringkasan
+            </span>
+            <div class="h-px flex-1 bg-gradient-to-l from-transparent to-gray-200"></div>
+        </div>
+
+        @php
+            $totalPengajuan = $pengajuan->count();
+            $totalPending = $pengajuan->where('status', 'pending')->count();
+            $totalDisetujui = $pengajuan->where('status', 'disetujui')->count();
+            $totalDitolak = $pengajuan->where('status', 'ditolak')->count();
+        @endphp
+
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
 
             {{-- Pending --}}
-            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
-                        <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+            <div
+                class="relative overflow-hidden rounded-2xl border-2 border-yellow-300 bg-gradient-to-br from-yellow-400 via-yellow-500 to-orange-500 p-6 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl">
+                <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10"></div>
+                <div class="relative flex items-start justify-between">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-widest text-yellow-100">Menunggu Review</p>
+                        <p class="mt-3 text-5xl font-black leading-none text-white">{{ $totalPending }}</p>
+                        <p class="mt-2 text-xs font-medium text-yellow-100">sedang diproses</p>
+                    </div>
+                    <div
+                        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border-2 border-white/20 bg-white/20">
+                        <x-heroicon-o-clock class="h-5 w-5 text-white" />
                     </div>
                 </div>
-                <p class="text-gray-500 text-sm font-medium mb-1">Menunggu Review</p>
-                <p class="text-3xl font-bold text-gray-800">{{ $pengajuan->where('status', 'pending')->count() }}</p>
+                <div class="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-white/20">
+                    <div class="h-full {{ $totalPending > 0 ? 'animate-pulse' : '' }} w-full rounded-full bg-white/60">
+                    </div>
+                </div>
             </div>
 
             {{-- Disetujui --}}
-            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+            <div
+                class="relative overflow-hidden rounded-2xl border-2 border-emerald-300 bg-gradient-to-br from-emerald-500 via-emerald-600 to-green-700 p-6 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl">
+                <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10"></div>
+                <div class="relative flex items-start justify-between">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-widest text-emerald-200">Disetujui</p>
+                        <p class="mt-3 text-5xl font-black leading-none text-white">{{ $totalDisetujui }}</p>
+                        <p class="mt-2 text-xs font-medium text-emerald-200">pengajuan berhasil</p>
+                    </div>
+                    <div
+                        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border-2 border-white/20 bg-white/20">
+                        <x-heroicon-o-check-circle class="h-5 w-5 text-white" />
                     </div>
                 </div>
-                <p class="text-gray-500 text-sm font-medium mb-1">Disetujui</p>
-                <p class="text-3xl font-bold text-gray-800">{{ $pengajuan->where('status', 'disetujui')->count() }}</p>
+                <div class="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-white/20">
+                    @php $pctDisetujui = $totalPengajuan > 0 ? round(($totalDisetujui / $totalPengajuan) * 100) : 0; @endphp
+                    <div class="h-full rounded-full bg-white/60 transition-all duration-700"
+                        style="width: {{ $pctDisetujui }}%"></div>
+                </div>
             </div>
 
             {{-- Ditolak --}}
-            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
-                        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+            <div
+                class="relative overflow-hidden rounded-2xl border-2 border-red-300 bg-gradient-to-br from-red-500 via-red-600 to-rose-700 p-6 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl">
+                <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10"></div>
+                <div class="relative flex items-start justify-between">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-widest text-red-200">Ditolak</p>
+                        <p class="mt-3 text-5xl font-black leading-none text-white">{{ $totalDitolak }}</p>
+                        <p class="mt-2 text-xs font-medium text-red-200">perlu pengajuan ulang</p>
+                    </div>
+                    <div
+                        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border-2 border-white/20 bg-white/20">
+                        <x-heroicon-o-x-circle class="h-5 w-5 text-white" />
                     </div>
                 </div>
-                <p class="text-gray-500 text-sm font-medium mb-1">Ditolak</p>
-                <p class="text-3xl font-bold text-gray-800">{{ $pengajuan->where('status', 'ditolak')->count() }}</p>
+                <div class="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-white/20">
+                    <div class="h-full w-full rounded-full bg-white/60"></div>
+                </div>
             </div>
 
         </div>
 
-        {{-- ================= FILTER & SORT ================= --}}
-        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-            <div class="flex flex-col md:flex-row gap-4">
-
-                {{-- Filter Status --}}
-                <div class="flex-1">
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Filter Status</label>
-                    <select x-model="filterStatus" @change="applyFilter()"
-                        class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
-                        <option value="all">Semua Status</option>
-                        <option value="pending">Menunggu Review</option>
-                        <option value="disetujui">Disetujui</option>
-                        <option value="ditolak">Ditolak</option>
-                    </select>
-                </div>
-
-                {{-- Sort --}}
-                <div class="flex-1">
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Urutkan</label>
-                    <select x-model="sortBy" @change="applyFilter()"
-                        class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
-                        <option value="newest">Terbaru</option>
-                        <option value="oldest">Terlama</option>
-                        <option value="priority">Prioritas</option>
-                    </select>
-                </div>
-
-                {{-- Result Count --}}
-                <div class="flex items-end">
-                    <div class="px-4 py-2.5 bg-indigo-50 text-indigo-700 rounded-xl font-medium text-sm">
-                        <span x-text="filteredData.length"></span> dari {{ $pengajuan->count() }} pengajuan
-                    </div>
-                </div>
-
-            </div>
+        {{-- ===== FILTER ===== --}}
+        <div class="flex items-center gap-3">
+            <div class="h-px flex-1 bg-gradient-to-r from-transparent to-gray-200"></div>
+            <span
+                class="flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-bold uppercase tracking-widest text-gray-400 shadow-sm">
+                <x-heroicon-o-clock class="h-3 w-3" />
+                Timeline
+            </span>
+            <div class="h-px flex-1 bg-gradient-to-l from-transparent to-gray-200"></div>
         </div>
 
-        {{-- ================= TIMELINE ================= --}}
-        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+        <div class="flex flex-wrap items-center gap-3">
 
+            {{-- Status Filter Pills --}}
+            <div class="flex items-center gap-1 rounded-2xl border-2 border-gray-200 bg-white p-1.5 shadow-sm">
+                @foreach ([
+        'all' => 'Semua',
+        'pending' => 'Pending',
+        'disetujui' => 'Disetujui',
+        'ditolak' => 'Ditolak',
+    ] as $val => $label)
+                    <button type="button" @click="filterStatus = '{{ $val }}'; applyFilter()"
+                        x-bind:class="filterStatus === '{{ $val }}'
+                            ?
+                            '{{ $val === 'ditolak' ? 'bg-red-600' : ($val === 'pending' ? 'bg-yellow-500' : ($val === 'disetujui' ? 'bg-emerald-600' : 'bg-indigo-600')) }} text-white shadow-sm' :
+                            'text-gray-500 hover:bg-gray-100 hover:text-gray-700'"
+                        class="rounded-xl px-3 py-1.5 text-xs font-bold transition-all">
+                        {{ $label }}
+                    </button>
+                    @if (!$loop->last)
+                        <div class="h-5 w-px bg-gray-200"></div>
+                    @endif
+                @endforeach
+            </div>
+
+            {{-- Sort --}}
+            <select x-model="sortBy" @change="applyFilter()"
+                class="rounded-2xl border-2 border-gray-200 bg-white px-4 py-2 text-xs font-bold text-gray-600 shadow-sm focus:border-indigo-400 focus:outline-none transition">
+                <option value="newest">Terbaru</option>
+                <option value="oldest">Terlama</option>
+                <option value="priority">Prioritas</option>
+            </select>
+
+            {{-- Count --}}
+            <div
+                class="flex items-center gap-1.5 rounded-2xl border-2 border-gray-200 bg-white px-4 py-2 shadow-sm text-xs font-bold text-gray-600">
+                <span x-text="filteredData.length"></span>
+                <span>dari {{ $pengajuan->count() }}</span>
+            </div>
+
+        </div>
+
+        {{-- ===== TIMELINE ===== --}}
+        <div class="overflow-hidden rounded-2xl border-2 border-gray-200 bg-white shadow-md">
+
+            {{-- Card Header --}}
+            <div
+                class="flex items-center justify-between border-b-4 border-indigo-200 bg-gradient-to-r from-indigo-600 to-purple-700 px-6 py-4">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="flex h-9 w-9 items-center justify-center rounded-xl border-2 border-white/30 bg-white/20">
+                        <x-heroicon-o-clock class="h-5 w-5 text-white" />
+                    </div>
+                    <h3 class="font-extrabold text-white">Timeline Pengajuan</h3>
+                </div>
+                <span class="rounded-full border-2 border-white/30 bg-white/20 px-3 py-1 text-xs font-black text-white">
+                    <span x-text="filteredData.length"></span> pengajuan
+                </span>
+            </div>
+
+            {{-- Empty State --}}
+            <template x-if="filteredData.length === 0">
+                <div class="flex flex-col items-center justify-center py-24 text-center">
+                    <div
+                        class="flex h-24 w-24 items-center justify-center rounded-3xl border-2 border-indigo-100 bg-gradient-to-br from-indigo-50 to-purple-100 shadow-inner mb-6">
+                        <x-heroicon-o-document-text class="h-12 w-12 text-indigo-300" />
+                    </div>
+                    <p class="text-lg font-extrabold text-gray-800">
+                        <span x-show="filterStatus === 'all'">Belum ada pengajuan</span>
+                        <span x-show="filterStatus !== 'all'">Tidak ada pengajuan dengan status ini</span>
+                    </p>
+                    <p class="mt-2 text-sm text-gray-400">
+                        <span x-show="filterStatus === 'all'">Mulai ajukan judul skripsi Anda</span>
+                        <span x-show="filterStatus !== 'all'">Coba ubah filter untuk melihat pengajuan lain</span>
+                    </p>
+                    <a href="{{ route('mahasiswa.pengajuan') }}" x-show="filterStatus === 'all'"
+                        class="mt-6 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-md transition hover:bg-indigo-700">
+                        <x-heroicon-o-plus class="h-4 w-4" />
+                        Ajukan Judul Sekarang
+                    </a>
+                </div>
+            </template>
+
+            {{-- Timeline Items --}}
             <template x-if="filteredData.length > 0">
-                <div class="relative">
-                    {{-- Timeline Line --}}
-                    <div class="absolute left-8 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+                <div class="p-6">
+                    <div class="relative">
 
-                    {{-- Timeline Items --}}
-                    <div class="space-y-8">
-                        <template x-for="(item, index) in filteredData" :key="item.id">
-                            <div class="relative pl-20">
+                        {{-- Timeline Line --}}
+                        <div class="absolute left-5 top-0 bottom-0 w-0.5 bg-gradient-to-b from-indigo-300 to-gray-200">
+                        </div>
 
-                                {{-- Timeline Dot --}}
-                                <div class="absolute left-6 top-6 w-4 h-4 rounded-full border-4 border-white"
-                                    :class="{
-                                        'bg-yellow-500': item.status === 'pending',
-                                        'bg-green-500': item.status === 'disetujui',
-                                        'bg-red-500': item.status === 'ditolak'
-                                    }">
-                                </div>
+                        <div class="space-y-6">
+                            <template x-for="(item, index) in filteredData" :key="item.id">
+                                <div class="relative pl-16">
 
-                                {{-- Card --}}
-                                <div class="bg-gray-50 border-2 rounded-xl p-6 hover:shadow-lg transition-all group"
-                                    :class="{
-                                        'border-yellow-200 hover:border-yellow-300': item.status === 'pending',
-                                        'border-green-200 hover:border-green-300': item.status === 'disetujui',
-                                        'border-red-200 hover:border-red-300': item.status === 'ditolak'
-                                    }">
-
-                                    {{-- Header --}}
-                                    <div class="flex items-start justify-between mb-4">
-                                        <div class="flex-1">
-                                            <div class="flex items-center gap-2 mb-2">
-                                                <span class="px-3 py-1 text-xs font-bold rounded-full"
-                                                    :class="{
-                                                        'bg-yellow-100 text-yellow-700': item.status === 'pending',
-                                                        'bg-green-100 text-green-700': item.status === 'disetujui',
-                                                        'bg-red-100 text-red-700': item.status === 'ditolak'
-                                                    }"
-                                                    x-text="item.status === 'pending' ? 'Menunggu Review' : item.status === 'disetujui' ? 'Disetujui' : 'Ditolak'">
-                                                </span>
-                                                <span
-                                                    class="px-3 py-1 text-xs font-bold bg-indigo-100 text-indigo-700 rounded-full">
-                                                    Prioritas <span x-text="item.prioritas"></span>
-                                                </span>
-                                                <span x-show="item.jenis === 'mandiri'"
-                                                    class="px-3 py-1 text-xs font-bold bg-purple-100 text-purple-700 rounded-full">
-                                                    Mandiri
-                                                </span>
-                                            </div>
-                                            <h3 class="text-xl font-bold text-gray-800 mb-1" x-text="item.judul"></h3>
-                                            <p class="text-sm text-gray-500" x-text="item.waktu"></p>
-                                        </div>
+                                    {{-- Timeline Dot --}}
+                                    <div class="absolute left-3 top-5 flex h-5 w-5 items-center justify-center rounded-full border-4 border-white shadow-md"
+                                        x-bind:class="{
+                                            'bg-yellow-500': item.status === 'pending',
+                                            'bg-emerald-500': item.status === 'disetujui',
+                                            'bg-red-500': item.status === 'ditolak'
+                                        }">
+                                        <span x-show="item.status === 'pending'"
+                                            class="h-1.5 w-1.5 animate-pulse rounded-full bg-white">
+                                        </span>
                                     </div>
 
-                                    {{-- Content --}}
-                                    <div class="space-y-3">
+                                    {{-- Card --}}
+                                    <div class="overflow-hidden rounded-2xl border-2 transition hover:shadow-md"
+                                        x-bind:class="{
+                                            'border-yellow-200 hover:border-yellow-300': item.status === 'pending',
+                                            'border-emerald-200 hover:border-emerald-300': item.status === 'disetujui',
+                                            'border-red-200 hover:border-red-300': item.status === 'ditolak'
+                                        }">
 
-                                        {{-- Kode (if pilih) --}}
-                                        <div x-show="item.kode">
-                                            <p class="text-sm text-gray-600">
-                                                <span class="font-semibold">Kode:</span>
-                                                <span class="font-mono" x-text="item.kode"></span>
-                                            </p>
+                                        {{-- Color bar --}}
+                                        <div class="h-1.5 w-full"
+                                            x-bind:class="{
+                                                'bg-gradient-to-r from-yellow-400 to-orange-500': item
+                                                    .status === 'pending',
+                                                'bg-gradient-to-r from-emerald-500 to-green-500': item
+                                                    .status === 'disetujui',
+                                                'bg-gradient-to-r from-red-500 to-rose-500': item.status === 'ditolak'
+                                            }">
                                         </div>
 
-                                        {{-- Deskripsi (if mandiri) --}}
-                                        <div x-show="item.deskripsi">
-                                            <p class="text-sm text-gray-600">
-                                                <span class="font-semibold">Deskripsi:</span>
-                                                <span x-text="item.deskripsi"></span>
-                                            </p>
-                                        </div>
+                                        <div class="p-5">
 
-                                        {{-- Lab (if pilih) --}}
-                                        <div x-show="item.lab">
-                                            <p class="text-sm text-gray-600">
-                                                <span class="font-semibold">Laboratorium:</span>
-                                                <span x-text="item.lab"></span>
-                                            </p>
-                                        </div>
-
-                                        {{-- Alasan --}}
-                                        <div x-show="item.alasan">
-                                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                                                <p class="text-xs text-blue-600 font-semibold mb-1">Alasan Anda:</p>
-                                                <p class="text-sm text-blue-800" x-text="item.alasan"></p>
-                                            </div>
-                                        </div>
-
-                                        {{-- Catatan Dosen --}}
-                                        <div x-show="item.catatan_dosen">
-                                            <div class="rounded-lg p-4"
-                                                :class="{
-                                                    'bg-green-50 border border-green-200': item.status === 'disetujui',
-                                                    'bg-red-50 border border-red-200': item.status === 'ditolak'
-                                                }">
-                                                <div class="flex items-start gap-3">
-                                                    <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-                                                        :class="{
-                                                            'bg-green-200': item.status === 'disetujui',
-                                                            'bg-red-200': item.status === 'ditolak'
-                                                        }">
-                                                        <svg class="w-4 h-4"
-                                                            :class="{
-                                                                'text-green-700': item.status === 'disetujui',
-                                                                'text-red-700': item.status === 'ditolak'
-                                                            }"
-                                                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2"
-                                                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                                        </svg>
-                                                    </div>
-                                                    <div class="flex-1">
-                                                        <p class="text-xs font-semibold mb-1"
-                                                            :class="{
-                                                                'text-green-700': item.status === 'disetujui',
-                                                                'text-red-700': item.status === 'ditolak'
+                                            {{-- Header --}}
+                                            <div class="flex items-start justify-between gap-3 mb-4">
+                                                <div class="flex-1">
+                                                    <div class="flex flex-wrap items-center gap-2 mb-2">
+                                                        <span
+                                                            class="inline-flex items-center gap-1.5 rounded-full border-2 px-2.5 py-1 text-xs font-black"
+                                                            x-bind:class="{
+                                                                'border-yellow-200 bg-yellow-100 text-yellow-700': item
+                                                                    .status === 'pending',
+                                                                'border-emerald-200 bg-emerald-100 text-emerald-700': item
+                                                                    .status === 'disetujui',
+                                                                'border-red-200 bg-red-100 text-red-700': item
+                                                                    .status === 'ditolak'
                                                             }">
-                                                            Catatan Dosen:
+                                                            <span class="h-1.5 w-1.5 rounded-full"
+                                                                x-bind:class="{
+                                                                    'bg-yellow-500 animate-pulse': item
+                                                                        .status === 'pending',
+                                                                    'bg-emerald-500': item.status === 'disetujui',
+                                                                    'bg-red-500': item.status === 'ditolak'
+                                                                }">
+                                                            </span>
+                                                            <span
+                                                                x-text="item.status === 'pending' ? 'Menunggu Review' : item.status === 'disetujui' ? 'Disetujui' : 'Ditolak'"></span>
+                                                        </span>
+                                                        <span
+                                                            class="inline-flex items-center rounded-full border-2 border-indigo-200 bg-indigo-50 px-2.5 py-1 text-xs font-black text-indigo-700">
+                                                            Prioritas <span x-text="item.prioritas"
+                                                                class="ml-1"></span>
+                                                        </span>
+                                                        <span x-show="item.jenis === 'mandiri'"
+                                                            class="inline-flex items-center rounded-full border-2 border-violet-200 bg-violet-50 px-2.5 py-1 text-xs font-black text-violet-700">
+                                                            Mandiri
+                                                        </span>
+                                                    </div>
+                                                    <h3 class="text-base font-black text-gray-800 leading-relaxed"
+                                                        x-text="item.judul"></h3>
+                                                    <p class="mt-1 text-xs text-gray-400" x-text="item.waktu"></p>
+                                                </div>
+                                            </div>
+
+                                            {{-- Details --}}
+                                            <div class="space-y-3">
+
+                                                {{-- Kode --}}
+                                                <div x-show="item.kode" class="flex items-center gap-2">
+                                                    <span class="text-xs font-bold text-gray-500">Kode:</span>
+                                                    <span
+                                                        class="rounded-lg border-2 border-gray-200 bg-gray-50 px-2 py-0.5 font-mono text-xs font-black text-gray-600"
+                                                        x-text="item.kode">
+                                                    </span>
+                                                </div>
+
+                                                {{-- Lab --}}
+                                                <div x-show="item.lab" class="flex items-center gap-2">
+                                                    <span class="text-xs font-bold text-gray-500">Lab:</span>
+                                                    <span
+                                                        class="rounded-full border-2 border-indigo-200 bg-indigo-50 px-2.5 py-0.5 text-xs font-black text-indigo-700"
+                                                        x-text="item.lab">
+                                                    </span>
+                                                </div>
+
+                                                {{-- Deskripsi --}}
+                                                <div x-show="item.deskripsi">
+                                                    <p class="text-xs font-bold text-gray-500 mb-1">Deskripsi:</p>
+                                                    <p class="text-sm text-gray-600 leading-relaxed line-clamp-2"
+                                                        x-text="item.deskripsi"></p>
+                                                </div>
+
+                                                {{-- Alasan --}}
+                                                <div x-show="item.alasan">
+                                                    <div
+                                                        class="rounded-xl border-2 border-blue-200 bg-blue-50 px-4 py-3">
+                                                        <p
+                                                            class="text-xs font-black uppercase tracking-widest text-blue-500 mb-1">
+                                                            Alasan Anda</p>
+                                                        <p class="text-sm text-blue-800 leading-relaxed"
+                                                            x-text="item.alasan"></p>
+                                                    </div>
+                                                </div>
+
+                                                {{-- Catatan Dosen --}}
+                                                <div x-show="item.catatan_dosen">
+                                                    <div class="rounded-xl border-2 px-4 py-3"
+                                                        x-bind:class="{
+                                                            'border-emerald-200 bg-emerald-50': item
+                                                                .status === 'disetujui',
+                                                            'border-red-200 bg-red-50': item.status === 'ditolak'
+                                                        }">
+                                                        <p class="text-xs font-black uppercase tracking-widest mb-1"
+                                                            x-bind:class="{
+                                                                'text-emerald-500': item.status === 'disetujui',
+                                                                'text-red-500': item.status === 'ditolak'
+                                                            }">
+                                                            Catatan Dosen
                                                         </p>
-                                                        <p class="text-sm"
-                                                            :class="{
-                                                                'text-green-800': item.status === 'disetujui',
+                                                        <p class="text-sm italic leading-relaxed"
+                                                            x-bind:class="{
+                                                                'text-emerald-800': item.status === 'disetujui',
                                                                 'text-red-800': item.status === 'ditolak'
                                                             }"
                                                             x-text="item.catatan_dosen">
                                                         </p>
                                                     </div>
                                                 </div>
+
                                             </div>
+
+                                            {{-- Action --}}
+                                            <div
+                                                class="mt-4 flex items-center justify-between border-t-2 border-gray-100 pt-3">
+                                                <p class="text-xs text-gray-400" x-text="item.tanggal"></p>
+                                                <button @click="openDetail(item)"
+                                                    class="inline-flex items-center gap-1.5 rounded-xl border-2 border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-black text-indigo-700 transition hover:bg-indigo-100">
+                                                    <x-heroicon-o-eye class="h-3.5 w-3.5" />
+                                                    Detail
+                                                </button>
+                                            </div>
+
                                         </div>
-
-                                    </div>
-
-                                    {{-- Actions --}}
-                                    <div class="mt-4 pt-4 border-t border-gray-200">
-                                        <button @click="openDetail(item)"
-                                            class="text-sm text-indigo-600 hover:text-indigo-700 font-semibold flex items-center gap-2 group">
-                                            Lihat Detail Lengkap
-                                            <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform"
-                                                fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M9 5l7 7-7 7" />
-                                            </svg>
-                                        </button>
                                     </div>
 
                                 </div>
+                            </template>
+                        </div>
 
-                            </div>
-                        </template>
                     </div>
-
                 </div>
             </template>
 
-            {{-- Empty State --}}
-            <template x-if="filteredData.length === 0">
-                <div class="text-center py-16">
-                    <svg class="w-24 h-24 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    <p class="text-gray-500 text-lg font-medium">
-                        <span x-show="filterStatus === 'all'">Belum ada pengajuan</span>
-                        <span x-show="filterStatus !== 'all'">Tidak ada pengajuan dengan status ini</span>
+            {{-- Footer --}}
+            <template x-if="filteredData.length > 0">
+                <div class="flex items-center justify-between border-t-2 border-gray-200 bg-gray-50 px-6 py-4">
+                    <p class="text-xs font-semibold text-gray-500">
+                        Menampilkan <span class="font-black text-gray-800" x-text="filteredData.length"></span>
+                        dari <span class="font-black text-gray-800">{{ $pengajuan->count() }}</span> pengajuan
                     </p>
-                    <p class="text-gray-400 text-sm mt-1">
-                        <span x-show="filterStatus === 'all'">Mulai ajukan judul skripsi Anda</span>
-                        <span x-show="filterStatus !== 'all'">Coba ubah filter untuk melihat pengajuan lain</span>
-                    </p>
-                    <a href="{{ route('mahasiswa.pengajuan') }}" x-show="filterStatus === 'all'"
-                        class="inline-block mt-6 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl">
-                        Ajukan Judul Sekarang
-                    </a>
+                    <div class="flex items-center gap-3 text-xs">
+                        <span class="flex items-center gap-1.5 font-bold text-yellow-600">
+                            <span class="h-2 w-2 animate-pulse rounded-full bg-yellow-500"></span>
+                            {{ $totalPending }} pending
+                        </span>
+                        <div class="h-4 w-px bg-gray-300"></div>
+                        <span class="flex items-center gap-1.5 font-bold text-emerald-600">
+                            <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                            {{ $totalDisetujui }} disetujui
+                        </span>
+                        <div class="h-4 w-px bg-gray-300"></div>
+                        <span class="flex items-center gap-1.5 font-bold text-red-500">
+                            <span class="h-2 w-2 rounded-full bg-red-500"></span>
+                            {{ $totalDitolak }} ditolak
+                        </span>
+                    </div>
                 </div>
             </template>
 
         </div>
-
-
-
-        {{-- ================= DETAIL MODAL ================= --}}
+        {{-- ===== MODAL DETAIL ===== --}}
         <div x-show="showModal" x-cloak @click.self="showModal = false"
-            class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-
-            <div @click.away="showModal = false" x-transition:enter="transition ease-out duration-200"
-                x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-                x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100"
-                x-transition:leave-end="opacity-0 scale-95"
-                class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <div x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95"
+                x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+                class="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border-2 border-gray-200 bg-white shadow-2xl">
 
                 {{-- Modal Header --}}
                 <div
-                    class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-                    <h3 class="text-xl font-bold text-gray-800">Detail Pengajuan</h3>
-                    <button @click="showModal = false" class="text-gray-400 hover:text-gray-600 transition-colors">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+                    class="sticky top-0 z-10 flex items-center justify-between border-b-4 border-indigo-200 bg-gradient-to-r from-indigo-600 to-purple-700 px-6 py-4">
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="flex h-9 w-9 items-center justify-center rounded-xl border-2 border-white/30 bg-white/20">
+                            <x-heroicon-o-document-text class="h-5 w-5 text-white" />
+                        </div>
+                        <div>
+                            <h3 class="font-extrabold text-white">Detail Pengajuan</h3>
+                            <p class="text-xs text-indigo-200" x-text="selectedItem.waktu"></p>
+                        </div>
+                    </div>
+                    <button @click="showModal = false"
+                        class="flex h-8 w-8 items-center justify-center rounded-xl border-2 border-white/30 bg-white/20 text-white transition hover:bg-white/30">
+                        <x-heroicon-o-x-mark class="h-5 w-5" />
                     </button>
                 </div>
 
                 {{-- Modal Body --}}
-                <div class="p-6 space-y-6">
+                <div class="p-6 space-y-5">
 
-                    {{-- Status Badge --}}
-                    <div class="flex items-center gap-3">
-                        <span class="px-4 py-2 text-sm font-bold rounded-full"
-                            :class="{
-                                'bg-yellow-100 text-yellow-700': selectedItem.status === 'pending',
-                                'bg-green-100 text-green-700': selectedItem.status === 'disetujui',
-                                'bg-red-100 text-red-700': selectedItem.status === 'ditolak'
-                            }"
-                            x-text="selectedItem.status === 'pending' ? 'Menunggu Review' : selectedItem.status === 'disetujui' ? 'Disetujui' : 'Ditolak'">
+                    {{-- Status Badges --}}
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span
+                            class="inline-flex items-center gap-1.5 rounded-full border-2 px-3 py-1.5 text-xs font-black"
+                            x-bind:class="{
+                                'border-yellow-200 bg-yellow-100 text-yellow-700': selectedItem.status === 'pending',
+                                'border-emerald-200 bg-emerald-100 text-emerald-700': selectedItem
+                                    .status === 'disetujui',
+                                'border-red-200 bg-red-100 text-red-700': selectedItem.status === 'ditolak'
+                            }">
+                            <span class="h-1.5 w-1.5 rounded-full"
+                                x-bind:class="{
+                                    'bg-yellow-500 animate-pulse': selectedItem.status === 'pending',
+                                    'bg-emerald-500': selectedItem.status === 'disetujui',
+                                    'bg-red-500': selectedItem.status === 'ditolak'
+                                }">
+                            </span>
+                            <span
+                                x-text="selectedItem.status === 'pending' ? 'Menunggu Review' : selectedItem.status === 'disetujui' ? 'Disetujui' : 'Ditolak'"></span>
                         </span>
-                        <span class="px-4 py-2 text-sm font-bold bg-indigo-100 text-indigo-700 rounded-full">
-                            Prioritas <span x-text="selectedItem.prioritas"></span>
+                        <span
+                            class="inline-flex items-center rounded-full border-2 border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-black text-indigo-700">
+                            Prioritas <span x-text="selectedItem.prioritas" class="ml-1"></span>
+                        </span>
+                        <span x-show="selectedItem.jenis === 'mandiri'"
+                            class="inline-flex items-center rounded-full border-2 border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-black text-violet-700">
+                            Judul Mandiri
                         </span>
                     </div>
 
                     {{-- Judul --}}
-                    <div>
-                        <h4 class="text-2xl font-bold text-gray-800 mb-2" x-text="selectedItem.judul"></h4>
-                        <p class="text-sm text-gray-500" x-text="selectedItem.waktu"></p>
+                    <div class="rounded-xl border-2 border-indigo-200 bg-indigo-50 p-4">
+                        <p class="text-xs font-black uppercase tracking-widest text-indigo-500 mb-2">Judul</p>
+                        <p class="text-lg font-black text-gray-900 leading-relaxed" x-text="selectedItem.judul"></p>
                     </div>
 
-                    {{-- Details Grid --}}
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="bg-gray-50 rounded-xl p-4">
-                            <p class="text-xs text-gray-500 mb-1">Jenis Pengajuan</p>
-                            <p class="font-semibold text-gray-800"
-                                x-text="selectedItem.jenis === 'mandiri' ? 'Judul Mandiri' : 'Pilih Judul Dosen'"></p>
+                    {{-- Info Grid --}}
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="rounded-xl border-2 border-gray-100 bg-gray-50 p-3">
+                            <p class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-1">Jenis</p>
+                            <p class="text-sm font-black text-gray-800"
+                                x-text="selectedItem.jenis === 'mandiri' ? 'Judul Mandiri' : 'Pilih Judul Dosen'">
+                            </p>
                         </div>
-                        <div class="bg-gray-50 rounded-xl p-4">
-                            <p class="text-xs text-gray-500 mb-1">Tanggal Pengajuan</p>
-                            <p class="font-semibold text-gray-800" x-text="selectedItem.tanggal"></p>
+                        <div class="rounded-xl border-2 border-gray-100 bg-gray-50 p-3">
+                            <p class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-1">Tanggal</p>
+                            <p class="text-sm font-black text-gray-800" x-text="selectedItem.tanggal"></p>
                         </div>
                     </div>
 
-                    {{-- Full Details --}}
-                    <div class="space-y-4">
-                        <div x-show="selectedItem.kode">
-                            <p class="text-sm font-semibold text-gray-700 mb-1">Kode Judul</p>
-                            <p class="text-gray-800 font-mono" x-text="selectedItem.kode"></p>
-                        </div>
+                    {{-- Kode --}}
+                    <div x-show="selectedItem.kode">
+                        <p class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Kode Judul</p>
+                        <span
+                            class="rounded-lg border-2 border-gray-200 bg-gray-50 px-3 py-1.5 font-mono text-sm font-black text-gray-700"
+                            x-text="selectedItem.kode">
+                        </span>
+                    </div>
 
-                        <div x-show="selectedItem.deskripsi">
-                            <p class="text-sm font-semibold text-gray-700 mb-1">Deskripsi</p>
-                            <p class="text-gray-800" x-text="selectedItem.deskripsi"></p>
-                        </div>
+                    {{-- Lab --}}
+                    <div x-show="selectedItem.lab">
+                        <p class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Laboratorium</p>
+                        <span
+                            class="inline-flex items-center rounded-full border-2 border-indigo-200 bg-indigo-50 px-3 py-1.5 text-sm font-black text-indigo-700"
+                            x-text="selectedItem.lab">
+                        </span>
+                    </div>
 
-                        <div x-show="selectedItem.lab">
-                            <p class="text-sm font-semibold text-gray-700 mb-1">Laboratorium</p>
-                            <p class="text-gray-800" x-text="selectedItem.lab"></p>
+                    {{-- Deskripsi --}}
+                    <div x-show="selectedItem.deskripsi">
+                        <p class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Deskripsi</p>
+                        <div class="rounded-xl border-2 border-gray-100 bg-gray-50 px-4 py-3">
+                            <p class="text-sm text-gray-700 leading-relaxed" x-text="selectedItem.deskripsi"></p>
                         </div>
+                    </div>
 
-                        <div x-show="selectedItem.alasan">
-                            <p class="text-sm font-semibold text-gray-700 mb-1">Alasan Anda</p>
-                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                <p class="text-gray-800" x-text="selectedItem.alasan"></p>
-                            </div>
+                    {{-- Alasan --}}
+                    <div x-show="selectedItem.alasan">
+                        <p class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Alasan Anda</p>
+                        <div class="rounded-xl border-2 border-blue-200 bg-blue-50 px-4 py-3">
+                            <p class="text-sm text-blue-800 leading-relaxed" x-text="selectedItem.alasan"></p>
                         </div>
+                    </div>
 
-                        <div x-show="selectedItem.catatan_dosen">
-                            <p class="text-sm font-semibold text-gray-700 mb-1">Catatan Dosen</p>
-                            <div class="rounded-lg p-4"
-                                :class="{
-                                    'bg-green-50 border border-green-200': selectedItem.status === 'disetujui',
-                                    'bg-red-50 border border-red-200': selectedItem.status === 'ditolak'
-                                }">
-                                <p class="text-gray-800" x-text="selectedItem.catatan_dosen"></p>
-                            </div>
+                    {{-- Catatan Dosen --}}
+                    <div x-show="selectedItem.catatan_dosen">
+                        <p class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Catatan Dosen</p>
+                        <div class="rounded-xl border-2 px-4 py-3"
+                            x-bind:class="{
+                                'border-emerald-200 bg-emerald-50': selectedItem.status === 'disetujui',
+                                'border-red-200 bg-red-50': selectedItem.status === 'ditolak',
+                                'border-gray-200 bg-gray-50': selectedItem.status === 'pending'
+                            }">
+                            <p class="text-sm italic leading-relaxed"
+                                x-bind:class="{
+                                    'text-emerald-800': selectedItem.status === 'disetujui',
+                                    'text-red-800': selectedItem.status === 'ditolak',
+                                    'text-gray-700': selectedItem.status === 'pending'
+                                }"
+                                x-text="selectedItem.catatan_dosen">
+                            </p>
                         </div>
+                    </div>
+
+                    {{-- Close Button --}}
+                    <div class="border-t-2 border-gray-100 pt-4">
+                        <button @click="showModal = false"
+                            class="w-full rounded-xl border-2 border-gray-200 bg-white px-5 py-3 text-sm font-bold text-gray-600 transition hover:bg-gray-50">
+                            Tutup
+                        </button>
                     </div>
 
                 </div>
-
             </div>
-
         </div>
+
     </div>
+    <script id="riwayat-data" type="application/json">
+    {!! json_encode($pengajuanJson) !!}
+</script>
 
-    {{-- ================= ALPINE SCRIPT ================= --}}
-    <script>
-        function riwayatPage() {
-            return {
-                filterStatus: 'all',
-                sortBy: 'newest',
-                showModal: false,
-                selectedItem: {},
-                allData: [],
-                filteredData: [],
+    @push('scripts')
+        <script>
+            function riwayatPage() {
+                return {
+                    filterStatus: 'all',
+                    sortBy: 'newest',
+                    showModal: false,
+                    selectedItem: {},
+                    allData: [],
+                    filteredData: [],
 
-                init() {
-                    this.allData = [
-                        @foreach ($pengajuan as $p)
-                            {
-                                id: {{ $p->id }},
-                                judul: '{{ $p->jenis === 'pilih' ? addslashes($p->judul->nama_judul ?? '-') : addslashes($p->judul_mandiri) }}',
-                                jenis: '{{ $p->jenis }}',
-                                status: '{{ $p->status }}',
-                                prioritas: {{ $p->prioritas }},
-                                kode: '{{ $p->jenis === 'pilih' ? $p->judul->kode ?? '' : '' }}',
-                                deskripsi: '{{ $p->jenis === 'mandiri' ? addslashes($p->deskripsi_mandiri) : '' }}',
-                                lab: '{{ $p->jenis === 'pilih' && $p->judul ? $p->judul->laboratorium->nama ?? '' : '' }}',
-                                alasan: '{{ addslashes($p->alasan ?? '') }}',
-                                catatan_dosen: '{{ addslashes($p->catatan_dosen ?? '') }}',
-                                waktu: '{{ $p->created_at->diffForHumans() }}',
-                                tanggal: '{{ $p->created_at->format('d M Y H:i') }}',
-                                timestamp: {{ $p->created_at->timestamp }}
-                            }
-                            {{ $loop->last ? '' : ',' }}
-                        @endforeach
-                    ];
+                    init() {
+                        const el = document.getElementById('riwayat-data');
+                        this.allData = el ? JSON.parse(el.textContent) : [];
+                        this.applyFilter();
+                    },
 
-                    this.applyFilter();
-                },
+                    applyFilter() {
+                        let result = [...this.allData];
 
-                applyFilter() {
-                    let result = this.allData;
+                        if (this.filterStatus !== 'all') {
+                            result = result.filter(item => item.status === this.filterStatus);
+                        }
 
-                    // Filter by status
-                    if (this.filterStatus !== 'all') {
-                        result = result.filter(item => item.status === this.filterStatus);
+                        if (this.sortBy === 'newest') {
+                            result.sort((a, b) => b.timestamp - a.timestamp);
+                        } else if (this.sortBy === 'oldest') {
+                            result.sort((a, b) => a.timestamp - b.timestamp);
+                        } else if (this.sortBy === 'priority') {
+                            result.sort((a, b) => a.prioritas - b.prioritas);
+                        }
+
+                        this.filteredData = result;
+                    },
+
+                    openDetail(item) {
+                        this.selectedItem = item;
+                        this.showModal = true;
                     }
-
-                    // Sort
-                    if (this.sortBy === 'newest') {
-                        result.sort((a, b) => b.timestamp - a.timestamp);
-                    } else if (this.sortBy === 'oldest') {
-                        result.sort((a, b) => a.timestamp - b.timestamp);
-                    } else if (this.sortBy === 'priority') {
-                        result.sort((a, b) => a.prioritas - b.prioritas);
-                    }
-
-                    this.filteredData = result;
-                },
-
-                openDetail(item) {
-                    this.selectedItem = item;
-                    this.showModal = true;
                 }
             }
-        }
-    </script>
+        </script>
+    @endpush
+
 
 </x-layout>

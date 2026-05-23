@@ -6,223 +6,211 @@ use App\Http\Controllers\Controller;
 use App\Models\Judul;
 use App\Models\Laboratorium;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use App\Models\User;
 
 class DosenJudulController extends Controller
 {
     public function index()
     {
-        $user = Auth::user();
-
-        $judul = Judul::where('dosen_id', $user->id)
+        $judul = Judul::where('dosen_id', auth()->id())
             ->with('laboratorium')
             ->withCount([
-                'pengajuan as total_peminat',
-                'pengajuan as total_disetujui' => function ($query) {
-                    $query->where('status', 'disetujui');
-                }
+                'pengajuanPilihan1',
+                'pengajuanPilihan2',
+                'pengajuanPilihan3',
+                'pengajuanDitetapkan'
             ])
-            ->orderBy('created_at', 'desc')
+            ->latest()
             ->get()
             ->map(function ($item) {
-                $item->can_edit = !$item->is_locked && $item->total_disetujui == 0;
-                $item->can_delete = !$item->is_locked && $item->total_disetujui == 0;
-                $item->can_toggle = !$item->is_locked;
-                $item->lab_name = $item->laboratorium ? $item->laboratorium->nama : 'N/A';
+                // Hitung total peminat dari semua pilihan
+                $item->total_peminat = $item->pengajuan_pilihan1_count
+                    + $item->pengajuan_pilihan2_count
+                    + $item->pengajuan_pilihan3_count;
+
+                // Hitung yang sudah ditetapkan
+                $item->jumlah_ditetapkan = $item->pengajuan_ditetapkan_count;
+                $item->lab_name = $item->laboratorium->nama ?? 'N/A';
+
                 return $item;
             });
 
+        // Hitung statistik untuk cards (SISTEM BARU)
         $totalJudul = $judul->count();
-        $aktif = $judul->where('aktif', true)->where('is_locked', false)->count();
-        $terkunci = $judul->where('is_locked', true)->count();
-        $pendingKoor = $judul->where('status_judul', 'pending_koor')->count();
-        $pendingKalab = $judul->where('status_judul', 'pending_kalab')->count();
-        $ditawarkan = $judul->where('status_judul', 'ditawarkan')->count();
+        $draft = $judul->where('status', 'draft')->count();
+        $tersedia = $judul->where('status', 'available')->where('is_available', true)->count();
+        $nonaktif = $judul->where('status', 'inactive')->count();
+        $totalPeminat = $judul->sum('total_peminat');
+        $totalDitetapkan = $judul->sum('jumlah_ditetapkan');
 
-        $laboratorium = Laboratorium::orderBy('nama')->get();
+        $title = 'Manajemen Judul';
+        $laboratorium = Laboratorium::all();
 
-        return view('dosen.judul', [
-            'title' => 'Manajemen Judul',
-            'judul' => $judul,
-            'laboratorium' => $laboratorium,
-            'totalJudul' => $totalJudul,
-            'aktif' => $aktif,
-            'terkunci' => $terkunci,
-            'pendingKoor' => $pendingKoor,
-            'pendingKalab' => $pendingKalab,
-            'ditawarkan' => $ditawarkan,
-        ]);
+        return view('dosen.judul', compact(
+            'judul',
+            'title',
+            'laboratorium',
+            'totalJudul',
+            'draft',
+            'tersedia',
+            'nonaktif',
+            'totalPeminat',
+            'totalDitetapkan'
+        ));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'judul' => 'required|string|max:500',
+            'deskripsi' => 'required|string',
             'laboratorium_id' => 'required|exists:laboratorium,id',
-            'nama_judul' => 'required|string|max:255',
-            'deskripsi' => 'required|string|max:1000',
-        ], [
-            'laboratorium_id.required' => 'Laboratorium harus dipilih',
-            'laboratorium_id.exists' => 'Laboratorium tidak valid',
-            'nama_judul.required' => 'Nama judul harus diisi',
-            'nama_judul.max' => 'Nama judul maksimal 255 karakter',
-            'deskripsi.required' => 'Deskripsi harus diisi',
-            'deskripsi.max' => 'Deskripsi maksimal 1000 karakter',
+            'kuota_maksimal' => 'nullable|integer|min:1',
+            'status' => 'nullable|in:draft,available,inactive',
         ]);
 
-        $user = Auth::user();
+        $validated['dosen_id'] = auth()->id();
 
-        // Generate kode berdasarkan nama lab + nomor urut
-        $lab = Laboratorium::find($validated['laboratorium_id']);
-        $prefix = strtoupper($lab->nama);
-        $lastNumber = Judul::where('laboratorium_id', $validated['laboratorium_id'])->count();
-        $kode = $prefix . '-' . ($lastNumber + 1);
+        // Default values untuk kolom baru
+        $validated['status'] = $validated['status'] ?? 'draft'; // Default: draft
+        $validated['is_available'] = ($validated['status'] === 'available'); // Auto-set berdasarkan status
+        $validated['is_active'] = true; // Backward compatibility
 
-        while (Judul::where('kode', $kode)->exists()) {
-            $lastNumber++;
-            $kode = $prefix . '-' . ($lastNumber + 1);
-        }
+        Judul::create($validated);
 
-        // Status awal: pending_koor (masuk ke workflow koor lab)
-        DB::table('judul')->insert([
-            'kode' => $kode,
-            'nama_judul' => $validated['nama_judul'],
-            'deskripsi' => $validated['deskripsi'],
-            'dosen_id' => $user->id,
-            'laboratorium_id' => $validated['laboratorium_id'],
-            'aktif' => DB::raw('false'),
-            'is_locked' => DB::raw('false'),
-            'status_judul' => 'pending_koor',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        $message = $validated['status'] === 'available'
+            ? 'Judul berhasil ditambahkan dan langsung tersedia untuk mahasiswa'
+            : 'Judul berhasil disimpan sebagai draft';
 
-        // Log
-        $judulId = DB::table('judul')->where('kode', $kode)->value('id');
-        DB::table('judul_logs')->insert([
-            'judul_id' => $judulId,
-            'user_id' => $user->id,
-            'aksi' => 'diajukan',
-            'dari_status' => null,
-            'ke_status' => 'pending_koor',
-            'catatan' => 'Judul diajukan oleh dosen',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        return redirect()->route('dosen.judul.index')
-            ->with('success', 'Judul berhasil diajukan! Menunggu review Koordinator Lab.');
+        return back()->with('success', $message);
     }
 
     public function update(Request $request, $id)
     {
+        $judul = Judul::where('dosen_id', auth()->id())->findOrFail($id);
+
         $validated = $request->validate([
+            'judul' => 'required|string|max:500',
+            'deskripsi' => 'required|string',
             'laboratorium_id' => 'required|exists:laboratorium,id',
-            'nama_judul' => 'required|string|max:255',
-            'deskripsi' => 'required|string|max:1000',
-        ], [
-            'laboratorium_id.required' => 'Laboratorium harus dipilih',
-            'laboratorium_id.exists' => 'Laboratorium tidak valid',
-            'nama_judul.required' => 'Nama judul harus disi',
-            'nama_judul.max' => 'Nama judul maksimal 255 karakter',
-            'deskripsi.required' => 'Deskripsi harus disi',
-            'deskripsi.max' => 'Deskripsi maksimal 1000 karakter',
+            'kuota_maksimal' => 'nullable|integer|min:1',
+            'status' => 'nullable|in:draft,available,inactive',
         ]);
 
-        $user = Auth::user();
-        $judul = Judul::where('id', $id)
-            ->where('dosen_id', $user->id)
-            ->withCount([
-                'pengajuan as total_disetujui' => function ($query) {
-                    $query->where('status', 'disetujui');
-                }
-            ])
-            ->firstOrFail();
-
-        if ($judul->is_locked) {
-            return redirect()->route('dosen.judul.index')
-                ->with('error', 'Judul terkunci tidak dapat diubah!');
+        // Update is_available sesuai status
+        if (isset($validated['status'])) {
+            $validated['is_available'] = ($validated['status'] === 'available');
         }
 
-        if ($judul->total_disetujui > 0) {
-            return redirect()->route('dosen.judul.index')
-                ->with('error', 'Judul tidak dapat diubah karena sudah ada mahasiswa yang disetujui!');
+        $judul->update($validated);
+
+        return back()->with('success', 'Judul berhasil diperbarui');
+    }
+
+    /**
+     * Toggle status judul (draft <-> available)
+     * Menggantikan toggleStatus lama yang pakai is_active
+     */
+    public function toggleStatus($id)
+    {
+        $judul = Judul::where('dosen_id', auth()->id())->findOrFail($id);
+
+        // Toggle antara available dan inactive
+        $newStatus = $judul->status === 'available' ? 'inactive' : 'available';
+        $newIsAvailable = ($newStatus === 'available');
+
+        $judul->update([
+            'status' => $newStatus,
+            'is_available' => $newIsAvailable,
+        ]);
+
+        $statusText = $newStatus === 'available' ? 'diaktifkan' : 'dinonaktifkan';
+        return back()->with('success', "Judul berhasil {$statusText}");
+    }
+
+    /**
+     * Publish judul dari draft ke available
+     */
+    public function publish($id)
+    {
+        $judul = Judul::where('dosen_id', auth()->id())->findOrFail($id);
+
+        if ($judul->status !== 'draft') {
+            return back()->with('error', 'Hanya judul draft yang bisa dipublikasikan');
         }
 
         $judul->update([
-            'nama_judul' => $validated['nama_judul'],
-            'deskripsi' => $validated['deskripsi'],
-            'laboratorium_id' => $validated['laboratorium_id'],
+            'status' => 'available',
+            'is_available' => true,
         ]);
 
-        return redirect()->route('dosen.judul.index')
-            ->with('success', 'Judul berhasil diperbarui!');
+        return back()->with('success', 'Judul berhasil dipublikasikan dan tersedia untuk mahasiswa');
     }
 
-    public function toggleStatus($id)
+    /**
+     * Kembalikan judul ke draft
+     */
+    public function unpublish($id)
     {
-        $user = Auth::user();
-        $judul = Judul::where('id', $id)
-            ->where('dosen_id', $user->id)
-            ->firstOrFail();
+        $judul = Judul::where('dosen_id', auth()->id())->findOrFail($id);
 
-        if ($judul->is_locked) {
-            return redirect()->route('dosen.judul.index')
-                ->with('error', 'Judul terkunci tidak dapat diubah statusnya!');
+        // Cek apakah ada mahasiswa yang sudah memilih
+        $totalPeminat = $judul->pengajuanPilihan1()->count()
+            + $judul->pengajuanPilihan2()->count()
+            + $judul->pengajuanPilihan3()->count();
+
+        if ($totalPeminat > 0) {
+            return back()->with('error', 'Judul tidak dapat dikembalikan ke draft karena sudah dipilih oleh mahasiswa');
         }
 
-        DB::statement("UPDATE judul SET aktif = NOT aktif, updated_at = NOW() WHERE id = ?", [$id]);
+        $judul->update([
+            'status' => 'draft',
+            'is_available' => false,
+        ]);
 
-        $judul->refresh();
-        $statusText = $judul->aktif ? 'diaktifkan' : 'dinonaktifkan';
+        return back()->with('success', 'Judul dikembalikan ke draft');
+    }
 
-        return redirect()->route('dosen.judul.index')
-            ->with('success', "Judul berhasil {$statusText}!");
+    /**
+     * Toggle ketersediaan judul (is_available)
+     * Untuk sementara menutup/membuka judul tanpa mengubah status
+     */
+    public function toggleAvailability($id)
+    {
+        $judul = Judul::where('dosen_id', auth()->id())->findOrFail($id);
+
+        if ($judul->status !== 'available') {
+            return back()->with('error', 'Hanya judul dengan status "available" yang bisa di-toggle ketersediaannya');
+        }
+
+        $judul->update([
+            'is_available' => !$judul->is_available,
+        ]);
+
+        $statusText = $judul->is_available ? 'dibuka' : 'ditutup sementara';
+        return back()->with('success', "Ketersediaan judul berhasil {$statusText}");
     }
 
     public function destroy($id)
     {
-        $user = Auth::user();
-        $judul = Judul::where('id', $id)
-            ->where('dosen_id', $user->id)
-            ->withCount([
-                'pengajuan as total_disetujui' => function ($query) {
-                    $query->where('status', 'disetujui');
-                }
-            ])
-            ->firstOrFail();
+        $judul = Judul::where('dosen_id', auth()->id())->findOrFail($id);
 
-        if ($judul->is_locked) {
-            return redirect()->route('dosen.judul.index')
-                ->with('error', 'Judul terkunci tidak dapat dihapus!');
+        // Cek apakah judul sudah dipilih mahasiswa
+        $totalPeminat = $judul->pengajuanPilihan1()->count()
+            + $judul->pengajuanPilihan2()->count()
+            + $judul->pengajuanPilihan3()->count();
+
+        if ($totalPeminat > 0) {
+            return back()->with('error', 'Judul tidak dapat dihapus karena sudah dipilih oleh mahasiswa');
         }
 
-        if ($judul->total_disetujui > 0) {
-            return redirect()->route('dosen.judul.index')
-                ->with('error', 'Judul tidak dapat dihapus karena sudah ada mahasiswa yang disetujui!');
+        // Cek apakah ada yang sudah ditetapkan
+        $totalDitetapkan = $judul->pengajuanDitetapkan()->count();
+        if ($totalDitetapkan > 0) {
+            return back()->with('error', 'Judul tidak dapat dihapus karena sudah ditetapkan ke mahasiswa');
         }
 
         $judul->delete();
 
-        // NOTIFIKASI KE KOOR LAB (sesuai lab yang dipilih)
-        $koorLab = User::where('role', 'koor_lab')
-            ->where('laboratorium_id', $validated['laboratorium_id'])
-            ->first();
-
-        if ($koorLab) {
-            DB::table('aktivitas')->insert([
-                'user_id' => $koorLab->id,
-                'tipe' => 'judul_baru',
-                'pesan' => auth()->user()->name . ' mengajukan judul baru: ' . $validated['nama_judul'],
-                'is_read' => DB::raw('false'),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
-
-
-        return redirect()->route('dosen.judul.index')
-            ->with('success', 'Judul berhasil dihapus!');
+        return back()->with('success', 'Judul berhasil dihapus');
     }
 }

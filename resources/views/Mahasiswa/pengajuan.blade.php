@@ -3,484 +3,670 @@
 
     <div x-data="pengajuanPage()" x-init="init()" class="space-y-6">
 
-        {{-- Alerts --}}
+        {{-- Alert --}}
         @if (session('success'))
-            <div x-data="{ show: true }" x-show="show" x-transition
-                class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <x-heroicon-o-check-circle class="w-5 h-5" />
-                    <span>{{ session('success') }}</span>
-                </div>
-                <button @click="show = false"><x-heroicon-o-x-mark class="w-5 h-5" /></button>
+            <div x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 4000)"
+                class="flex items-center gap-3 rounded-2xl border-2 border-green-200 bg-green-50 px-5 py-4 text-sm text-green-800 shadow-sm">
+                <x-heroicon-o-check-circle class="h-5 w-5 shrink-0 text-green-500" />
+                <span class="font-semibold">{{ session('success') }}</span>
+                <button @click="show = false"
+                    class="ml-auto rounded-lg p-1 text-green-400 hover:bg-green-100 transition">
+                    <x-heroicon-o-x-mark class="h-4 w-4" />
+                </button>
             </div>
         @endif
 
         @if (session('error'))
-            <div x-data="{ show: true }" x-show="show" x-transition
-                class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <x-heroicon-o-exclamation-circle class="w-5 h-5" />
-                    <span>{{ session('error') }}</span>
-                </div>
-                <button @click="show = false"><x-heroicon-o-x-mark class="w-5 h-5" /></button>
+            <div x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 4000)"
+                class="flex items-center gap-3 rounded-2xl border-2 border-red-200 bg-red-50 px-5 py-4 text-sm text-red-800 shadow-sm">
+                <x-heroicon-o-x-circle class="h-5 w-5 shrink-0 text-red-500" />
+                <span class="font-semibold">{{ session('error') }}</span>
+                <button @click="show = false" class="ml-auto rounded-lg p-1 text-red-400 hover:bg-red-100 transition">
+                    <x-heroicon-o-x-mark class="h-4 w-4" />
+                </button>
             </div>
         @endif
 
-        {{-- Header --}}
-        <div class="bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-2xl shadow-xl p-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h2 class="text-2xl font-bold mb-1">Pengajuan Judul Skripsi</h2>
-                    <p class="text-indigo-100 text-sm">Pilih judul dari dosen atau ajukan judul mandiri</p>
-                </div>
-                <div class="hidden md:flex gap-3">
-                    <div class="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2 text-center">
-                        <p class="text-2xl font-bold">{{ $jumlahPengajuan }}/2</p>
-                        <p class="text-xs text-indigo-200">Pengajuan Aktif</p>
+        {{-- ===== HEADER BANNER ===== --}}
+        <div
+            class="relative overflow-hidden rounded-2xl border-2 border-indigo-300 bg-gradient-to-br from-indigo-600 via-purple-700 to-pink-700 p-7 shadow-xl">
+            <div class="absolute -right-10 -top-10 h-48 w-48 rounded-full bg-white/10"></div>
+            <div class="absolute -bottom-12 -left-6 h-40 w-40 rounded-full bg-white/5"></div>
+            <div class="relative flex items-center justify-between gap-6">
+                <div class="flex items-center gap-5">
+                    <div
+                        class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border-2 border-white/30 bg-white/20 backdrop-blur-sm shadow-lg">
+                        <x-heroicon-o-document-text class="h-7 w-7 text-white" />
                     </div>
-                    <div class="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2 text-center">
-                        <p class="text-2xl font-bold">{{ $judul->count() }}</p>
-                        <p class="text-xs text-indigo-200">Judul Tersedia</p>
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-widest text-indigo-300">Mahasiswa</p>
+                        <h2 class="mt-1 text-xl font-black text-white leading-tight">Pengajuan Judul Tugas Akhir</h2>
+                        <p class="mt-1 text-sm text-indigo-200">Ajukan usulan judul sendiri dan pilih 3 alternatif dari
+                            dosen</p>
+                    </div>
+                </div>
+                <div class="hidden lg:flex shrink-0 gap-3">
+                    <div
+                        class="rounded-2xl border-2 border-white/20 bg-white/15 px-5 py-3 text-center backdrop-blur-sm">
+                        <p class="text-xs font-bold uppercase tracking-widest text-indigo-200">Status</p>
+                        <p class="mt-1 text-lg font-black text-white">
+                            {{ $jumlahPengajuan > 0 ? '✓ Sudah' : '○ Belum' }}
+                        </p>
+                    </div>
+                    <div
+                        class="rounded-2xl border-2 border-white/20 bg-white/15 px-5 py-3 text-center backdrop-blur-sm">
+                        <p class="text-xs font-bold uppercase tracking-widest text-indigo-200">Tersedia</p>
+                        <p class="mt-1 text-2xl font-black text-white">{{ $judul->count() }}</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        {{-- My Submissions --}}
+        {{-- ===== MY SUBMISSIONS ===== --}}
         @if ($mySubmissions->count() > 0)
-            <div class="bg-white rounded-2xl shadow-lg border-gray-100 p-6">
-                <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                    <x-heroicon-o-clipboard-document-list class="w-5 h-5 text-indigo-600" />
+            <div class="flex items-center gap-3">
+                <div class="h-px flex-1 bg-gradient-to-r from-transparent to-gray-200"></div>
+                <span
+                    class="flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-bold uppercase tracking-widest text-gray-400 shadow-sm">
+                    <x-heroicon-o-clipboard-document-list class="h-3 w-3" />
                     Pengajuan Anda
-                </h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    @foreach ($mySubmissions as $submission)
+                </span>
+                <div class="h-px flex-1 bg-gradient-to-l from-transparent to-gray-200"></div>
+            </div>
+
+            <div class="space-y-4">
+                @foreach ($mySubmissions as $submission)
+                    <div
+                        class="overflow-hidden rounded-2xl border-2 shadow-md
+                        {{ $submission->status === 'pending' ? 'border-yellow-200' : ($submission->status === 'disetujui' ? 'border-emerald-200' : 'border-red-200') }}
+                        bg-white">
+
+                        {{-- Submission Header --}}
                         <div
-                            class="border-2 rounded-xl p-4 {{ $submission->status === 'pending' ? 'border-yellow-300 bg-yellow-50' : 'border-green-300 bg-green-50' }}">
-                            <div class="flex items-start justify-between mb-2">
-                                <span
-                                    class="px-3 py-1 text-xs font-bold rounded-full {{ $submission->status === 'pending' ? 'bg-yellow-200 text-yellow-800' : 'bg-green-200 text-green-800' }}">
-                                    Prioritas {{ $submission->prioritas }}
-                                </span>
-                                <span
-                                    class="px-3 py-1 text-xs font-bold rounded-full {{ $submission->status === 'pending' ? 'bg-yellow-200 text-yellow-800' : 'bg-green-200 text-green-800' }}">
-                                    {{ ucfirst($submission->status) }}
-                                </span>
+                            class="flex items-center justify-between border-b-4 px-6 py-4
+                            {{ $submission->status === 'pending'
+                                ? 'border-yellow-200 bg-gradient-to-r from-yellow-500 to-orange-500'
+                                : ($submission->status === 'disetujui'
+                                    ? 'border-emerald-200 bg-gradient-to-r from-emerald-600 to-green-700'
+                                    : 'border-red-200 bg-gradient-to-r from-red-600 to-rose-700') }}">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="flex h-9 w-9 items-center justify-center rounded-xl border-2 border-white/30 bg-white/20">
+                                    @if ($submission->status === 'pending')
+                                        <x-heroicon-o-clock class="h-5 w-5 text-white" />
+                                    @elseif ($submission->status === 'disetujui')
+                                        <x-heroicon-o-check-circle class="h-5 w-5 text-white" />
+                                    @else
+                                        <x-heroicon-o-x-circle class="h-5 w-5 text-white" />
+                                    @endif
+                                </div>
+                                <div>
+                                    <p class="font-extrabold text-white">
+                                        {{ $submission->status === 'pending' ? 'Menunggu Review' : ($submission->status === 'disetujui' ? 'Disetujui' : 'Ditolak') }}
+                                    </p>
+                                    <p class="text-xs text-white/70">{{ $submission->created_at->diffForHumans() }}</p>
+                                </div>
                             </div>
-                            <h4 class="font-bold text-gray-800 mb-1">
-                                {{ $submission->jenis === 'mandiri' ? $submission->judul_mandiri : $submission->judul->nama_judul }}
-                            </h4>
-                            <p class="text-xs text-gray-500">Diajukan {{ $submission->created_at->diffForHumans() }}
-                            </p>
+                            <span
+                                class="inline-flex items-center gap-1.5 rounded-full border-2 border-white/30 bg-white/20 px-3 py-1 text-xs font-black text-white">
+                                <span
+                                    class="h-1.5 w-1.5 rounded-full {{ $submission->status === 'pending' ? 'animate-pulse bg-yellow-200' : 'bg-white' }}"></span>
+                                {{ ucfirst($submission->status) }}
+                            </span>
                         </div>
-                    @endforeach
-                </div>
+
+                        <div class="p-6 space-y-4">
+
+                            {{-- Judul Mandiri --}}
+                            @if ($submission->judul_mandiri)
+                                <div class="rounded-xl border-2 border-violet-200 bg-violet-50 p-4">
+                                    <p class="text-xs font-black uppercase tracking-widest text-violet-500 mb-2">Usulan
+                                        Judul Sendiri</p>
+                                    <p class="font-black text-gray-800 text-base leading-relaxed">
+                                        {{ $submission->judul_mandiri }}</p>
+                                    @if ($submission->deskripsi_mandiri)
+                                        <p class="mt-2 text-sm text-gray-600 leading-relaxed">
+                                            {{ $submission->deskripsi_mandiri }}</p>
+                                    @endif
+                                </div>
+                            @endif
+
+                            {{-- 3 Pilihan --}}
+                            <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+                                @foreach ([['label' => 'Pilihan 1', 'judul' => $submission->pilihan1, 'alasan' => $submission->alasan_1, 'color' => 'blue'], ['label' => 'Pilihan 2', 'judul' => $submission->pilihan2, 'alasan' => $submission->alasan_2, 'color' => 'emerald'], ['label' => 'Pilihan 3', 'judul' => $submission->pilihan3, 'alasan' => $submission->alasan_3, 'color' => 'orange']] as $p)
+                                    @if ($p['judul'])
+                                        <div
+                                            class="rounded-xl border-2 border-{{ $p['color'] }}-200 bg-{{ $p['color'] }}-50 p-4">
+                                            <p
+                                                class="text-xs font-black uppercase tracking-widest text-{{ $p['color'] }}-600 mb-2">
+                                                {{ $p['label'] }}</p>
+                                            <p class="text-sm font-bold text-gray-800 leading-relaxed mb-2">
+                                                {{ $p['judul']->nama_judul }}</p>
+                                            <div class="space-y-1 text-xs text-gray-500">
+                                                <p><span class="font-bold">Kode:</span> {{ $p['judul']->kode ?? '-' }}
+                                                </p>
+                                                <p><span class="font-bold">Dosen:</span>
+                                                    {{ $p['judul']->dosen->name ?? '-' }}</p>
+                                                <p><span class="font-bold">Lab:</span>
+                                                    {{ $p['judul']->laboratorium->nama ?? '-' }}</p>
+                                            </div>
+                                            @if ($p['alasan'])
+                                                <div class="mt-3 border-t-2 border-{{ $p['color'] }}-200 pt-2">
+                                                    <p class="text-xs font-black text-{{ $p['color'] }}-600 mb-1">
+                                                        Alasan</p>
+                                                    <p class="text-xs text-gray-600 leading-relaxed">
+                                                        {{ $p['alasan'] }}</p>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    @endif
+                                @endforeach
+                            </div>
+
+                            {{-- Catatan Penolakan --}}
+                            @if ($submission->status === 'ditolak' && $submission->catatan)
+                                <div class="rounded-xl border-2 border-red-200 bg-red-50 p-4">
+                                    <p class="text-xs font-black uppercase tracking-widest text-red-500 mb-2">Catatan
+                                        Penolakan</p>
+                                    <p class="text-sm text-red-800 leading-relaxed">{{ $submission->catatan }}</p>
+                                </div>
+                            @endif
+
+                        </div>
+                    </div>
+                @endforeach
             </div>
         @endif
 
-        {{-- Tab Navigation --}}
-        <div class="bg-white rounded-2xl shadow-lg border-gray-100 overflow-hidden">
-            <div class="flex border-b border-gray-200">
-                <button @click="activeTab = 'pilih'"
-                    :class="activeTab === 'pilih' ? 'border-indigo-600 text-indigo-600 bg-indigo-50' :
-                        'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'"
-                    class="flex-1 px-6 py-4 text-sm font-semibold border-b-2 transition-all flex items-center justify-center gap-2">
-                    <x-heroicon-o-document-text class="w-5 h-5" />
-                    Pilih Judul Dosen
-                </button>
-                <button @click="activeTab = 'mandiri'"
-                    :class="activeTab === 'mandiri' ? 'border-purple-600 text-purple-600 bg-purple-50' :
-                        'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'"
-                    class="flex-1 px-6 py-4 text-sm font-semibold border-b-2 transition-all flex items-center justify-center gap-2">
-                    <x-heroicon-o-pencil-square class="w-5 h-5" />
-                    Judul Mandiri
-                </button>
-            </div>
+        {{-- ===== FORM ===== --}}
+        <div class="flex items-center gap-3">
+            <div class="h-px flex-1 bg-gradient-to-r from-transparent to-gray-200"></div>
+            <span
+                class="flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-bold uppercase tracking-widest text-gray-400 shadow-sm">
+                <x-heroicon-o-document-plus class="h-3 w-3" />
+                Form Pengajuan
+            </span>
+            <div class="h-px flex-1 bg-gradient-to-l from-transparent to-gray-200"></div>
+        </div>
+        <form method="POST" action="{{ route('mahasiswa.pengajuan.store') }}" class="space-y-5">
+            @csrf
 
-            <div class="p-6">
-                {{-- TAB: PILIH JUDUL --}}
-                <div x-show="activeTab === 'pilih'" x-transition>
+            <input type="hidden" name="pilihan_1_id" x-bind:value="pilihan1?.id || ''">
+            <input type="hidden" name="pilihan_2_id" x-bind:value="pilihan2?.id || ''">
+            <input type="hidden" name="pilihan_3_id" x-bind:value="pilihan3?.id || ''">
 
-                    {{-- Filter --}}
-                    <div class="mb-6 flex flex-col md:flex-row gap-3">
-                        <div class="flex-1 relative">
-                            <x-heroicon-o-magnifying-glass
-                                class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                            <input type="text" x-model="searchQuery" @input="filterJudul()"
-                                placeholder="Cari judul, dosen, kode..."
-                                class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
-                        </div>
-                        <select x-model="selectedLab" @change="filterJudul()"
-                            class="px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500">
-                            <option value="">Semua Lab</option>
-                            @foreach ($laboratorium as $lab)
-                                <option value="{{ $lab->id }}">{{ $lab->nama }}</option>
-                            @endforeach
-                        </select>
-                        <select x-model="filterStatus" @change="filterJudul()"
-                            class="px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500">
-                            <option value="all">Semua</option>
-                            <option value="available">Tersedia</option>
-                            <option value="taken">Sudah Diambil</option>
-                        </select>
-                        <div
-                            class="flex items-center px-4 py-2.5 bg-indigo-50 text-indigo-700 rounded-xl text-sm font-medium">
-                            <span x-text="filteredJudul.length"></span>&nbsp;judul
-                        </div>
+            {{-- ===== SECTION 0: JUDUL MANDIRI ===== --}}
+            <div class="overflow-hidden rounded-2xl border-2 border-gray-200 bg-white shadow-md">
+                <div
+                    class="flex items-center gap-3 border-b-4 border-violet-200 bg-gradient-to-r from-violet-600 to-purple-700 px-6 py-4">
+                    <div
+                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 border-white/30 bg-white/20">
+                        <span class="text-base font-black text-white">0</span>
                     </div>
-
-                    {{-- Tabel --}}
-                    <div class="overflow-x-auto rounded-xl border-gray-200">
-                        <table class="w-full text-sm">
-                            <thead class="bg-gray-50 border-b border-gray-200">
-                                <tr>
-                                    <th class="px-4 py-3 text-left font-semibold text-gray-600">No</th>
-                                    <th class="px-4 py-3 text-left font-semibold text-gray-600">Kode</th>
-                                    <th class="px-4 py-3 text-left font-semibold text-gray-600">Judul</th>
-                                    <th class="px-4 py-3 text-left font-semibold text-gray-600">Dosen</th>
-                                    <th class="px-4 py-3 text-left font-semibold text-gray-600">Lab</th>
-                                    <th class="px-4 py-3 text-left font-semibold text-gray-600">Peminat</th>
-                                    <th class="px-4 py-3 text-left font-semibold text-gray-600">Status</th>
-                                    <th class="px-4 py-3 text-center font-semibold text-gray-600">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100">
-                                <template x-for="(item, index) in paginatedJudul" :key="item.id">
-                                    <tr class="hover:bg-gray-50 transition-colors">
-                                        <td class="px-4 py-3 text-gray-500"
-                                            x-text="(currentPage - 1) * perPage + index + 1"></td>
-                                        <td class="px-4 py-3"><span
-                                                class="font-mono text-xs bg-gray-100 px-2 py-1 rounded"
-                                                x-text="item.kode"></span></td>
-                                        <td class="px-4 py-3">
-                                            <p class="font-medium text-gray-800 truncate max-w-[200px]"
-                                                x-text="item.nama_judul"></p>
-                                        </td>
-                                        <td class="px-4 py-3 text-gray-600 truncate max-w-[120px]"
-                                            x-text="item.dosen_name"></td>
-                                        <td class="px-4 py-3"><span
-                                                class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-semibold"
-                                                x-text="item.lab_name"></span></td>
-                                        <td class="px-4 py-3 text-gray-600" x-text="item.peminat"></td>
-                                        <td class="px-4 py-3">
-                                            <span class="text-xs px-2 py-1 rounded-full font-semibold"
-                                                :class="item.is_taken ? 'bg-red-100 text-red-700' : (item.is_selected ?
-                                                    'bg-green-100 text-green-700' :
-                                                    'bg-emerald-100 text-emerald-700')"
-                                                x-text="item.is_taken ? 'Diambil' : (item.is_selected ? 'Dipilih' : 'Tersedia')"></span>
-                                        </td>
-                                        <td class="px-4 py-3 text-center">
-                                            <button @click="openModal(item)"
-                                                :disabled="item.is_taken || item.is_selected || {{ $jumlahPengajuan }} >= 2"
-                                                class="p-2 rounded-lg transition-colors"
-                                                :class="item.is_taken || item.is_selected || {{ $jumlahPengajuan }} >= 2 ?
-                                                    'text-gray-300 cursor-not-allowed' :
-                                                    'text-indigo-600 hover:bg-indigo-50'">
-                                                <x-heroicon-o-paper-airplane class="w-5 h-5" />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {{-- Empty --}}
-                    <div x-show="filteredJudul.length === 0" class="p-12 text-center">
-                        <x-heroicon-o-document-magnifying-glass class="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                        <p class="text-gray-500 font-medium">Tidak ada judul yang ditemukan</p>
-                    </div>
-
-                    {{-- Pagination --}}
-                    <div x-show="totalPages > 1" class="mt-4 flex items-center justify-between">
-                        <p class="text-sm text-gray-500">Halaman <span x-text="currentPage"></span> dari <span
-                                x-text="totalPages"></span></p>
-                        <div class="flex gap-1">
-                            <button @click="currentPage--; paginate()" :disabled="currentPage === 1"
-                                class="px-3 py-1 rounded-lg text-sm border-gray-300 disabled:opacity-50 hover:bg-gray-50">Prev</button>
-                            <template x-for="page in totalPages" :key="page">
-                                <button @click="currentPage = page; paginate()"
-                                    :class="currentPage === page ? 'bg-indigo-600 text-white' :
-                                        'border border-gray-300 hover:bg-gray-50'"
-                                    class="px-3 py-1 rounded-lg text-sm" x-text="page"></button>
-                            </template>
-                            <button @click="currentPage++; paginate()" :disabled="currentPage === totalPages"
-                                class="px-3 py-1 rounded-lg text-sm border border-gray-300 disabled:opacity-50 hover:bg-gray-50">Next</button>
-                        </div>
+                    <div>
+                        <h4 class="font-extrabold text-white">Usulan Judul Sendiri</h4>
+                        <p class="text-xs text-violet-200">Opsional — Ajukan judul hasil ide Anda sendiri</p>
                     </div>
                 </div>
+                <div class="p-6 space-y-4">
+                    <div>
+                        <label class="mb-1.5 block text-sm font-bold text-gray-700">
+                            Judul Usulan
+                        </label>
+                        <input type="text" name="judul_mandiri" maxlength="255"
+                            placeholder="Contoh: Sistem Informasi Manajemen Perpustakaan Berbasis Web"
+                            class="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-100 transition" />
+                    </div>
+                    <div>
+                        <label class="mb-1.5 block text-sm font-bold text-gray-700">
+                            Deskripsi Usulan
+                        </label>
+                        <textarea name="deskripsi_mandiri" rows="4" maxlength="1000"
+                            placeholder="Jelaskan latar belakang, tujuan, dan ruang lingkup penelitian..."
+                            class="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-100 resize-none transition">
+                        </textarea>
+                    </div>
+                </div>
+            </div>
 
-                {{-- TAB: JUDUL MANDIRI --}}
-                <div x-show="activeTab === 'mandiri'" x-transition>
-                    <div class="max-w-2xl mx-auto">
-                        <div class="bg-purple-50 border-2 border-purple-200 rounded-2xl p-6 mb-6">
-                            <div class="flex items-start gap-4">
-                                <div
-                                    class="w-12 h-12 bg-purple-200 rounded-xl flex items-center justify-center flex-shrink-0">
-                                    <x-heroicon-o-information-circle class="w-6 h-6 text-purple-700" />
-                                </div>
+            {{-- ===== REUSABLE SECTION TEMPLATE ===== --}}
+            @foreach ([['num' => 1, 'label' => 'Pilihan Pertama', 'sub' => 'Wajib — Pilih 1 judul sebagai prioritas utama', 'color' => 'blue', 'grad' => 'from-blue-600 to-indigo-700', 'border' => 'border-blue-200'], ['num' => 2, 'label' => 'Pilihan Kedua', 'sub' => 'Wajib — Pilih 1 judul sebagai alternatif kedua', 'color' => 'emerald', 'grad' => 'from-emerald-600 to-teal-700', 'border' => 'border-emerald-200'], ['num' => 3, 'label' => 'Pilihan Ketiga', 'sub' => 'Wajib — Pilih 1 judul sebagai alternatif ketiga', 'color' => 'orange', 'grad' => 'from-orange-500 to-amber-600', 'border' => 'border-orange-200']] as $s)
+                <div class="overflow-hidden rounded-2xl border-2 border-gray-200 bg-white shadow-md">
+
+                    {{-- Section Header --}}
+                    <div
+                        class="flex items-center justify-between border-b-4 {{ $s['border'] }} bg-gradient-to-r {{ $s['grad'] }} px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 border-white/30 bg-white/20">
+                                <span class="text-base font-black text-white">{{ $s['num'] }}</span>
+                            </div>
+                            <div>
+                                <h4 class="font-extrabold text-white">{{ $s['label'] }}</h4>
+                                <p class="text-xs text-white/70">{{ $s['sub'] }}</p>
+                            </div>
+                        </div>
+                        <div x-show="pilihan{{ $s['num'] }}"
+                            class="inline-flex items-center gap-1.5 rounded-full border-2 border-white/30 bg-white/20 px-3 py-1 text-xs font-black text-white">
+                            <x-heroicon-o-check class="h-3.5 w-3.5" />
+                            Terpilih
+                        </div>
+                    </div>
+
+                    <div class="p-6">
+
+                        {{-- Selected Card --}}
+                        <div x-show="pilihan{{ $s['num'] }}" x-transition
+                            class="mb-5 rounded-xl border-2 border-{{ $s['color'] }}-200 bg-{{ $s['color'] }}-50 p-5">
+                            <div class="flex items-start justify-between gap-3 mb-4">
                                 <div class="flex-1">
-                                    <h3 class="font-bold text-purple-900 mb-2">Tentang Judul Mandiri</h3>
-                                    <p class="text-sm text-purple-700">Ajukan judul skripsi hasil ide Anda sendiri.
-                                        Judul akan direview oleh dosen dan jika disetujui, akan masuk ke proses
-                                        laboratorium.</p>
+                                    <p
+                                        class="text-xs font-black uppercase tracking-widest text-{{ $s['color'] }}-600 mb-1">
+                                        Judul Terpilih</p>
+                                    <p class="font-black text-gray-800 text-base leading-relaxed"
+                                        x-text="pilihan{{ $s['num'] }}?.nama_judul"></p>
+                                    <div class="mt-2 flex flex-wrap items-center gap-3 text-xs text-gray-500">
+                                        <span class="flex items-center gap-1">
+                                            <x-heroicon-o-academic-cap class="h-3.5 w-3.5" />
+                                            <span x-text="pilihan{{ $s['num'] }}?.dosen_name"></span>
+                                        </span>
+                                        <span
+                                            class="inline-flex items-center rounded-full border-2 border-{{ $s['color'] }}-200 bg-{{ $s['color'] }}-100 px-2.5 py-0.5 text-xs font-black text-{{ $s['color'] }}-700"
+                                            x-text="pilihan{{ $s['num'] }}?.lab_name">
+                                        </span>
+                                    </div>
                                 </div>
+                                <button type="button"
+                                    @click="pilihan{{ $s['num'] }} = null; alasan{{ $s['num'] }} = ''"
+                                    class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border-2 border-red-200 bg-red-50 text-red-500 transition hover:bg-red-100">
+                                    <x-heroicon-o-x-mark class="h-4 w-4" />
+                                </button>
+                            </div>
+                            <div>
+                                <label class="mb-1.5 block text-sm font-bold text-gray-700">
+                                    Alasan Memilih Judul Ini
+                                </label>
+                                <textarea x-model="alasan{{ $s['num'] }}" name="alasan_{{ $s['num'] }}" rows="3" maxlength="500"
+                                    placeholder="Jelaskan mengapa Anda tertarik dengan judul ini..."
+                                    class="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:border-{{ $s['color'] }}-400 focus:outline-none focus:ring-2 focus:ring-{{ $s['color'] }}-100 resize-none transition">
+                            </textarea>
                             </div>
                         </div>
 
-                        <form method="POST" action="{{ route('mahasiswa.pengajuan.store') }}" class="space-y-6">
-                            @csrf
-                            <input type="hidden" name="jenis" value="mandiri">
+                        {{-- Filter --}}
+                        <div x-show="!pilihan{{ $s['num'] }}" class="mb-4 flex flex-wrap items-center gap-3">
+                            <div
+                                class="flex flex-1 items-center gap-2 rounded-2xl border-2 border-gray-200 bg-white px-4 py-2 shadow-sm min-w-[200px]">
+                                <x-heroicon-o-magnifying-glass class="h-4 w-4 shrink-0 text-gray-400" />
+                                <input type="text" x-model="searchQuery{{ $s['num'] }}"
+                                    @input="filterJudul{{ $s['num'] }}()"
+                                    placeholder="Cari judul, dosen, kode..."
+                                    class="flex-1 bg-transparent text-sm text-gray-700 placeholder-gray-400 focus:outline-none" />
+                            </div>
+                            <select x-model="selectedLab{{ $s['num'] }}"
+                                @change="filterJudul{{ $s['num'] }}()"
+                                class="rounded-2xl border-2 border-gray-200 bg-white px-4 py-2 text-xs font-bold text-gray-600 shadow-sm focus:border-{{ $s['color'] }}-400 focus:outline-none transition">
+                                <option value="">Semua Lab</option>
+                                @foreach ($laboratorium as $lab)
+                                    <option value="{{ $lab->id }}">{{ $lab->nama }}</option>
+                                @endforeach
+                            </select>
+                            <div
+                                class="flex items-center gap-1.5 rounded-2xl border-2 border-gray-200 bg-white px-4 py-2 shadow-sm text-xs font-bold text-gray-600">
+                                <span x-text="filteredJudul{{ $s['num'] }}.length"></span>
+                                <span>judul</span>
+                            </div>
+                        </div>
 
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Judul Skripsi <span
-                                        class="text-red-500">*</span></label>
-                                <input type="text" name="judul_mandiri" required maxlength="255"
-                                    placeholder="Masukkan judul skripsi Anda"
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        {{-- Table --}}
+                        <div x-show="!pilihan{{ $s['num'] }}"
+                            class="overflow-hidden rounded-2xl border-2 border-gray-200 shadow-sm">
+
+                            {{-- Table Header --}}
+                            <div
+                                class="border-b-2 border-gray-200 bg-gray-50 px-4 py-3 text-xs font-black uppercase tracking-wider text-gray-500 grid grid-cols-12 gap-3">
+                                <div class="col-span-1">No</div>
+                                <div class="col-span-2">Kode</div>
+                                <div class="col-span-4">Judul</div>
+                                <div class="col-span-2">Dosen / Lab</div>
+                                <div class="col-span-1 text-center">Peminat</div>
+                                <div class="col-span-2 text-center">Aksi</div>
                             </div>
 
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Deskripsi <span
-                                        class="text-red-500">*</span></label>
-                                <textarea name="deskripsi_mandiri" required rows="5" maxlength="1000"
-                                    placeholder="Jelaskan latar belakang dan tujuan penelitian..."
-                                    class="w-full px-4 py-3 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"></textarea>
+                            {{-- Empty State --}}
+                            <div x-show="filteredJudul{{ $s['num'] }}.length === 0"
+                                class="flex flex-col items-center justify-center py-16 text-center">
+                                <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100 mb-4">
+                                    <x-heroicon-o-document-magnifying-glass class="h-8 w-8 text-gray-400" />
+                                </div>
+                                <p class="text-sm font-bold text-gray-600">Tidak ada judul ditemukan</p>
+                                <button type="button"
+                                    @click="searchQuery{{ $s['num'] }} = ''; selectedLab{{ $s['num'] }} = ''; filterJudul{{ $s['num'] }}()"
+                                    class="mt-3 text-xs font-bold text-{{ $s['color'] }}-600 hover:text-{{ $s['color'] }}-800 transition">
+                                    Reset Filter
+                                </button>
                             </div>
 
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Prioritas <span
-                                        class="text-red-500">*</span></label>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <label
-                                        class="relative flex items-center justify-center p-4 border-2 border-gray-300 rounded-xl cursor-pointer hover:border-purple-500 transition-all">
-                                        <input type="radio" name="prioritas" value="1" required
-                                            class="sr-only peer">
-                                        <div class="text-center peer-checked:text-purple-600">
-                                            <div class="text-2xl font-bold mb-1">1</div>
-                                            <div class="text-xs">Utama</div>
-                                            <div
-                                                class="absolute inset-0 border-2 border-purple-600 rounded-xl opacity-0 peer-checked:opacity-100">
-                                            </div>
-                                        </div>
-                                    </label>
-                                    <label
-                                        class="relative flex items-center justify-center p-4 border-2 border-gray-300 rounded-xl cursor-pointer hover:border-purple-500 transition-all">
-                                        <input type="radio" name="prioritas" value="2" required
-                                            class="sr-only peer">
-                                        <div class="text-center peer-checked:text-purple-600">
-                                            <div class="text-2xl font-bold mb-1">2</div>
-                                            <div class="text-xs">Kedua</div>
-                                        </div>
-                                        <div
-                                            class="absolute inset-0 border-2 border-purple-600 rounded-xl opacity-0 peer-checked:opacity-100">
+                            {{-- Rows --}}
+                            <div class="divide-y-2 divide-gray-100">
+                                <template x-for="(item, index) in paginatedJudul{{ $s['num'] }}"
+                                    :key="item.id">
+                                    <div
+                                        class="grid grid-cols-12 gap-3 px-4 py-4 transition hover:bg-{{ $s['color'] }}-50/30 items-start">
+
+                                        {{-- No --}}
+                                        <div class="col-span-1">
+                                            <span
+                                                class="flex h-7 w-7 items-center justify-center rounded-lg border-2 border-gray-200 bg-gray-50 text-xs font-black text-gray-500"
+                                                x-text="(currentPage{{ $s['num'] }} - 1) * perPage + index + 1">
+                                            </span>
                                         </div>
 
-                                    </label>
+                                        {{-- Kode --}}
+                                        <div class="col-span-2">
+                                            <span
+                                                class="rounded-lg border-2 border-gray-200 bg-gray-50 px-2 py-1 font-mono text-xs font-black text-gray-600"
+                                                x-text="item.kode">
+                                            </span>
+                                        </div>
 
+                                        {{-- Judul + Deskripsi --}}
+                                        <div class="col-span-4" x-data="{ expanded: false }">
+                                            <p class="text-sm font-bold text-gray-800 leading-relaxed mb-1"
+                                                x-text="item.nama_judul"></p>
+                                            <p class="text-xs text-gray-500 leading-relaxed"
+                                                x-bind:class="!expanded && item.deskripsi && item.deskripsi.length > 100 ?
+                                                    'line-clamp-2' : ''"
+                                                x-text="item.deskripsi || 'Tidak ada deskripsi'">
+                                            </p>
+                                            <button type="button"
+                                                x-show="item.deskripsi && item.deskripsi.length > 100"
+                                                @click="expanded = !expanded"
+                                                class="mt-1 text-xs font-bold text-{{ $s['color'] }}-600 hover:text-{{ $s['color'] }}-800 transition">
+                                                <span x-text="expanded ? '↑ Sembunyikan' : '↓ Selengkapnya'"></span>
+                                            </button>
+                                        </div>
+
+                                        {{-- Dosen / Lab --}}
+                                        <div class="col-span-2">
+                                            <p class="text-xs font-semibold text-gray-700 mb-1"
+                                                x-text="item.dosen_name"></p>
+                                            <span
+                                                class="inline-flex items-center rounded-full border-2 border-{{ $s['color'] }}-200 bg-{{ $s['color'] }}-50 px-2 py-0.5 text-[10px] font-black text-{{ $s['color'] }}-700"
+                                                x-text="item.lab_name">
+                                            </span>
+                                        </div>
+
+                                        {{-- Peminat --}}
+                                        <div class="col-span-1 text-center">
+                                            <span
+                                                class="inline-flex h-7 w-7 items-center justify-center rounded-full border-2 border-violet-200 bg-violet-100 text-xs font-black text-violet-700"
+                                                x-text="item.peminat">
+                                            </span>
+                                        </div>
+
+                                        {{-- Aksi --}}
+                                        <div class="col-span-2 text-center">
+                                            <button type="button" @click="pilihan{{ $s['num'] }} = item"
+                                                x-bind:disabled="isSelectedInOthers(item.id, {{ $s['num'] }})"
+                                                x-bind:class="isSelectedInOthers(item.id, {{ $s['num'] }}) ?
+                                                    'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed' :
+                                                    '{{ $s['num'] === 1 ? 'border-blue-300 bg-blue-600 text-white hover:bg-blue-700' : ($s['num'] === 2 ? 'border-emerald-300 bg-emerald-600 text-white hover:bg-emerald-700' : 'border-orange-300 bg-orange-600 text-white hover:bg-orange-700') }} hover:shadow-md'"
+                                                class="inline-flex items-center gap-1 rounded-xl border-2 px-3 py-1.5 text-xs font-black shadow-sm transition">
+                                                <x-heroicon-o-plus class="h-3.5 w-3.5" />
+                                                Pilih
+                                            </button>
+                                        </div>
+
+                                    </div>
+                                </template>
+                            </div>
+
+                            {{-- Pagination --}}
+                            <div x-show="totalPages{{ $s['num'] }} > 1"
+                                class="flex items-center justify-between border-t-2 border-gray-200 bg-gray-50 px-4 py-3">
+                                <p class="text-xs font-semibold text-gray-500">
+                                    Hal <span class="font-black text-gray-800"
+                                        x-text="currentPage{{ $s['num'] }}"></span>
+                                    / <span x-text="totalPages{{ $s['num'] }}"></span>
+                                </p>
+                                <div class="flex items-center gap-1.5">
+                                    <button type="button"
+                                        @click="currentPage{{ $s['num'] }}--; paginate{{ $s['num'] }}()"
+                                        x-bind:disabled="currentPage{{ $s['num'] }} === 1"
+                                        class="flex h-8 w-8 items-center justify-center rounded-xl border-2 border-gray-200 bg-white text-xs font-black text-gray-500 transition hover:border-{{ $s['color'] }}-300 hover:bg-{{ $s['color'] }}-50 disabled:opacity-40 disabled:cursor-not-allowed">
+                                        <x-heroicon-o-chevron-left class="h-4 w-4" />
+                                    </button>
+                                    <button type="button"
+                                        @click="currentPage{{ $s['num'] }}++; paginate{{ $s['num'] }}()"
+                                        x-bind:disabled="currentPage{{ $s['num'] }} === totalPages{{ $s['num'] }}"
+                                        class="flex h-8 w-8 items-center justify-center rounded-xl border-2 border-gray-200 bg-white text-xs font-black text-gray-500 transition hover:border-{{ $s['color'] }}-300 hover:bg-{{ $s['color'] }}-50 disabled:opacity-40 disabled:cursor-not-allowed">
+                                        <x-heroicon-o-chevron-right class="h-4 w-4" />
+                                    </button>
                                 </div>
                             </div>
 
-
-                            <button type="submit" :disabled="{{ $jumlahPengajuan }} >= 2"
-                                class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-gray-400 disabled:to-gray-400 text-white py-3 rounded-xl font-semibold transition-all shadow-lg disabled:cursor-not-allowed">
-                                <span x-show="{{ $jumlahPengajuan }} < 2">Ajukan Judul Mandiri</span>
-                                <span x-show="{{ $jumlahPengajuan }} >= 2">Batas Pengajuan Tercapai</span>
-                            </button>
-                        </form>
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+            {{-- ===== SUBMIT SECTION ===== --}}
+            <div class="overflow-hidden rounded-2xl border-2 border-gray-200 bg-white shadow-md">
+                <div
+                    class="flex items-center gap-3 border-b-4 border-indigo-200 bg-gradient-to-r from-indigo-600 to-purple-700 px-6 py-4">
+                    <div
+                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 border-white/30 bg-white/20">
+                        <x-heroicon-o-paper-airplane class="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                        <h4 class="font-extrabold text-white">Kirim Pengajuan</h4>
+                        <p class="text-xs text-indigo-200">Pastikan semua pilihan sudah terisi dengan benar</p>
                     </div>
                 </div>
 
+                <div class="p-6 space-y-5">
 
-
-                {{-- MODAL --}}
-                <div x-show="showModal" x-cloak @click.self="showModal = false"
-                    class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div @click.away="showModal = false" x-transition:enter="transition ease-out duration-200"
-                        x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-                        x-transition:leave="transition ease-in duration-150"
-                        x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
-                        class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-
-                        <div
-                            class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-                            <h3 class="text-xl font-bold text-gray-800">Konfirmasi Pengajuan</h3>
-                            <button @click="showModal = false"><x-heroicon-o-x-mark
-                                    class="w-6 h-6 text-gray-400 hover:text-gray-600" /></button>
-                        </div>
-
-                        <div class="p-6">
-                            <form method="POST" action="{{ route('mahasiswa.pengajuan.store') }}"
-                                class="space-y-6">
-                                @csrf
-                                <input type="hidden" name="jenis" value="pilih">
-                                <input type="hidden" name="judul_id" :value="selectedJudul.id">
-
-                                {{-- Info Judul --}}
-                                <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4 space-y-2">
-                                    <h4 class="font-bold text-indigo-900" x-text="selectedJudul.nama_judul"></h4>
-                                    <p class="text-sm text-indigo-700" x-text="selectedJudul.deskripsi"></p>
-                                    <div class="flex gap-4 text-xs text-indigo-600">
-                                        <span x-text="'Lab: ' + selectedJudul.lab_name"></span>
-                                        <span x-text="'Dosen: ' + selectedJudul.dosen_name"></span>
-                                    </div>
+                    {{-- Progress Indicator --}}
+                    <div class="grid grid-cols-3 gap-4">
+                        @foreach ([['num' => 1, 'color' => 'blue', 'grad' => 'from-blue-500 to-indigo-600'], ['num' => 2, 'color' => 'emerald', 'grad' => 'from-emerald-500 to-green-600'], ['num' => 3, 'color' => 'orange', 'grad' => 'from-orange-500 to-amber-600']] as $p)
+                            <div class="flex flex-col items-center gap-2">
+                                <div class="flex h-14 w-14 items-center justify-center rounded-full border-2 transition-all duration-300"
+                                    x-bind:class="pilihan{{ $p['num'] }}
+                                        ?
+                                        'bg-gradient-to-br {{ $p['grad'] }} border-{{ $p['color'] }}-400 shadow-md' :
+                                        'bg-gray-100 border-gray-300'">
+                                    <span class="font-black text-lg"
+                                        x-bind:class="pilihan{{ $p['num'] }} ? 'text-white' : 'text-gray-400'"
+                                        x-text="pilihan{{ $p['num'] }} ? '✓' : '{{ $p['num'] }}'">
+                                    </span>
                                 </div>
-
-                                {{-- Prioritas --}}
-                                <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-3">Pilih Prioritas <span
-                                            class="text-red-500">*</span></label>
-                                    <div class="grid grid-cols-2 gap-4">
-                                        <label
-                                            class="relative flex items-center justify-center p-4 border-2 border-gray-300 rounded-xl cursor-pointer hover:border-indigo-500 transition-all">
-                                            <input type="radio" name="prioritas" value="1" required
-                                                class="sr-only peer">
-                                            <div class="text-center peer-checked:text-indigo-600">
-                                                <div class="text-3xl font-bold mb-1">1</div>
-                                                <div class="text-xs font-medium">Utama</div>
-                                            </div>
-                                            <div
-                                                class="absolute inset-0 border-2 border-indigo-600 rounded-xl opacity-0 peer-checked:opacity-100">
-                                            </div>
-                                        </label>
-                                        <label
-                                            class="relative flex items-center justify-center p-4 border-2 border-gray-300 rounded-xl cursor-pointer hover:border-indigo-500 transition-all">
-                                            <input type="radio" name="prioritas" value="2" required
-                                                class="sr-only peer">
-                                            <div class="text-center peer-checked:text-indigo-600">
-                                                <div class="text-3xl font-bold mb-1">2</div>
-                                                <div class="text-xs font-medium">Kedua</div>
-                                            </div>
-                                            <div
-                                                class="absolute inset-0 border-2 border-indigo-600 rounded-xl opacity-0 peer-checked:opacity-100">
-                                            </div>
-                                        </label>
-                                    </div>
-                                </div>
-
-
-                                {{-- Alasan --}}
-                                <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Alasan
-                                        (Opsional)</label>
-                                    <textarea name="alasan" rows="3" maxlength="500" placeholder="Jelaskan mengapa Anda tertarik..."
-                                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"></textarea>
-                                </div>
-
-                                {{-- Actions --}}
-                                <div class="flex gap-4">
-                                    <button type="button" @click="showModal = false"
-                                        class="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50">Batal</button>
-                                    <button type="submit"
-                                        class="flex-1 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl font-semibold shadow-lg">Ajukan
-                                        Sekarang</button>
-                                </div>
-                            </form>
-                        </div>
+                                <p class="text-xs font-bold transition-colors"
+                                    x-bind:class="pilihan{{ $p['num'] }} ? 'text-{{ $p['color'] }}-600' : 'text-gray-400'">
+                                    Pilihan {{ $p['num'] }}
+                                </p>
+                                <p class="text-[10px] text-center leading-tight"
+                                    x-bind:class="pilihan{{ $p['num'] }} ? 'text-{{ $p['color'] }}-500 font-semibold' :
+                                        'text-gray-400'"
+                                    x-text="pilihan{{ $p['num'] }} ? pilihan{{ $p['num'] }}.nama_judul.substring(0, 30) + '...' : 'Belum dipilih'">
+                                </p>
+                            </div>
+                        @endforeach
                     </div>
-                </div>
 
+                    {{-- Status info --}}
+                    <div class="rounded-xl border-2 border-gray-100 bg-gray-50 px-4 py-3">
+                        <p class="text-center text-sm font-semibold"
+                            x-bind:class="pilihan1 && pilihan2 && pilihan3 ? 'text-emerald-600' : 'text-gray-500'">
+                            <template x-if="pilihan1 && pilihan2 && pilihan3">
+                                <span class="flex items-center justify-center gap-2">
+                                    <x-heroicon-o-check-circle class="h-4 w-4" />
+                                    Semua pilihan sudah lengkap — siap dikirim
+                                </span>
+                            </template>
+                            <template x-if="!pilihan1 || !pilihan2 || !pilihan3">
+                                <span>
+                                    Masih kurang:
+                                    <span x-show="!pilihan1" class="font-black text-blue-600"> Pilihan 1</span>
+                                    <span x-show="!pilihan2" class="font-black text-emerald-600"> Pilihan 2</span>
+                                    <span x-show="!pilihan3" class="font-black text-orange-600"> Pilihan 3</span>
+                                </span>
+                            </template>
+                        </p>
+                    </div>
+
+                    {{-- Submit Button --}}
+                    <button type="submit"
+                        x-bind:disabled="{{ $jumlahPengajuan }} > 0 || !pilihan1 || !pilihan2 || !pilihan3"
+                        x-bind:class="{{ $jumlahPengajuan }} > 0 || !pilihan1 || !pilihan2 || !pilihan3 ?
+                            'bg-gray-200 text-gray-400 cursor-not-allowed border-gray-200' :
+                            'bg-gradient-to-r from-indigo-600 to-purple-700 border-indigo-300 text-white hover:from-indigo-700 hover:to-purple-800 hover:shadow-lg'"
+                        class="w-full inline-flex items-center justify-center gap-3 rounded-xl border-2 px-6 py-4 text-base font-black shadow-sm transition">
+                        <x-heroicon-o-paper-airplane class="h-5 w-5" />
+                        <span x-show="{{ $jumlahPengajuan }} === 0 && pilihan1 && pilihan2 && pilihan3">
+                            Kirim Pengajuan Sekarang
+                        </span>
+                        <span x-show="{{ $jumlahPengajuan }} > 0">
+                            ✓ Anda Sudah Mengajukan
+                        </span>
+                        <span x-show="{{ $jumlahPengajuan }} === 0 && (!pilihan1 || !pilihan2 || !pilihan3)">
+                            Lengkapi 3 Pilihan Terlebih Dahulu
+                        </span>
+                    </button>
+
+                </div>
             </div>
 
-            <script>
-                function pengajuanPage() {
-                    return {
-                        activeTab: 'pilih',
-                        searchQuery: '',
-                        selectedLab: '',
-                        filterStatus: 'all',
-                        showModal: false,
-                        selectedJudul: {},
-                        allJudul: [],
-                        filteredJudul: [],
-                        paginatedJudul: [],
-                        currentPage: 1,
-                        perPage: 10,
-                        totalPages: 1,
+        </form>
 
-                        init() {
-                            this.allJudul = [
-                                @foreach ($judul as $j)
-                                    @php
-                                        $approved = $j->pengajuan->where('status', 'disetujui')->first();
-                                        $isTaken = $approved !== null;
-                                        $takenBy = $approved ? $approved->mahasiswa->name : null;
-                                        $isSelected = in_array($j->id, $pengajuanSaya);
-                                    @endphp {
-                                        id: {{ $j->id }},
-                                        kode: '{{ $j->kode ?? '-' }}',
-                                        nama_judul: '{{ addslashes($j->nama_judul) }}',
-                                        deskripsi: '{{ addslashes($j->deskripsi) }}',
-                                        lab_id: {{ $j->laboratorium_id }},
-                                        lab_name: '{{ $j->laboratorium->nama ?? '-' }}',
-                                        dosen_name: '{{ addslashes($j->dosen->name ?? '-') }}',
-                                        peminat: {{ $j->peminat ?? 0 }},
-                                        is_taken: {{ $isTaken ? 'true' : 'false' }},
-                                        taken_by: '{{ addslashes($takenBy ?? '') }}',
-                                        is_selected: {{ $isSelected ? 'true' : 'false' }}
-                                    }
-                                    {{ $loop->last ? '' : ',' }}
-                                @endforeach
-                            ];
-                            this.filteredJudul = this.allJudul;
-                            this.paginate();
-                        },
+    </div>
 
-                        filterJudul() {
-                            var self = this;
-                            var result = this.allJudul;
+    @push('scripts')
+        <script>
+            function pengajuanPage() {
+                return {
+                    pilihan1: null,
+                    pilihan2: null,
+                    pilihan3: null,
+                    alasan1: '',
+                    alasan2: '',
+                    alasan3: '',
 
-                            if (this.searchQuery) {
-                                var q = this.searchQuery.toLowerCase();
-                                result = result.filter(function(j) {
-                                    return j.nama_judul.toLowerCase().includes(q) ||
-                                        j.dosen_name.toLowerCase().includes(q) ||
-                                        j.kode.toLowerCase().includes(q);
-                                });
-                            }
+                    searchQuery1: '',
+                    selectedLab1: '',
+                    allJudul: [],
+                    filteredJudul1: [],
+                    paginatedJudul1: [],
+                    currentPage1: 1,
+                    totalPages1: 1,
 
-                            if (this.selectedLab) {
-                                result = result.filter(function(j) {
-                                    return j.lab_id == self.selectedLab;
-                                });
-                            }
+                    searchQuery2: '',
+                    selectedLab2: '',
+                    filteredJudul2: [],
+                    paginatedJudul2: [],
+                    currentPage2: 1,
+                    totalPages2: 1,
 
-                            if (this.filterStatus === 'available') {
-                                result = result.filter(function(j) {
-                                    return !j.is_taken;
-                                });
-                            } else if (this.filterStatus === 'taken') {
-                                result = result.filter(function(j) {
-                                    return j.is_taken;
-                                });
-                            }
+                    searchQuery3: '',
+                    selectedLab3: '',
+                    filteredJudul3: [],
+                    paginatedJudul3: [],
+                    currentPage3: 1,
+                    totalPages3: 1,
 
-                            this.filteredJudul = result;
-                            this.currentPage = 1;
-                            this.paginate();
-                        },
+                    perPage: 10,
 
-                        paginate() {
-                            this.totalPages = Math.ceil(this.filteredJudul.length / this.perPage) || 1;
-                            var start = (this.currentPage - 1) * this.perPage;
-                            this.paginatedJudul = this.filteredJudul.slice(start, start + this.perPage);
-                        },
+                    init() {
+                        this.allJudul = @json($judulJson);
+                        this.filteredJudul1 = this.allJudul;
+                        this.filteredJudul2 = this.allJudul;
+                        this.filteredJudul3 = this.allJudul;
+                        this.paginate1();
+                        this.paginate2();
+                        this.paginate3();
+                    },
 
-                        resetFilters() {
-                            this.searchQuery = '';
-                            this.selectedLab = '';
-                            this.filterStatus = 'all';
-                            this.filteredJudul = this.allJudul;
-                            this.currentPage = 1;
-                            this.paginate();
-                        },
-
-                        openModal(judul) {
-                            this.selectedJudul = judul;
-                            this.showModal = true;
+                    filterJudul1() {
+                        let result = this.allJudul;
+                        if (this.searchQuery1) {
+                            const q = this.searchQuery1.toLowerCase();
+                            result = result.filter(j =>
+                                j.nama_judul.toLowerCase().includes(q) ||
+                                j.dosen_name.toLowerCase().includes(q) ||
+                                j.kode.toLowerCase().includes(q)
+                            );
                         }
+                        if (this.selectedLab1) {
+                            result = result.filter(j => j.lab_id == this.selectedLab1);
+                        }
+                        this.filteredJudul1 = result;
+                        this.currentPage1 = 1;
+                        this.paginate1();
+                    },
+
+                    paginate1() {
+                        this.totalPages1 = Math.ceil(this.filteredJudul1.length / this.perPage) || 1;
+                        const start = (this.currentPage1 - 1) * this.perPage;
+                        this.paginatedJudul1 = this.filteredJudul1.slice(start, start + this.perPage);
+                    },
+
+                    filterJudul2() {
+                        let result = this.allJudul;
+                        if (this.searchQuery2) {
+                            const q = this.searchQuery2.toLowerCase();
+                            result = result.filter(j =>
+                                j.nama_judul.toLowerCase().includes(q) ||
+                                j.dosen_name.toLowerCase().includes(q) ||
+                                j.kode.toLowerCase().includes(q)
+                            );
+                        }
+                        if (this.selectedLab2) {
+                            result = result.filter(j => j.lab_id == this.selectedLab2);
+                        }
+                        this.filteredJudul2 = result;
+                        this.currentPage2 = 1;
+                        this.paginate2();
+                    },
+
+                    paginate2() {
+                        this.totalPages2 = Math.ceil(this.filteredJudul2.length / this.perPage) || 1;
+                        const start = (this.currentPage2 - 1) * this.perPage;
+                        this.paginatedJudul2 = this.filteredJudul2.slice(start, start + this.perPage);
+                    },
+
+                    filterJudul3() {
+                        let result = this.allJudul;
+                        if (this.searchQuery3) {
+                            const q = this.searchQuery3.toLowerCase();
+                            result = result.filter(j =>
+                                j.nama_judul.toLowerCase().includes(q) ||
+                                j.dosen_name.toLowerCase().includes(q) ||
+                                j.kode.toLowerCase().includes(q)
+                            );
+                        }
+                        if (this.selectedLab3) {
+                            result = result.filter(j => j.lab_id == this.selectedLab3);
+                        }
+                        this.filteredJudul3 = result;
+                        this.currentPage3 = 1;
+                        this.paginate3();
+                    },
+
+                    paginate3() {
+                        this.totalPages3 = Math.ceil(this.filteredJudul3.length / this.perPage) || 1;
+                        const start = (this.currentPage3 - 1) * this.perPage;
+                        this.paginatedJudul3 = this.filteredJudul3.slice(start, start + this.perPage);
+                    },
+
+                    isSelectedInOthers(judulId, currentPilihan) {
+                        if (currentPilihan !== 1 && this.pilihan1 && this.pilihan1.id === judulId) return true;
+                        if (currentPilihan !== 2 && this.pilihan2 && this.pilihan2.id === judulId) return true;
+                        if (currentPilihan !== 3 && this.pilihan3 && this.pilihan3.id === judulId) return true;
+                        return false;
                     }
                 }
-            </script>
+            }
+        </script>
+    @endpush
+
 
 </x-layout>

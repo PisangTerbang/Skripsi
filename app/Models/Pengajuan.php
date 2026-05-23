@@ -2,49 +2,60 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\User;
-use App\Models\Judul;
-use App\Models\Periode;
-use App\Models\Aktivitas;
+use Illuminate\Support\Facades\DB;
 
 class Pengajuan extends Model
 {
+    use HasFactory;
+
     protected $table = 'pengajuan';
 
     protected $fillable = [
         'mahasiswa_id',
-        'judul_id',
+        'periode_id',
+        'pilihan_1_id',
+        'pilihan_2_id',
+        'pilihan_3_id',
+        'alasan_1',
+        'alasan_2',
+        'alasan_3',
         'judul_mandiri',
         'deskripsi_mandiri',
-        'dosen_pilihan_id',
-        'jenis',
-        'prioritas',
-        'alasan',
         'status',
-        'catatan_dosen',
-        'periode_id'
+        // Ka Lab
+        'status_kalab',
+        'catatan_kalab_pengajuan',
+        'tanggal_review_kalab',
+        'reviewed_by_kalab',
+        // Koor Lab (tidak dipakai di workflow, disimpan untuk histori)
+        'status_koor',
+        'catatan_koor_pengajuan',
+        'tanggal_review_koor',
+        'reviewed_by_koor',
+        // Kaprodi
+        'status_kaprodi',
+        'catatan_kaprodi',
+        'tanggal_review_kaprodi',
+        'reviewed_by_kaprodi',
+        // Judul Ditetapkan
+        'judul_ditetapkan_id',
+        'sumber_judul',
+        'jenis',
     ];
 
-    /*
-    |--------------------------------------------------------------------------
-    | RELATIONSHIP
-    |--------------------------------------------------------------------------
-    */
+    protected $casts = [
+        'tanggal_review_kalab' => 'datetime',
+        'tanggal_review_koor' => 'datetime',
+        'tanggal_review_kaprodi' => 'datetime',
+    ];
+
+    // ==================== RELASI ====================
 
     public function mahasiswa()
     {
         return $this->belongsTo(User::class, 'mahasiswa_id');
-    }
-
-    public function judul()
-    {
-        return $this->belongsTo(Judul::class);
-    }
-
-    public function dosenPilihan()
-    {
-        return $this->belongsTo(User::class, 'dosen_pilihan_id');
     }
 
     public function periode()
@@ -52,68 +63,439 @@ class Pengajuan extends Model
         return $this->belongsTo(Periode::class);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | MODEL EVENTS
-    |--------------------------------------------------------------------------
-    */
-
-    protected static function booted()
+    public function pilihan1()
     {
-        static::updating(function ($pengajuan) {
+        return $this->belongsTo(Judul::class, 'pilihan_1_id');
+    }
 
-            $statusLama = $pengajuan->getOriginal('status');
-            $statusBaru = $pengajuan->status;
+    public function pilihan2()
+    {
+        return $this->belongsTo(Judul::class, 'pilihan_2_id');
+    }
 
-            // 🔒 LOCK FIELD KRITIS
-            if (
-                in_array($statusLama, ['disetujui', 'ditolak']) &&
-                (
-                    $pengajuan->isDirty('status') ||
-                    $pengajuan->isDirty('judul_id') ||
-                    $pengajuan->isDirty('prioritas') ||
-                    $pengajuan->isDirty('jenis')
-                )
-            ) {
-                throw new \Exception('Pengajuan yang sudah diputuskan tidak dapat diubah.');
+    public function pilihan3()
+    {
+        return $this->belongsTo(Judul::class, 'pilihan_3_id');
+    }
+
+    public function judulDitetapkan()
+    {
+        return $this->belongsTo(Judul::class, 'judul_ditetapkan_id');
+    }
+
+    public function judul()
+    {
+        return $this->belongsTo(Judul::class, 'judul_ditetapkan_id');
+    }
+
+    public function reviewerKalab()
+    {
+        return $this->belongsTo(User::class, 'reviewed_by_kalab');
+    }
+
+    public function reviewerKoor()
+    {
+        return $this->belongsTo(User::class, 'reviewed_by_koor');
+    }
+
+    public function reviewerKaprodi()
+    {
+        return $this->belongsTo(User::class, 'reviewed_by_kaprodi');
+    }
+
+    // ==================== QUERY SCOPES ====================
+
+    public function scopePendingKalabReview($query)
+    {
+        return $query->where('status', 'pending')
+            ->whereNull('status_kalab');
+    }
+
+    // Dibiarkan untuk histori / Koordinator TA nanti
+    public function scopePendingKoorReview($query)
+    {
+        return $query->where('status_kalab', 'disetujui')
+            ->whereNull('status_koor');
+    }
+
+    // ✅ Fix: dari status_koor → status_kalab
+    public function scopePendingKaprodiReview($query)
+    {
+        return $query->where('status_kalab', 'disetujui')
+            ->whereNull('status_kaprodi');
+    }
+
+    public function scopeApprovedByKalab($query)
+    {
+        return $query->where('status_kalab', 'disetujui');
+    }
+
+    public function scopeApprovedByKoor($query)
+    {
+        return $query->where('status_koor', 'disetujui');
+    }
+
+    public function scopeFinalApproved($query)
+    {
+        return $query->where('status_kaprodi', 'disetujui');
+    }
+
+    // ==================== STATUS CHECKERS ====================
+
+    public function isPending()
+    {
+        return $this->status === 'pending';
+    }
+
+    public function isApproved()
+    {
+        return $this->status === 'disetujui';
+    }
+
+    public function isRejected()
+    {
+        return $this->status === 'ditolak';
+    }
+
+    public function isFinalApproved()
+    {
+        return $this->status_kaprodi === 'disetujui';
+    }
+
+    public function isRejectedByKalab()
+    {
+        return $this->status_kalab === 'ditolak';
+    }
+
+    public function isRejectedByKoor()
+    {
+        return $this->status_koor === 'ditolak';
+    }
+
+    public function isRejectedByKaprodi()
+    {
+        return $this->status_kaprodi === 'ditolak';
+    }
+
+    // ==================== REVIEW CHECKERS ====================
+
+    public function needsKalabReview()
+    {
+        return $this->status === 'pending' && is_null($this->status_kalab);
+    }
+
+    // Dibiarkan untuk histori
+    public function needsKoorReview()
+    {
+        return $this->status_kalab === 'disetujui' && is_null($this->status_koor);
+    }
+
+    // ✅ Fix: dari status_koor → status_kalab
+    public function needsKaprodiReview()
+    {
+        return $this->status_kalab === 'disetujui' && is_null($this->status_kaprodi);
+    }
+
+    public function canBeReviewedByKalab()
+    {
+        return $this->status === 'pending' && is_null($this->status_kalab);
+    }
+
+    // Dibiarkan untuk histori
+    public function canBeReviewedByKoor()
+    {
+        return $this->status_kalab === 'disetujui' && is_null($this->status_koor);
+    }
+
+    // ✅ Fix: dari status_koor → status_kalab
+    public function canBeReviewedByKaprodi()
+    {
+        return $this->status_kalab === 'disetujui' && is_null($this->status_kaprodi);
+    }
+
+    // ==================== ACTION METHODS ====================
+
+    public function approveByKalab($userId, $judulId, $sumberJudul, $catatan = null)
+    {
+        DB::beginTransaction();
+        try {
+            $this->update([
+                'status_kalab' => 'disetujui',
+                'catatan_kalab_pengajuan' => $catatan,
+                'tanggal_review_kalab' => now(),
+                'reviewed_by_kalab' => $userId,
+                'judul_ditetapkan_id' => $judulId,
+                'sumber_judul' => $sumberJudul,
+            ]);
+
+            $this->logActivity($userId, 'disetujui_kalab', 'Ka Lab menyetujui pengajuan', $catatan);
+
+            DB::commit();
+            return true;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return false;
+        }
+    }
+
+    public function rejectByKalab($userId, $catatan)
+    {
+        DB::beginTransaction();
+        try {
+            $this->update([
+                'status_kalab' => 'ditolak',
+                'catatan_kalab_pengajuan' => $catatan,
+                'tanggal_review_kalab' => now(),
+                'reviewed_by_kalab' => $userId,
+                'status' => 'ditolak',
+            ]);
+
+            $this->logActivity($userId, 'ditolak_kalab', 'Ka Lab menolak pengajuan', $catatan);
+
+            DB::commit();
+            return true;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return false;
+        }
+    }
+
+    // Dibiarkan untuk histori / Koordinator TA nanti
+    public function approveByKoor($userId, $catatan = null)
+    {
+        DB::beginTransaction();
+        try {
+            $this->update([
+                'status_koor' => 'disetujui',
+                'catatan_koor_pengajuan' => $catatan,
+                'tanggal_review_koor' => now(),
+                'reviewed_by_koor' => $userId,
+            ]);
+
+            $this->logActivity($userId, 'disetujui_koor', 'Koor Lab menyetujui pengajuan', $catatan);
+
+            DB::commit();
+            return true;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return false;
+        }
+    }
+
+    // Dibiarkan untuk histori / Koordinator TA nanti
+    public function rejectByKoor($userId, $catatan)
+    {
+        DB::beginTransaction();
+        try {
+            $this->update([
+                'status_koor' => 'ditolak',
+                'catatan_koor_pengajuan' => $catatan,
+                'tanggal_review_koor' => now(),
+                'reviewed_by_koor' => $userId,
+                'status' => 'ditolak',
+            ]);
+
+            $this->logActivity($userId, 'ditolak_koor', 'Koor Lab menolak pengajuan', $catatan);
+
+            DB::commit();
+            return true;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return false;
+        }
+    }
+
+    public function approveByKaprodi($userId, $catatan = null)
+    {
+        DB::beginTransaction();
+        try {
+            $this->update([
+                'status_kaprodi' => 'disetujui',
+                'catatan_kaprodi' => $catatan,
+                'tanggal_review_kaprodi' => now(),
+                'reviewed_by_kaprodi' => $userId,
+                'status' => 'disetujui',
+            ]);
+
+            if ($this->judul_ditetapkan_id) {
+                DB::table('judul')->where('id', $this->judul_ditetapkan_id)->update([
+                    'is_locked' => true,
+                    'updated_at' => now(),
+                ]);
             }
 
-            // ✅ NOTIF DISETUJUI
-            if ($statusLama === 'pending' && $statusBaru === 'disetujui') {
-                Aktivitas::buat(
-                    $pengajuan->mahasiswa_id,
-                    'persetujuan',
-                    'Pengajuan judul Anda telah disetujui.'
-                );
-            }
+            $this->logActivity($userId, 'disetujui_kaprodi', 'Kaprodi menyetujui pengajuan (Final Approval)', $catatan);
 
-            // ❌ NOTIF DITOLAK
-            if ($statusLama === 'pending' && $statusBaru === 'ditolak') {
-                Aktivitas::buat(
-                    $pengajuan->mahasiswa_id,
-                    'penolakan',
-                    'Pengajuan ditolak. Catatan: ' . ($pengajuan->catatan_dosen ?? '-')
-                );
-            }
-        });
+            DB::commit();
+            return true;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return false;
+        }
+    }
 
-        static::creating(function ($pengajuan) {
+    public function rejectByKaprodi($userId, $catatan)
+    {
+        DB::beginTransaction();
+        try {
+            $this->update([
+                'status_kaprodi' => 'ditolak',
+                'catatan_kaprodi' => $catatan,
+                'tanggal_review_kaprodi' => now(),
+                'reviewed_by_kaprodi' => $userId,
+                'status' => 'ditolak',
+            ]);
 
-            if (!$pengajuan->periode_id) {
+            $this->logActivity($userId, 'ditolak_kaprodi', 'Kaprodi menolak pengajuan', $catatan);
 
-                // 🔥 POSTGRES SAFE BOOLEAN
-                $periode = Periode::whereRaw('aktif IS TRUE')->first();
+            DB::commit();
+            return true;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return false;
+        }
+    }
 
-                if (!$periode) {
-                    throw new \Exception('Tidak ada periode aktif.');
-                }
+    // ==================== HELPER METHODS ====================
 
-                if ($periode->ditutup) {
-                    throw new \Exception('Periode sudah ditutup.');
-                }
+    private function logActivity($userId, $tipe, $pesan, $catatan = null)
+    {
+        $fullPesan = $pesan;
+        if ($catatan) {
+            $fullPesan .= ' - Catatan: ' . $catatan;
+        }
 
-                $pengajuan->periode_id = $periode->id;
-            }
-        });
+        DB::table('aktivitas')->insert([
+            'user_id' => $this->mahasiswa_id,
+            'tipe' => $tipe,
+            'pesan' => $fullPesan,
+            'is_read' => false,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    public function getJudulOptions()
+    {
+        $options = [];
+
+        if ($this->pilihan_1_id) {
+            $options[] = [
+                'id' => $this->pilihan_1_id,
+                'judul' => $this->pilihan1,
+                'alasan' => $this->alasan_1,
+                'nomor' => 1,
+            ];
+        }
+
+        if ($this->pilihan_2_id) {
+            $options[] = [
+                'id' => $this->pilihan_2_id,
+                'judul' => $this->pilihan2,
+                'alasan' => $this->alasan_2,
+                'nomor' => 2,
+            ];
+        }
+
+        if ($this->pilihan_3_id) {
+            $options[] = [
+                'id' => $this->pilihan_3_id,
+                'judul' => $this->pilihan3,
+                'alasan' => $this->alasan_3,
+                'nomor' => 3,
+            ];
+        }
+
+        return $options;
+    }
+
+    // ==================== STATUS BADGES ====================
+
+    public function getStatusBadgeAttribute()
+    {
+        return match ($this->status) {
+            'pending' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Menunggu Review</span>',
+            'disetujui' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Disetujui</span>',
+            'ditolak' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Ditolak</span>',
+            default => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">Unknown</span>',
+        };
+    }
+
+    public function getKalabStatusBadgeAttribute()
+    {
+        if (is_null($this->status_kalab)) {
+            return '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">Belum Review</span>';
+        }
+
+        return match ($this->status_kalab) {
+            'disetujui' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">✓ Ka Lab</span>',
+            'ditolak' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">✗ Ka Lab</span>',
+            default => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">Unknown</span>',
+        };
+    }
+
+    public function getKoorStatusBadgeAttribute()
+    {
+        if (is_null($this->status_koor)) {
+            return '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">Belum Review</span>';
+        }
+
+        return match ($this->status_koor) {
+            'disetujui' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">✓ Koor Lab</span>',
+            'ditolak' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">✗ Koor Lab</span>',
+            default => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">Unknown</span>',
+        };
+    }
+
+    public function getKaprodiStatusBadgeAttribute()
+    {
+        if (is_null($this->status_kaprodi)) {
+            return '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">Belum Review</span>';
+        }
+
+        return match ($this->status_kaprodi) {
+            'disetujui' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">✓ Kaprodi</span>',
+            'ditolak' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">✗ Kaprodi</span>',
+            default => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">Unknown</span>',
+        };
+    }
+
+    // ==================== PROGRESS TRACKER ====================
+
+    // ✅ Fix: 3 steps, hapus step Koor
+    public function getProgressPercentageAttribute()
+    {
+        $steps = 3;
+        $completed = 0;
+
+        if ($this->status !== null)
+            $completed++;
+        if ($this->status_kalab === 'disetujui')
+            $completed++;
+        if ($this->status_kaprodi === 'disetujui')
+            $completed++;
+
+        return ($completed / $steps) * 100;
+    }
+
+    // ✅ Fix: hapus step Koor
+    public function getCurrentStepAttribute()
+    {
+        if ($this->status === 'ditolak')
+            return 'Ditolak';
+        if ($this->status === 'disetujui')
+            return 'Selesai';
+
+        if (is_null($this->status_kalab))
+            return 'Menunggu Review Ka Lab';
+        if ($this->status_kalab === 'ditolak')
+            return 'Ditolak oleh Ka Lab';
+
+        if (is_null($this->status_kaprodi))
+            return 'Menunggu Review Kaprodi';
+        if ($this->status_kaprodi === 'ditolak')
+            return 'Ditolak oleh Kaprodi';
+
+        return 'Selesai';
     }
 }

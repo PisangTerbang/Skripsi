@@ -56,67 +56,38 @@ class UserSeeder extends Seeder
                 'updated_at' => now(),
             ],
 
-            // ============ KOORDINATOR LAB ============
+            // ============ KEPALA LAB (KA LAB) ============
+            // Merge dari koor_lab (4 org) + kepala_lab (1 org) menjadi 1 org
             [
-                'name' => 'Koordinator Lab SIRKEL',
-                'email' => 'koorlab@sirkel.com',
-                'nim' => null,
-                'password' => Hash::make('password'),
-                'role' => 'koor_lab',
-                'laboratorium_id' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Koordinator Lab ITSC',
-                'email' => 'koorlab@itsc.com',
-                'nim' => null,
-                'password' => Hash::make('password'),
-                'role' => 'koor_lab',
-                'laboratorium_id' => 2,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Koordinator Lab MVK',
-                'email' => 'koorlab@mvk.com',
-                'nim' => null,
-                'password' => Hash::make('password'),
-                'role' => 'koor_lab',
-                'laboratorium_id' => 3,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Koordinator Lab SISTEM SIBER',
-                'email' => 'koorlab@siber.com',
-                'nim' => null,
-                'password' => Hash::make('password'),
-                'role' => 'koor_lab',
-                'laboratorium_id' => 4,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-
-            // ============ KEPALA LAB ============
-            [
-                'name' => 'Kepala Laboratorium',
+                'name' => 'Dr. Ahmad Fauzi, M.Kom.',
                 'email' => 'kalab@informatika.com',
                 'nim' => null,
                 'password' => Hash::make('password'),
-                'role' => 'kepala_lab',
+                'role' => 'ka_lab',
                 'laboratorium_id' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
 
-            // ============ KAPRODI ============
+            // ============ PRODI (DULU KAPRODI) ============
             [
-                'name' => 'Kepala Program Studi',
-                'email' => 'kaprodi@informatika.com',
+                'name' => 'Dr. Budi Santoso, M.T.',
+                'email' => 'prodi@informatika.com',
                 'nim' => null,
                 'password' => Hash::make('password'),
-                'role' => 'kaprodi',
+                'role' => 'prodi',
+                'laboratorium_id' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+
+            // ============ KOORDINATOR TA (ROLE BARU - ADMIN) ============
+            [
+                'name' => 'Admin Koordinator TA',
+                'email' => 'koordinatorta@informatika.com',
+                'nim' => null,
+                'password' => Hash::make('password'),
+                'role' => 'koordinator_ta',
                 'laboratorium_id' => null,
                 'created_at' => now(),
                 'updated_at' => now(),

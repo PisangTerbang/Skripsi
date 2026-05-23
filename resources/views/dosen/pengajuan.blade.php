@@ -1,382 +1,609 @@
 <x-layout-dosen>
     <x-slot:title>{{ $title }}</x-slot>
 
-    <div x-data="pengajuanDosenPage()" x-init="init()" class="space-y-6">
+    <div x-data="pengajuanDosenPage()" x-init="init()" class="min-h-screen bg-slate-100">
+        <div class="px-6 py-6 space-y-6">
 
-        {{-- =============== ALERTS ================= --}}
-        @if (session('success'))
-            <div x-data="{ show: true }" x-show="show" x-transition
-                class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 12l2 2 4-4m6 2a9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>{{ session('success') }}</span>
+            {{-- ===== TOP BAR ===== --}}
+            <div class="sticky top-0 z-10 border-b-2 border-emerald-100 bg-white px-6 py-4 shadow-sm -mx-6 -mt-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="flex h-10 w-10 items-center justify-center rounded-xl border-2 border-emerald-200 bg-emerald-50">
+                            <x-heroicon-o-clipboard-document-list class="h-5 w-5 text-emerald-600" />
+                        </div>
+                        <div class="h-8 w-px bg-gray-200"></div>
+                        <div>
+                            <h1 class="text-lg font-extrabold text-gray-900">Review Pengajuan Mahasiswa</h1>
+                            <p class="mt-0.5 text-xs text-gray-400">Tinjau dan berikan keputusan untuk pengajuan judul
+                                TA</p>
+                        </div>
+                    </div>
+                    @if ($pending > 0)
+                        <span
+                            class="inline-flex items-center gap-1.5 rounded-full border-2 border-yellow-200 bg-yellow-100 px-4 py-1.5 text-xs font-black text-yellow-700">
+                            <span class="h-2 w-2 animate-pulse rounded-full bg-yellow-500"></span>
+                            {{ $pending }} perlu review
+                        </span>
+                    @endif
                 </div>
-                <button @click="show = false" class="text-green-700 hover:text-green-900">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
             </div>
-        @endif
 
-        @if (session('error'))
-            <div x-data="{ show: true }" x-show="show" x-transition
-                class="bg-red-50 border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 0 0118 0z" />
-                    </svg>
-                    <span>{{ session('error') }}</span>
+            {{-- Alert --}}
+            @if (session('success'))
+                <div x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 4000)"
+                    class="flex items-center gap-3 rounded-2xl border-2 border-green-200 bg-green-50 px-5 py-4 text-sm text-green-800 shadow-sm">
+                    <x-heroicon-o-check-circle class="h-5 w-5 shrink-0 text-green-500" />
+                    <span class="font-semibold">{{ session('success') }}</span>
+                    <button @click="show = false"
+                        class="ml-auto rounded-lg p-1 text-green-400 hover:bg-green-100 transition">
+                        <x-heroicon-o-x-mark class="h-4 w-4" />
+                    </button>
                 </div>
-                <button @click="show = false" class="text-red-700 hover:text-red-900">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
+            @endif
+
+            @if (session('error'))
+                <div x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 4000)"
+                    class="flex items-center gap-3 rounded-2xl border-2 border-red-200 bg-red-50 px-5 py-4 text-sm text-red-800 shadow-sm">
+                    <x-heroicon-o-x-circle class="h-5 w-5 shrink-0 text-red-500" />
+                    <span class="font-semibold">{{ session('error') }}</span>
+                    <button @click="show = false"
+                        class="ml-auto rounded-lg p-1 text-red-400 hover:bg-red-100 transition">
+                        <x-heroicon-o-x-mark class="h-4 w-4" />
+                    </button>
+                </div>
+            @endif
+
+            {{-- ===== STATS ===== --}}
+            <div class="flex items-center gap-3">
+                <div class="h-px flex-1 bg-gradient-to-r from-transparent to-gray-200"></div>
+                <span
+                    class="flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-bold uppercase tracking-widest text-gray-400 shadow-sm">
+                    <x-heroicon-o-chart-bar class="h-3 w-3" />
+                    Ringkasan
+                </span>
+                <div class="h-px flex-1 bg-gradient-to-l from-transparent to-gray-200"></div>
             </div>
-        @endif
 
-        {{-- ================= HEADER ================= --}}
-        <div class="bg-gradient-to-br from-emerald-500 to-green-600 text-white rounded-2xl shadow-xl p-6">
-            <div class="flex items-center justify-between">
-                <div class="flex-1">
-                    <h2 class="text-2xl font-bold mb-2">Review Pengajuan Mahasiswa</h2>
-                    <p class="text-emerald-100 text-sm">Tinjau dan berikan keputusan untuk pengajuan judul skripsi</p>
-                </div>
-                <div class="hidden md:block">
-                    <div class="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center">
-                        <p class="text-3xl font-bold">{{ $pending }}</p>
-                        <p class="text-xs text-emerald-100 mt-1">Perlu Review</p>
+            @php
+                $pctDisetujui = $totalPengajuan > 0 ? round(($disetujui / $totalPengajuan) * 100) : 0;
+                $pctDitolak = $totalPengajuan > 0 ? round(($ditolak / $totalPengajuan) * 100) : 0;
+            @endphp
+
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+
+                {{-- Total --}}
+                <div
+                    class="relative overflow-hidden rounded-2xl border-2 border-indigo-300 bg-gradient-to-br from-indigo-600 via-indigo-700 to-blue-800 p-6 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl">
+                    <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10"></div>
+                    <div class="absolute -bottom-6 -left-4 h-20 w-20 rounded-full bg-white/5"></div>
+                    <div class="relative flex items-start justify-between">
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-widest text-indigo-200">Total Pengajuan</p>
+                            <p class="mt-3 text-5xl font-black leading-none text-white">{{ $totalPengajuan }}</p>
+                            <p class="mt-2 text-xs font-medium text-indigo-200">semua status</p>
+                        </div>
+                        <div
+                            class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border-2 border-white/20 bg-white/20">
+                            <x-heroicon-o-document-text class="h-5 w-5 text-white" />
+                        </div>
+                    </div>
+                    <div class="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-white/20">
+                        <div class="h-full w-full rounded-full bg-white/60"></div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        {{-- ================= STATS CARDS ================= --}}
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-
-            <div class="bg-white rounded-2xl shadow-lg border-gray-100 p-6">
-                <div class="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center mb-4">
-                    <x-heroicon-o-document-text class="w-6 h-6 text-indigo-600" />
+                {{-- Pending --}}
+                <div
+                    class="relative overflow-hidden rounded-2xl border-2 border-yellow-300 bg-gradient-to-br from-yellow-400 via-yellow-500 to-orange-500 p-6 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl">
+                    <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10"></div>
+                    <div class="absolute -bottom-6 -left-4 h-20 w-20 rounded-full bg-white/5"></div>
+                    <div class="relative flex items-start justify-between">
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-widest text-yellow-100">Perlu Review</p>
+                            <p class="mt-3 text-5xl font-black leading-none text-white">{{ $pending }}</p>
+                            <p class="mt-2 text-xs font-medium text-yellow-100">menunggu keputusan</p>
+                        </div>
+                        <div
+                            class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border-2 border-white/20 bg-white/20">
+                            <x-heroicon-o-clock class="h-5 w-5 text-white" />
+                        </div>
+                    </div>
+                    <div class="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-white/20">
+                        <div class="h-full {{ $pending > 0 ? 'animate-pulse' : '' }} w-full rounded-full bg-white/60">
+                        </div>
+                    </div>
                 </div>
-                <p class="text-gray-500 text-sm font-medium mb-1">Total Pengajuan</p>
-                <p class="text-3xl font-bold text-gray-800">{{ $totalPengajuan }}</p>
-            </div>
 
-            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-                <div class="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center mb-4">
-                    <x-heroicon-o-clock class="w-6 h-6 text-yellow-600" />
+                {{-- Disetujui --}}
+                <div
+                    class="relative overflow-hidden rounded-2xl border-2 border-emerald-300 bg-gradient-to-br from-emerald-500 via-emerald-600 to-green-700 p-6 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl">
+                    <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10"></div>
+                    <div class="absolute -bottom-6 -left-4 h-20 w-20 rounded-full bg-white/5"></div>
+                    <div class="relative flex items-start justify-between">
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-widest text-emerald-200">Disetujui</p>
+                            <p class="mt-3 text-5xl font-black leading-none text-white">{{ $disetujui }}</p>
+                            <p class="mt-2 text-xs font-medium text-emerald-200">{{ $pctDisetujui }}% dari total</p>
+                        </div>
+                        <div
+                            class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border-2 border-white/20 bg-white/20">
+                            <x-heroicon-o-check-circle class="h-5 w-5 text-white" />
+                        </div>
+                    </div>
+                    <div class="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-white/20">
+                        <div class="h-full rounded-full bg-white/60 transition-all duration-700"
+                            style="width: {{ $pctDisetujui }}%"></div>
+                    </div>
                 </div>
-                <p class="text-gray-500 text-sm font-medium mb-1">Perlu Review</p>
-                <p class="text-3xl font-bold text-gray-800">{{ $pending }}</p>
-            </div>
 
-            <div class="bg-white rounded-2xl shadow-lg border-gray-100 p-6">
-                <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-4">
-                    <x-heroicon-o-check-circle class="w-6 h-6 text-green-600" />
+                {{-- Ditolak --}}
+                <div
+                    class="relative overflow-hidden rounded-2xl border-2 border-red-300 bg-gradient-to-br from-red-500 via-red-600 to-rose-700 p-6 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl">
+                    <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10"></div>
+                    <div class="absolute -bottom-6 -left-4 h-20 w-20 rounded-full bg-white/5"></div>
+                    <div class="relative flex items-start justify-between">
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-widest text-red-200">Ditolak</p>
+                            <p class="mt-3 text-5xl font-black leading-none text-white">{{ $ditolak }}</p>
+                            <p class="mt-2 text-xs font-medium text-red-200">{{ $pctDitolak }}% dari total</p>
+                        </div>
+                        <div
+                            class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border-2 border-white/20 bg-white/20">
+                            <x-heroicon-o-x-circle class="h-5 w-5 text-white" />
+                        </div>
+                    </div>
+                    <div class="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-white/20">
+                        <div class="h-full rounded-full bg-white/60 transition-all duration-700"
+                            style="width: {{ $pctDitolak }}%"></div>
+                    </div>
                 </div>
-                <p class="text-gray-500 text-sm font-medium mb-1">Disetujui</p>
-                <p class="text-3xl font-bold text-gray-800">{{ $disetujui }}</p>
+
             </div>
 
-            <div class="bg-white rounded-2xl shadow-lg border-gray-100 p-6">
-                <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center mb-4">
-                    <x-heroicon-o-x-circle class="w-6 h-6 text-red-600" />
+            {{-- ===== FILTER ===== --}}
+            <div class="flex items-center gap-3">
+                <div class="h-px flex-1 bg-gradient-to-r from-transparent to-gray-200"></div>
+                <span
+                    class="flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-bold uppercase tracking-widest text-gray-400 shadow-sm">
+                    <x-heroicon-o-table-cells class="h-3 w-3" />
+                    Daftar Pengajuan
+                </span>
+                <div class="h-px flex-1 bg-gradient-to-l from-transparent to-gray-200"></div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-3">
+
+                {{-- Status Filter Pills --}}
+                <div class="flex items-center gap-1 rounded-2xl border-2 border-gray-200 bg-white p-1.5 shadow-sm">
+                    @foreach ([
+        'all' => ['label' => 'Semua', 'color' => 'emerald'],
+        'pending' => ['label' => 'Pending', 'color' => 'yellow'],
+        'disetujui' => ['label' => 'Disetujui', 'color' => 'emerald'],
+        'ditolak' => ['label' => 'Ditolak', 'color' => 'red'],
+    ] as $val => $cfg)
+                        <button type="button" @click="filterStatus = '{{ $val }}'; applyFilter()"
+                            x-bind:class="filterStatus === '{{ $val }}'
+                                ?
+                                '{{ $val === 'ditolak' ? 'bg-red-600' : ($val === 'pending' ? 'bg-yellow-500' : 'bg-emerald-600') }} text-white shadow-sm' :
+                                'text-gray-500 hover:bg-gray-100 hover:text-gray-700'"
+                            class="rounded-xl px-3 py-1.5 text-xs font-bold transition-all">
+                            {{ $cfg['label'] }}
+                        </button>
+                        @if (!$loop->last)
+                            <div class="h-5 w-px bg-gray-200"></div>
+                        @endif
+                    @endforeach
                 </div>
-                <p class="text-gray-500 text-sm font-medium mb-1">Ditolak</p>
-                <p class="text-3xl font-bold text-gray-800">{{ $ditolak }}</p>
-            </div>
 
-        </div>
+                {{-- Jenis Filter --}}
+                <div class="flex items-center gap-1 rounded-2xl border-2 border-gray-200 bg-white p-1.5 shadow-sm">
+                    @foreach ([
+        'all' => 'Semua Jenis',
+        'pilih' => 'Pilih Judul',
+        'mandiri' => 'Mandiri',
+    ] as $val => $label)
+                        <button type="button" @click="filterJenis = '{{ $val }}'; applyFilter()"
+                            x-bind:class="filterJenis === '{{ $val }}'
+                                ?
+                                'bg-indigo-600 text-white shadow-sm' :
+                                'text-gray-500 hover:bg-gray-100 hover:text-gray-700'"
+                            class="rounded-xl px-3 py-1.5 text-xs font-bold transition-all">
+                            {{ $label }}
+                        </button>
+                        @if (!$loop->last)
+                            <div class="h-5 w-px bg-gray-200"></div>
+                        @endif
+                    @endforeach
+                </div>
 
-
-
-        {{-- ================= FILTER & SEARCH ================= --}}
-        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-            <div class="flex flex-col md:flex-row gap-4">
-                <div class="flex-1 relative">
+                {{-- Search --}}
+                <div
+                    class="flex flex-1 items-center gap-2 rounded-2xl border-2 border-gray-200 bg-white px-4 py-2 shadow-sm min-w-[200px]">
+                    <x-heroicon-o-magnifying-glass class="h-4 w-4 shrink-0 text-gray-400" />
                     <input type="text" x-model="searchQuery" @input="applyFilter()"
                         placeholder="Cari mahasiswa atau judul..."
-                        class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
-                    <x-heroicon-o-magnifying-glass
-                        class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                        class="flex-1 bg-transparent text-sm text-gray-700 placeholder-gray-400 focus:outline-none" />
+                    <template x-if="searchQuery !== ''">
+                        <button @click="searchQuery = ''; applyFilter()"
+                            class="text-gray-400 hover:text-gray-600 transition">
+                            <x-heroicon-o-x-mark class="h-4 w-4" />
+                        </button>
+                    </template>
+                </div>
 
+                {{-- Count --}}
+                <div
+                    class="flex items-center gap-1.5 rounded-2xl border-2 border-gray-200 bg-white px-4 py-2 shadow-sm text-xs font-bold text-gray-600">
+                    <span x-text="filteredData.length"></span>
+                    <span>judul</span>
                 </div>
-                <select x-model="filterStatus" @change="applyFilter()"
-                    class="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
-                    <option value="all">Semua Status</option>
-                    <option value="pending">Pending</option>
-                    <option value="disetujui">Disetujui</option>
-                    <option value="ditolak">Ditolak</option>
-                </select>
-                <select x-model="filterJenis" @change="applyFilter()"
-                    class="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
-                    <option value="all">Semua Jenis</option>
-                    <option value="pilih">Pilih Judul</option>
-                    <option value="mandiri">Judul Mandiri</option>
-                </select>
-                <div class="flex items-center px-4 py-3 bg-emerald-50 text-emerald-700 rounded-xl font-medium text-sm">
-                    <span x-text="filteredData.length"></span>&nbsp;hasil
-                </div>
+
             </div>
-        </div>
+            {{-- ===== PENGAJUAN LIST ===== --}}
+            <div class="space-y-5">
 
-        {{-- ================= PENGAJUAN LIST ================= --}}
-        <div class="space-y-6">
-            <template x-for="group in filteredData" :key="group.judul_id">
-                <div class="bg-white rounded-2xl shadow-lg border-gray-100 overflow-hidden">
+                <template x-for="group in filteredData" :key="group.judul_id">
+                    <div class="overflow-hidden rounded-2xl border-2 border-gray-200 bg-white shadow-md">
 
-                    {{-- Group Header --}}
-                    <div class="bg-gradient-to-r from-emerald-50 to-green-50 px-6 py-4 border-b border-gray-200">
-                        <div class="flex items-start justify-between">
-                            <div class="flex-1">
-                                <div class="flex items-center gap-2 mb-2">
-                                    <span x-show="group.jenis === 'mandiri'"
-                                        class="px-3 py-1 text-xs font-bold bg-purple-100 text-purple-700 rounded-full">Judul
-                                        Mandiri</span>
-                                    <span x-show="group.jenis === 'pilih'"
-                                        class="px-3 py-1 text-xs font-bold bg-blue-100 text-blue-700 rounded-full">Pilih
-                                        Judul</span>
-                                    <span x-show="!group.is_owner"
-                                        class="px-3 py-1 text-xs font-bold bg-gray-100 text-gray-600 rounded-full">Judul
-                                        Dosen Lain</span>
+                        {{-- Group Header --}}
+                        <div
+                            class="border-b-4 border-emerald-200 bg-gradient-to-r from-emerald-600 to-teal-700 px-6 py-5">
+                            <div class="flex items-start justify-between gap-4">
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <span x-show="group.jenis === 'mandiri'"
+                                            class="inline-flex items-center rounded-full border-2 border-white/30 bg-white/20 px-3 py-1 text-xs font-black text-white">
+                                            Judul Mandiri
+                                        </span>
+                                        <span x-show="group.jenis === 'pilih'"
+                                            class="inline-flex items-center rounded-full border-2 border-white/30 bg-white/20 px-3 py-1 text-xs font-black text-white">
+                                            Pilih Judul
+                                        </span>
+                                        <span x-show="!group.is_owner"
+                                            class="inline-flex items-center rounded-full border-2 border-orange-300/50 bg-orange-400/20 px-3 py-1 text-xs font-black text-orange-200">
+                                            Judul Dosen Lain
+                                        </span>
+                                    </div>
+                                    <h3 class="text-base font-extrabold text-white leading-relaxed line-clamp-2"
+                                        x-text="group.judul"></h3>
+                                    <div class="mt-1.5 flex items-center gap-3">
+                                        <span x-show="group.kode" class="font-mono text-xs text-emerald-200"
+                                            x-text="'Kode: ' + group.kode">
+                                        </span>
+                                    </div>
                                 </div>
-                                <h3 class="text-xl font-bold text-gray-800 mb-1" x-text="group.judul"></h3>
-                                <p x-show="group.kode" class="text-sm text-gray-500">Kode: <span class="font-mono"
-                                        x-text="group.kode"></span></p>
-                                <p x-show="group.deskripsi" class="text-sm text-gray-600 mt-2"
-                                    x-text="group.deskripsi"></p>
-                            </div>
-                            <div x-show="group.pemenang" class="ml-4">
-                                <div class="bg-green-100 border-green-200 rounded-xl px-4 py-2">
-                                    <p class="text-xs text-green-600 font-semibold mb-1">Sudah Diambil</p>
-                                    <p class="text-sm text-green-800 font-medium" x-text="group.pemenang"></p>
+
+                                {{-- Pemenang badge --}}
+                                <div x-show="group.pemenang" class="shrink-0">
+                                    <div
+                                        class="rounded-xl border-2 border-white/30 bg-white/20 px-4 py-2.5 text-center backdrop-blur-sm">
+                                        <p class="text-xs font-bold text-emerald-200 uppercase tracking-wide">Sudah
+                                            Diambil</p>
+                                        <p class="mt-0.5 text-sm font-black text-white" x-text="group.pemenang"></p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    {{-- Submissions List --}}
-                    <div class="p-6 space-y-4">
-                        <template x-for="item in group.items" :key="item.id">
-                            <div class="border-2 rounded-xl p-5 transition-all"
-                                :class="{
-                                    'border-yellow-200 bg-yellow-50/50': item.status === 'pending',
-                                    'border-green-200 bg-green-50/50': item.status === 'disetujui',
-                                    'border-red-200 bg-red-50/50': item.status === 'ditolak'
-                                }">
+                        {{-- Submissions List --}}
+                        <div class="divide-y-2 divide-gray-100 p-4 space-y-0">
+                            <template x-for="item in group.items" :key="item.id">
+                                <div class="rounded-xl border-2 p-5 mb-3 last:mb-0 transition-all"
+                                    x-bind:class="{
+                                        'border-yellow-200 bg-yellow-50/40': item.status === 'pending',
+                                        'border-emerald-200 bg-emerald-50/40': item.status === 'disetujui',
+                                        'border-red-200 bg-red-50/40': item.status === 'ditolak'
+                                    }">
 
-                                {{-- Item Header --}}
-                                <div class="flex items-start justify-between mb-4">
-                                    <div class="flex-1">
-                                        <div class="flex items-center gap-2 mb-2">
-                                            <h4 class="font-bold text-gray-800" x-text="item.mahasiswa"></h4>
-                                            <span class="px-3 py-1 text-xs font-bold rounded-full"
-                                                :class="{
-                                                    'bg-yellow-200 text-yellow-800': item.status === 'pending',
-                                                    'bg-green-200 text-green-800': item.status === 'disetujui',
-                                                    'bg-red-200 text-red-800': item.status === 'ditolak'
+                                    {{-- Item Header --}}
+                                    <div class="flex items-start justify-between gap-3 mb-4">
+                                        <div class="flex items-center gap-3">
+                                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-black text-white shadow-sm ring-2"
+                                                x-bind:class="{
+                                                    'bg-gradient-to-br from-yellow-400 to-orange-500 ring-yellow-200': item
+                                                        .status === 'pending',
+                                                    'bg-gradient-to-br from-emerald-500 to-green-600 ring-emerald-200': item
+                                                        .status === 'disetujui',
+                                                    'bg-gradient-to-br from-red-500 to-rose-600 ring-red-200': item
+                                                        .status === 'ditolak'
                                                 }"
-                                                x-text="item.status === 'pending' ? 'Pending' : item.status === 'disetujui' ? 'Disetujui' : 'Ditolak'">
-                                            </span>
+                                                x-text="item.mahasiswa.charAt(0).toUpperCase()">
+                                            </div>
+                                            <div>
+                                                <div class="flex items-center gap-2">
+                                                    <p class="font-black text-gray-800" x-text="item.mahasiswa"></p>
+                                                    <span
+                                                        class="inline-flex items-center gap-1.5 rounded-full border-2 px-2.5 py-1 text-xs font-black"
+                                                        x-bind:class="{
+                                                            'border-yellow-200 bg-yellow-100 text-yellow-700': item
+                                                                .status === 'pending',
+                                                            'border-emerald-200 bg-emerald-100 text-emerald-700': item
+                                                                .status === 'disetujui',
+                                                            'border-red-200 bg-red-100 text-red-700': item
+                                                                .status === 'ditolak'
+                                                        }">
+                                                        <span class="h-1.5 w-1.5 rounded-full"
+                                                            x-bind:class="{
+                                                                'bg-yellow-500 animate-pulse': item
+                                                                    .status === 'pending',
+                                                                'bg-emerald-500': item.status === 'disetujui',
+                                                                'bg-red-500': item.status === 'ditolak'
+                                                            }">
+                                                        </span>
+                                                        <span
+                                                            x-text="item.status === 'pending' ? 'Pending' : item.status === 'disetujui' ? 'Disetujui' : 'Ditolak'"></span>
+                                                    </span>
+                                                </div>
+                                                <div class="mt-0.5 flex items-center gap-2 text-xs text-gray-400">
+                                                    <span>Prioritas <span class="font-black"
+                                                            x-text="item.prioritas"></span></span>
+                                                    <span x-show="item.prioritas === 1"
+                                                        class="font-black text-blue-600">(Utama)</span>
+                                                    <span>•</span>
+                                                    <span x-text="item.waktu"></span>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <p class="text-sm text-gray-600">
-                                            Prioritas <span class="font-semibold" x-text="item.prioritas"></span>
-                                            <span x-show="item.prioritas === 1"
-                                                class="text-blue-600 font-semibold ml-1">(Utama)</span>
-                                        </p>
-                                        <p class="text-xs text-gray-500 mt-1" x-text="item.waktu"></p>
                                     </div>
-                                </div>
 
-                                {{-- Warning: Mahasiswa sudah punya judul --}}
-                                <div x-show="item.sudah_punya_judul && item.status === 'pending'"
-                                    class="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                                    <p class="text-sm text-orange-700">Mahasiswa sudah memiliki judul yang disetujui
-                                    </p>
-                                </div>
-
-                                {{-- Alasan Mahasiswa --}}
-                                <div x-show="item.alasan" class="mb-4">
-                                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                        <p class="text-xs text-blue-600 font-semibold mb-2">Alasan Mahasiswa:</p>
-                                        <p class="text-sm text-blue-900" x-text="item.alasan"></p>
+                                    {{-- Warning: sudah punya judul --}}
+                                    <div x-show="item.sudah_punya_judul && item.status === 'pending'"
+                                        class="mb-3 flex items-center gap-2 rounded-xl border-2 border-orange-200 bg-orange-50 px-4 py-3">
+                                        <x-heroicon-o-exclamation-triangle class="h-4 w-4 shrink-0 text-orange-500" />
+                                        <p class="text-xs font-semibold text-orange-700">Mahasiswa sudah memiliki judul
+                                            yang disetujui</p>
                                     </div>
-                                </div>
 
-                                {{-- Catatann Dosen --}}
-                                <div x-show="item.catatan_dosen" class="mb-4">
-                                    <div class="rounded-lg p-4"
-                                        :class="{
-                                            'bg-green-50 border border-green-200': item.status === 'disetujui',
-                                            'bg-red-50 border border-red-200': item.status === 'ditolak'
-                                        }">
-                                        <p class="text-xs font-semibold mb-2"
-                                            :class="{
-                                                'text-green-700': item.status === 'disetujui',
-                                                'text-red-700': item.status === 'ditolak'
+                                    {{-- Alasan Mahasiswa --}}
+                                    <div x-show="item.alasan" class="mb-3">
+                                        <div class="rounded-xl border-2 border-blue-200 bg-blue-50 px-4 py-3">
+                                            <p
+                                                class="text-xs font-black uppercase tracking-widest text-blue-500 mb-1.5">
+                                                Alasan Mahasiswa</p>
+                                            <p class="text-sm text-blue-900 leading-relaxed" x-text="item.alasan"></p>
+                                        </div>
+                                    </div>
+
+                                    {{-- Catatan Dosen --}}
+                                    <div x-show="item.catatan_dosen" class="mb-3">
+                                        <div class="rounded-xl border-2 px-4 py-3"
+                                            x-bind:class="{
+                                                'border-emerald-200 bg-emerald-50': item.status === 'disetujui',
+                                                'border-red-200 bg-red-50': item.status === 'ditolak'
                                             }">
-                                            Catatan Dosen:</p>
-                                        <p class="text-sm"
-                                            :class="{
-                                                'text-green-800': item.status === 'disetujui',
-                                                'text-red-800': item.status === 'ditolak'
-                                            }"
-                                            x-text="item.catatan_dosen"></p>
-                                    </div>
-                                </div>
-
-                                {{-- Status Kaprodi (jika sudah di-approve dosen) --}}
-                                <div x-show="item.status === 'disetujui'" class="mb-4">
-                                    <div class="flex items-center gap-2 p-3 rounded-lg"
-                                        :class="{
-                                            'bg-purple-50 border border-purple-200': item
-                                                .status_kaprodi === 'pending',
-                                            'bg-green-50 border border-green-200': item.status_kaprodi === 'disetujui',
-                                            'bg-red-50 border border-red-200': item.status_kaprodi === 'ditolak'
-                                        }">
-                                        <x-heroicon-o-academic-cap class="w-5 h-5 text-purple-600" />
-                                        <div>
-                                            <p class="text-xs font-semibold"
-                                                :class="{
-                                                    'text-purple-700': item.status_kaprodi === 'pending',
-                                                    'text-green-700': item.status_kaprodi === 'disetujui',
-                                                    'text-red-700': item.status_kaprodi === 'ditolak'
+                                            <p class="text-xs font-black uppercase tracking-widest mb-1.5"
+                                                x-bind:class="{
+                                                    'text-emerald-500': item.status === 'disetujui',
+                                                    'text-red-500': item.status === 'ditolak'
                                                 }">
-                                                Status Kaprodi:
-                                                <span
-                                                    x-text="item.status_kaprodi === 'pending' ? 'Menunggu Persetujuan Final' : (item.status_kaprodi === 'disetujui' ? 'Disetujui - Mahasiswa Boleh Mulai' : 'Ditolak')"></span>
+                                                Catatan Dosen
+                                            </p>
+                                            <p class="text-sm italic leading-relaxed"
+                                                x-bind:class="{
+                                                    'text-emerald-800': item.status === 'disetujui',
+                                                    'text-red-800': item.status === 'ditolak'
+                                                }"
+                                                x-text="item.catatan_dosen">
                                             </p>
                                         </div>
                                     </div>
-                                </div>
 
-
-                                {{-- Action Buttons --}}
-                                <div x-show="item.status === 'pending'">
-                                    <template x-if="!item.is_owner">
-                                        <div class="p-3 bg-gray-50 border border-gray-200 rounded-xl text-center">
-                                            <p class="text-sm text-gray-500">Hanya dosen pemilik judul yang dapat
-                                                menindaklanjuti pengajuan ini</p>
+                                    {{-- Status Kaprodi --}}
+                                    <div x-show="item.status === 'disetujui'" class="mb-3">
+                                        <div class="flex items-center gap-2 rounded-xl border-2 px-4 py-3"
+                                            x-bind:class="{
+                                                'border-violet-200 bg-violet-50': item.status_kaprodi === 'pending' ||
+                                                    item.status_kaprodi === '',
+                                                'border-emerald-200 bg-emerald-50': item
+                                                    .status_kaprodi === 'disetujui',
+                                                'border-red-200 bg-red-50': item.status_kaprodi === 'ditolak'
+                                            }">
+                                            <x-heroicon-o-academic-cap class="h-4 w-4 shrink-0 text-violet-500" />
+                                            <div>
+                                                <p class="text-xs font-black uppercase tracking-widest mb-0.5"
+                                                    x-bind:class="{
+                                                        'text-violet-500': item.status_kaprodi === 'pending' || item
+                                                            .status_kaprodi === '',
+                                                        'text-emerald-500': item.status_kaprodi === 'disetujui',
+                                                        'text-red-500': item.status_kaprodi === 'ditolak'
+                                                    }">
+                                                    Status Kaprodi
+                                                </p>
+                                                <p class="text-sm font-semibold"
+                                                    x-bind:class="{
+                                                        'text-violet-700': item.status_kaprodi === 'pending' || item
+                                                            .status_kaprodi === '',
+                                                        'text-emerald-700': item.status_kaprodi === 'disetujui',
+                                                        'text-red-700': item.status_kaprodi === 'ditolak'
+                                                    }"
+                                                    x-text="item.status_kaprodi === 'disetujui'
+                                                        ? 'Disetujui — Mahasiswa Boleh Mulai'
+                                                        : (item.status_kaprodi === 'ditolak'
+                                                            ? 'Ditolak oleh Kaprodi'
+                                                            : 'Menunggu Persetujuan Final Kaprodi')">
+                                                </p>
+                                            </div>
                                         </div>
-                                    </template>
-                                    <template x-if="item.is_owner">
-                                        <div class="flex gap-3">
-                                            <button @click="openReviewModal(item, 'disetujui')"
-                                                :disabled="item.sudah_punya_judul"
-                                                class="flex-1 px-4 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-xl font-semibold transition-all shadow-sm hover:shadow-md">
-                                                Setujui
-                                            </button>
-                                            <button @click="openReviewModal(item, 'ditolak')"
-                                                class="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold transition-all shadow-sm hover:shadow-md">
-                                                Tolak
-                                            </button>
-                                        </div>
-                                    </template>
+                                    </div>
+
+                                    {{-- Action Buttons --}}
+                                    <div x-show="item.status === 'pending'">
+                                        <template x-if="!item.is_owner">
+                                            <div
+                                                class="rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 px-4 py-3 text-center">
+                                                <p class="text-xs font-semibold text-gray-400">Hanya dosen pemilik
+                                                    judul yang dapat menindaklanjuti pengajuan ini</p>
+                                            </div>
+                                        </template>
+                                        <template x-if="item.is_owner">
+                                            <div class="grid grid-cols-2 gap-3">
+                                                <button @click="openReviewModal(item, 'disetujui')"
+                                                    x-bind:disabled="item.sudah_punya_judul"
+                                                    x-bind:class="item.sudah_punya_judul ?
+                                                        'opacity-50 cursor-not-allowed bg-gray-300 border-gray-300' :
+                                                        'bg-emerald-600 border-emerald-300 hover:bg-emerald-700 hover:shadow-md'"
+                                                    class="inline-flex items-center justify-center gap-2 rounded-xl border-2 px-4 py-2.5 text-sm font-black text-white shadow-sm transition">
+                                                    <x-heroicon-o-check-circle class="h-4 w-4" />
+                                                    Setujui
+                                                </button>
+                                                <button @click="openReviewModal(item, 'ditolak')"
+                                                    class="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-red-300 bg-red-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-red-700 hover:shadow-md">
+                                                    <x-heroicon-o-x-circle class="h-4 w-4" />
+                                                    Tolak
+                                                </button>
+                                            </div>
+                                        </template>
+                                    </div>
+
                                 </div>
-
-                            </div>
-                        </template>
-                    </div>
-
-                </div>
-            </template>
-
-            {{-- Empty State --}}
-            <template x-if="filteredData.length === 0">
-                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-12 text-center">
-                    <p class="text-gray-500 text-lg font-medium">Tidak ada pengajuan</p>
-                    <p class="text-gray-400 text-sm mt-1">Coba ubah filter atau kata kunci pencarian</p>
-                </div>
-            </template>
-        </div>
-
-
-        {{-- =============== REVIEW MODAL (DI DALAM x-data) ================= --}}
-        <div x-show="showModal" x-cloak @click.self="showModal = false"
-            class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div @click.away="showModal = false" x-transition:enter="transition ease-out duration-200"
-                x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-                x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100"
-                x-transition:leave-end="opacity-0 scale-95"
-                class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                <div
-                    class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-                    <h3 class="text-xl font-bold text-gray-800">
-                        <span x-show="reviewAction === 'disetujui'" class="text-green-600">Setujui
-                            Pengajuan</span>
-                        <span x-show="reviewAction === 'ditolak'" class="text-red-600">Tolak
-                            Pengajuan</span>
-                    </h3>
-                    <button @click="showModal = false" class="text-gray-400 hover:text-gray-600 transition-colors">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-                <div class="p-6 space-y-6">
-                    <div class="bg-gray-50 rounded-xl p-4">
-                        <p class="text-sm text-gray-600 mb-1">Mahasiswa:</p>
-                        <p class="text-lg font-bold text-gray-800" x-text="selectedItem.mahasiswa"></p>
-                        <p class="text-sm text-gray-600 mt-2 mb-1">Judul:</p>
-                        <p class="font-semibold text-gray-800" x-text="selectedItem.judul_text"></p>
-                    </div>
-                    <form method="POST" :action="'/dosen/pengajuan/' + selectedItem.id" class="space-y-6">
-                        @csrf
-                        @method('PUT')
-                        <input type="hidden" name="status" :value="reviewAction">
-                        <template x-if="selectedItem.jenis === 'mandiri' && reviewAction === 'disetujui'">
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Pilih
-                                    Laboratorium <span class="text-red-500">*</span></label>
-                                <select name="laboratorium_id" required
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
-                                    <option value="">-- Pilih Laboratorium --</option>
-                                    @foreach ($laboratorium as $lab)
-                                        <option value="{{ $lab->id }}">{{ $lab->nama }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </template>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Catatan untuk
-                                Mahasiswa</label>
-                            <textarea name="catatan_dosen" rows="4" placeholder="Berikan catatan, saran, atau alasan keputusan Anda..."
-                                class="w-full px-4 py-3 border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent"></textarea>
+                            </template>
                         </div>
-                        <div x-show="reviewAction === 'disetujui'"
-                            class="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                            <p class="text-sm text-blue-800">
-                                <span class="font-semibold">Perhatian:</span> Setelah disetujui, judul akan
-                                terkunci dan pengajuan lain akan otomatis ditolak.
+
+                    </div>
+                </template>
+
+
+                {{-- Empty State --}}
+                <template x-if="filteredData.length === 0">
+                    <div class="flex flex-col items-center justify-center py-24 text-center">
+                        <div class="relative mb-6">
+                            <div
+                                class="flex h-24 w-24 items-center justify-center rounded-3xl border-2 border-emerald-100 bg-gradient-to-br from-emerald-50 to-teal-100 shadow-inner">
+                                <x-heroicon-o-clipboard-document-list class="h-12 w-12 text-emerald-300" />
+                            </div>
+                        </div>
+                        <p class="text-lg font-extrabold text-gray-800">Tidak ada pengajuan</p>
+                        <p class="mt-2 text-sm text-gray-400">Coba ubah filter atau kata kunci pencarian</p>
+                    </div>
+                </template>
+
+            </div>{{-- end space-y-5 list --}}
+
+        </div>{{-- end px-6 py-6 --}}
+    
+
+    {{-- ✅ MODAL masih di dalam x-data --}}
+    <div x-show="showModal" x-cloak @click.self="showModal = false"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95"
+            x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+            class="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border-2 border-gray-200 bg-white shadow-2xl">
+
+            {{-- Modal Header --}}
+            <div class="sticky top-0 z-10 flex items-center justify-between border-b-4 px-6 py-4"
+                x-bind:class="reviewAction === 'disetujui'
+                    ?
+                    'border-emerald-200 bg-gradient-to-r from-emerald-600 to-teal-700' :
+                    'border-red-200 bg-gradient-to-r from-red-600 to-rose-700'">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="flex h-9 w-9 items-center justify-center rounded-xl border-2 border-white/30 bg-white/20">
+                        <template x-if="reviewAction === 'disetujui'">
+                            <x-heroicon-o-check-circle class="h-5 w-5 text-white" />
+                        </template>
+                        <template x-if="reviewAction === 'ditolak'">
+                            <x-heroicon-o-x-circle class="h-5 w-5 text-white" />
+                        </template>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-white"
+                            x-text="reviewAction === 'disetujui' ? 'Setujui Pengajuan' : 'Tolak Pengajuan'">
+                        </h3>
+                        <p class="text-xs text-white/70" x-text="selectedItem.mahasiswa"></p>
+                    </div>
+                </div>
+                <button @click="showModal = false"
+                    class="flex h-8 w-8 items-center justify-center rounded-xl border-2 border-white/30 bg-white/20 text-white transition hover:bg-white/30">
+                    <x-heroicon-o-x-mark class="h-5 w-5" />
+                </button>
+            </div>
+
+            {{-- Modal Body --}}
+            <div class="p-6 space-y-5">
+
+                <div class="rounded-xl border-2 border-gray-100 bg-gray-50 p-4">
+                    <p class="text-xs font-black uppercase tracking-widest text-gray-400 mb-1">Mahasiswa</p>
+                    <p class="text-base font-black text-gray-800" x-text="selectedItem.mahasiswa"></p>
+                    <p class="text-xs font-black uppercase tracking-widest text-gray-400 mt-3 mb-1">Judul</p>
+                    <p class="text-sm font-bold text-gray-700 leading-relaxed" x-text="selectedItem.judul_text"></p>
+                </div>
+
+                <form method="POST" x-bind:action="'/dosen/pengajuan/' + selectedItem.id" class="space-y-4">
+                    @csrf
+                    @method('PUT')
+                    <input type="hidden" name="status" x-bind:value="reviewAction" />
+
+                    <template x-if="selectedItem.jenis === 'mandiri' && reviewAction === 'disetujui'">
+                        <div>
+                            <label class="mb-1.5 block text-sm font-bold text-gray-700">
+                                Pilih Laboratorium <span class="text-red-500">*</span>
+                            </label>
+                            <select name="laboratorium_id" required
+                                class="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-sm text-gray-800 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 transition">
+                                <option value="">-- Pilih Laboratorium --</option>
+                                @foreach ($laboratorium as $lab)
+                                    <option value="{{ $lab->id }}">{{ $lab->nama }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </template>
+
+                    <div>
+                        <label class="mb-1.5 block text-sm font-bold text-gray-700">
+                            Catatan untuk Mahasiswa
+                            <span x-show="reviewAction === 'ditolak'" class="text-red-500">*</span>
+                            <span x-show="reviewAction === 'disetujui'"
+                                class="text-gray-400 font-normal">(opsional)</span>
+                        </label>
+                        <textarea name="catatan_dosen" rows="4" placeholder="Berikan catatan atau alasan keputusan Anda..."
+                            class="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 resize-none transition"
+                            x-bind:class="reviewAction === 'disetujui'
+                                ?
+                                'focus:border-emerald-400 focus:ring-emerald-100' :
+                                'focus:border-red-400 focus:ring-red-100'">
+                        </textarea>
+                    </div>
+
+                    <div x-show="reviewAction === 'disetujui'"
+                        class="rounded-xl border-2 border-blue-200 bg-blue-50 px-4 py-3">
+                        <div class="flex items-start gap-2">
+                            <x-heroicon-o-information-circle class="h-4 w-4 shrink-0 text-blue-500 mt-0.5" />
+                            <p class="text-xs font-semibold text-blue-700 leading-relaxed">
+                                Setelah disetujui, judul akan terkunci dan pengajuan lain akan otomatis ditolak.
                             </p>
                         </div>
-                        <div class="flex gap-4 pt-4">
-                            <button type="button" @click="showModal = false"
-                                class="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-all">
-                                Batal
-                            </button>
-                            <button type="submit"
-                                class="flex-1 px-6 py-3 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl text-white"
-                                :class="reviewAction === 'disetujui' ? 'bg-green-600 hover:bg-green-700' :
-                                    'bg-red-600 hover:bg-red-700'">
-                                <span
-                                    x-text="reviewAction === 'disetujui' ? 'Setujui Pengajuan' : 'Tolak Pengajuan'"></span>
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                    </div>
+
+                    <div class="flex items-center gap-3 border-t-2 border-gray-100 pt-4">
+                        <button type="button" @click="showModal = false"
+                            class="flex-1 rounded-xl border-2 border-gray-200 bg-white px-5 py-3 text-sm font-bold text-gray-600 transition hover:bg-gray-50">
+                            Batal
+                        </button>
+                        <button type="submit"
+                            class="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border-2 px-5 py-3 text-sm font-black text-white shadow-sm transition hover:shadow-md"
+                            x-bind:class="reviewAction === 'disetujui'
+                                ?
+                                'bg-emerald-600 border-emerald-300 hover:bg-emerald-700' :
+                                'bg-red-600 border-red-300 hover:bg-red-700'">
+                            <template x-if="reviewAction === 'disetujui'">
+                                <x-heroicon-o-check-circle class="h-4 w-4" />
+                            </template>
+                            <template x-if="reviewAction === 'ditolak'">
+                                <x-heroicon-o-x-circle class="h-4 w-4" />
+                            </template>
+                            <span
+                                x-text="reviewAction === 'disetujui' ? 'Setujui Pengajuan' : 'Tolak Pengajuan'"></span>
+                        </button>
+                    </div>
+
+                </form>
             </div>
         </div>
+    </div>{{-- end modal --}}
 
-    </div>
+    </div>{{-- ✅ ini satu-satunya closing x-data --}}
 
     <script>
         function pengajuanDosenPage() {
@@ -409,11 +636,11 @@
                                 }
                             @endphp {
                                 judul_id: '{{ $judulId }}',
-                                judul: '{{ $first->jenis === 'pilih' ? addslashes($first->judul->nama_judul ?? '-') : addslashes($first->judul_mandiri) }}',
-                                kode: '{{ $first->jenis === 'pilih' ? $first->judul->kode ?? '' : '' }}',
-                                deskripsi: '{{ $first->jenis === 'mandiri' ? addslashes($first->deskripsi_mandiri) : '' }}',
+                                judul: @json($first->jenis === 'pilih' ? $first->judul->nama_judul ?? '-' : $first->judul_mandiri),
+                                kode: @json($first->jenis === 'pilih' ? $first->judul->kode ?? '' : ''),
+                                deskripsi: @json($first->jenis === 'mandiri' ? $first->deskripsi_mandiri ?? '' : ''),
                                 jenis: '{{ $first->jenis }}',
-                                pemenang: '{{ $pemenang ? addslashes($pemenang->mahasiswa->name) : '' }}',
+                                pemenang: @json($pemenang ? $pemenang->mahasiswa->name : ''),
                                 is_owner: {{ $isOwner ? 'true' : 'false' }},
                                 items: [
                                     @foreach ($items as $p)
@@ -427,18 +654,17 @@
                                             }
                                         @endphp {
                                             id: {{ $p->id }},
-                                            mahasiswa: '{{ addslashes($p->mahasiswa->name) }}',
+                                            mahasiswa: @json($p->mahasiswa->name),
                                             status: '{{ $p->status }}',
                                             prioritas: {{ $p->prioritas }},
                                             jenis: '{{ $p->jenis }}',
-                                            judul_text: '{{ $p->jenis === 'mandiri' ? addslashes($p->judul_mandiri) : addslashes($p->judul->nama_judul ?? '-') }}',
-                                            alasan: '{{ addslashes($p->alasan ?? '') }}',
-                                            catatan_dosen: '{{ addslashes($p->catatan_dosen ?? '') }}',
+                                            judul_text: @json($p->jenis === 'mandiri' ? $p->judul_mandiri : $p->judul->nama_judul ?? '-'),
+                                            alasan: @json($p->alasan ?? ''),
+                                            catatan_dosen: @json($p->catatan_dosen ?? ''),
                                             waktu: '{{ $p->created_at->diffForHumans() }}',
                                             sudah_punya_judul: {{ $sudahPunyaJudul ? 'true' : 'false' }},
                                             is_owner: {{ $itemIsOwner ? 'true' : 'false' }},
-                                            status_kaprodi: '{{ $p->status_kaprodi ?? "" }}',
-
+                                            status_kaprodi: '{{ $p->status_kaprodi ?? '' }}',
                                         }
                                         {{ $loop->last ? '' : ',' }}
                                     @endforeach
@@ -447,48 +673,36 @@
                             {{ $loop->last ? '' : ',' }}
                         @endforeach
                     ];
-
                     this.applyFilter();
                 },
 
                 applyFilter() {
-                    var self = this;
-                    var result = this.allData;
-
+                    let result = this.allData;
                     if (this.searchQuery) {
-                        var query = this.searchQuery.toLowerCase();
-                        result = result.map(function(group) {
-                            var filtered = group.items.filter(function(item) {
-                                return item.mahasiswa.toLowerCase().includes(query) ||
-                                    item.judul_text.toLowerCase().includes(query);
-                            });
-                            return filtered.length > 0 ? Object.assign({}, group, {
+                        const q = this.searchQuery.toLowerCase();
+                        result = result.map(group => {
+                            const filtered = group.items.filter(item =>
+                                item.mahasiswa.toLowerCase().includes(q) ||
+                                item.judul_text.toLowerCase().includes(q)
+                            );
+                            return filtered.length > 0 ? {
+                                ...group,
                                 items: filtered
-                            }) : null;
-                        }).filter(function(g) {
-                            return g !== null;
-                        });
+                            } : null;
+                        }).filter(g => g !== null);
                     }
-
-                    if (self.filterStatus !== 'all') {
-                        result = result.map(function(group) {
-                            var filtered = group.items.filter(function(item) {
-                                return item.status === self.filterStatus;
-                            });
-                            return filtered.length > 0 ? Object.assign({}, group, {
+                    if (this.filterStatus !== 'all') {
+                        result = result.map(group => {
+                            const filtered = group.items.filter(item => item.status === this.filterStatus);
+                            return filtered.length > 0 ? {
+                                ...group,
                                 items: filtered
-                            }) : null;
-                        }).filter(function(g) {
-                            return g !== null;
-                        });
+                            } : null;
+                        }).filter(g => g !== null);
                     }
-
-                    if (self.filterJenis !== 'all') {
-                        result = result.filter(function(group) {
-                            return group.jenis === self.filterJenis;
-                        });
+                    if (this.filterJenis !== 'all') {
+                        result = result.filter(group => group.jenis === this.filterJenis);
                     }
-
                     this.filteredData = result;
                 },
 

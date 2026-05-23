@@ -1,0 +1,269 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Pengajuan extends Model
+{
+    use HasFactory;
+
+    protected $table = 'pengajuan';
+
+    protected $fillable = [
+        'mahasiswa_id',
+        'periode_id',
+        'pilihan_1_id',
+        'pilihan_2_id',
+        'pilihan_3_id',
+        'alasan_1',
+        'alasan_2',
+        'alasan_3',
+        'judul_mandiri',
+        'deskripsi_mandiri',
+        'status',
+        // Ka Lab
+        'status_kalab',
+        'catatan_kalab_pengajuan',
+        'tanggal_review_kalab',
+        'reviewed_by_kalab',
+        // Koor Lab
+        'status_koor',
+        'catatan_koor_pengajuan',
+        'tanggal_review_koor',
+        'reviewed_by_koor',
+        // Kaprodi
+        'status_kaprodi',
+        'catatan_kaprodi',
+        'tanggal_review_kaprodi',
+        'reviewed_by_kaprodi',
+        // Judul Ditetapkan
+        'judul_ditetapkan_id',
+        'sumber_judul',
+    ];
+
+    protected $casts = [
+        'tanggal_review_kalab' => 'datetime',
+        'tanggal_review_koor' => 'datetime',
+        'tanggal_review_kaprodi' => 'datetime',
+    ];
+
+    // ==================== RELASI ====================
+
+    public function mahasiswa()
+    {
+        return $this->belongsTo(User::class, 'mahasiswa_id');
+    }
+
+    public function periode()
+    {
+        return $this->belongsTo(Periode::class);
+    }
+
+    public function pilihan1()
+    {
+        return $this->belongsTo(Judul::class, 'pilihan_1_id');
+    }
+
+    public function pilihan2()
+    {
+        return $this->belongsTo(Judul::class, 'pilihan_2_id');
+    }
+
+    public function pilihan3()
+    {
+        return $this->belongsTo(Judul::class, 'pilihan_3_id');
+    }
+
+    public function judulDitetapkan()
+    {
+        return $this->belongsTo(Judul::class, 'judul_ditetapkan_id');
+    }
+
+    public function reviewerKalab()
+    {
+        return $this->belongsTo(User::class, 'reviewed_by_kalab');
+    }
+
+    public function reviewerKoor()
+    {
+        return $this->belongsTo(User::class, 'reviewed_by_koor');
+    }
+
+    public function reviewerKaprodi()
+    {
+        return $this->belongsTo(User::class, 'reviewed_by_kaprodi');
+    }
+
+    // ==================== STATUS CHECKERS ====================
+
+    public function isPending()
+    {
+        return $this->status === 'pending';
+    }
+
+    public function isApproved()
+    {
+        return $this->status === 'disetujui';
+    }
+
+    public function isRejected()
+    {
+        return $this->status === 'ditolak';
+    }
+
+    // ==================== REVIEW CHECKERS ====================
+
+    public function needsKalabReview()
+    {
+        return $this->status === 'pending' && is_null($this->status_kalab);
+    }
+
+    public function needsKoorReview()
+    {
+        return $this->status_kalab === 'disetujui' && is_null($this->status_koor);
+    }
+
+    public function needsKaprodiReview()
+    {
+        return $this->status_koor === 'disetujui' && is_null($this->status_kaprodi);
+    }
+
+    public function canBeReviewedByKalab()
+    {
+        return $this->status === 'pending' && is_null($this->status_kalab);
+    }
+
+    public function canBeReviewedByKoor()
+    {
+        return $this->status_kalab === 'disetujui' && is_null($this->status_koor);
+    }
+
+    public function canBeReviewedByKaprodi()
+    {
+        return $this->status_koor === 'disetujui' && is_null($this->status_kaprodi);
+    }
+
+    // ==================== STATUS BADGES ====================
+
+    public function getStatusBadgeAttribute()
+    {
+        return match ($this->status) {
+            'pending' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Menunggu Review</span>',
+            'disetujui' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Disetujui</span>',
+            'ditolak' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Ditolak</span>',
+            default => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">Unknown</span>',
+        };
+    }
+
+    public function getKalabStatusBadgeAttribute()
+    {
+        if (is_null($this->status_kalab)) {
+            return '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">Belum Review</span>';
+        }
+
+        return match ($this->status_kalab) {
+            'disetujui' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">✓ Ka Lab</span>',
+            'ditolak' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">✗ Ka Lab</span>',
+            default => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">Unknown</span>',
+        };
+    }
+
+    public function getKoorStatusBadgeAttribute()
+    {
+        if (is_null($this->status_koor)) {
+            return '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">Belum Review</span>';
+        }
+
+        return match ($this->status_koor) {
+            'disetujui' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">✓ Koor Lab</span>',
+            'ditolak' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">✗ Koor Lab</span>',
+            default => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">Unknown</span>',
+        };
+    }
+
+    public function getKaprodiStatusBadgeAttribute()
+    {
+        if (is_null($this->status_kaprodi)) {
+            return '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">Belum Review</span>';
+        }
+
+        return match ($this->status_kaprodi) {
+            'disetujui' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">✓ Kaprodi</span>',
+            'ditolak' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">✗ Kaprodi</span>',
+            default => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">Unknown</span>',
+        };
+    }
+
+    // ==================== PROGRESS TRACKER ====================
+
+    public function getProgressPercentageAttribute()
+    {
+        $steps = 0;
+        $completed = 0;
+
+        // Step 1: Submitted
+        $steps++;
+        if ($this->status !== null) {
+            $completed++;
+        }
+
+        // Step 2: Ka Lab Review
+        $steps++;
+        if ($this->status_kalab === 'disetujui') {
+            $completed++;
+        }
+
+        // Step 3: Koor Lab Review
+        $steps++;
+        if ($this->status_koor === 'disetujui') {
+            $completed++;
+        }
+
+        // Step 4: Kaprodi Review
+        $steps++;
+        if ($this->status_kaprodi === 'disetujui') {
+            $completed++;
+        }
+
+        return ($completed / $steps) * 100;
+    }
+
+    public function getCurrentStepAttribute()
+    {
+        if ($this->status === 'ditolak') {
+            return 'Ditolak';
+        }
+
+        if ($this->status === 'disetujui') {
+            return 'Selesai';
+        }
+
+        if (is_null($this->status_kalab)) {
+            return 'Menunggu Review Ka Lab';
+        }
+
+        if ($this->status_kalab === 'ditolak') {
+            return 'Ditolak oleh Ka Lab';
+        }
+
+        if (is_null($this->status_koor)) {
+            return 'Menunggu Review Koor Lab';
+        }
+
+        if ($this->status_koor === 'ditolak') {
+            return 'Ditolak oleh Koor Lab';
+        }
+
+        if (is_null($this->status_kaprodi)) {
+            return 'Menunggu Review Kaprodi';
+        }
+
+        if ($this->status_kaprodi === 'ditolak') {
+            return 'Ditolak oleh Kaprodi';
+        }
+
+        return 'Unknown';
+    }
+}

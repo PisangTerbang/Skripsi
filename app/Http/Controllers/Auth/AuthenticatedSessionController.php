@@ -24,23 +24,18 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
-        // 🔐 Authenticate user
         $request->authenticate();
-
-        // 🔁 Regenerate session (anti session fixation)
         $request->session()->regenerate();
 
-        // 👤 Get authenticated user
         $user = Auth::user();
 
-        // 🔀 Role-based redirect (case-safe)
         return match ($user->role) {
-        'dosen' => redirect()->route('dosen.dashboard'),
-        'mahasiswa' => redirect()->route('mahasiswa.beranda'),
-        'koor_lab' => redirect()->route('koor-lab.dashboard'),
-        'kepala_lab' => redirect()->route('kepala-lab.dashboard'),
-        'kaprodi' => redirect()->route('kaprodi.dashboard'),
-        default => redirect('/'),
+            'dosen' => redirect()->route('dosen.dashboard'),
+            'mahasiswa' => redirect()->route('mahasiswa.beranda'),
+            'ka_lab' => redirect()->route('ka-lab.dashboard'),
+            'prodi' => redirect()->route('prodi.dashboard'),
+            'koordinator_ta' => redirect()->route('koor-ta.dashboard'), // ✅ fix
+            default => redirect('/'),
         };
     }
 
@@ -49,16 +44,10 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
-        // 🚪 Logout user
         Auth::guard('web')->logout();
-
-        // 🧹 Clear session
         $request->session()->invalidate();
-
-        // 🔁 Regenerate CSRF token (PENTING untuk hindari 419)
         $request->session()->regenerateToken();
 
-        // 🔁 Redirect ke login
         return redirect()->route('login');
     }
 }

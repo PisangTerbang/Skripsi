@@ -8,8 +8,8 @@
     class="group relative flex items-center gap-3 px-4 py-2.5 rounded-xl
            transition-all duration-200 ease-out select-none
            {{ $isActive
-               ? 'bg-white/20 text-white shadow-lg shadow-amber-900/20'
-               : 'text-amber-200 hover:bg-white/10 hover:text-white' }}"
+               ? 'bg-white/20 text-white shadow-lg shadow-sky-900/20'
+               : 'text-sky-200 hover:bg-white/10 hover:text-white' }}"
     role="menuitem" aria-current="{{ $isActive ? 'page' : 'false' }}">
 
     <span
