@@ -1,11 +1,10 @@
 <?php
 
-namespace App\Http\Controllers\KaLab;
+namespace App\Http\Controllers\KepalaLab;
 
 use App\Http\Controllers\Controller;
 use App\Models\Pengajuan;
 use App\Models\Judul;
-use App\Models\Periode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -13,106 +12,66 @@ use Illuminate\Support\Facades\DB;
 class PengajuanController extends Controller
 {
     /**
-     * Halaman List Pengajuan yang perlu direview Ka Lab
+     * Tampilkan daftar pengajuan mahasiswa yang perlu direview Ka Lab
      */
-    public function index(Request $request)
+    public function index()
     {
-        $user = Auth::user();
-
-        // Validasi role
-        if ($user->role !== 'ka_lab') {
-            abort(403, 'Anda tidak memiliki akses sebagai Kepala Lab');
-        }
-
-        // Filter status
-        $status = $request->get('status', 'all');
-        $search = $request->get('search', '');
-
-        // Query pengajuan yang perlu direview oleh Ka Lab
-        $query = Pengajuan::with([
+        $pengajuanPending = Pengajuan::with([
             'mahasiswa',
             'periode',
-            'pilihan1',
             'pilihan1.laboratorium',
-            'pilihan1.dosen',
-            'pilihan2',
             'pilihan2.laboratorium',
-            'pilihan2.dosen',
-            'pilihan3',
-            'pilihan3.laboratorium',
-            'pilihan3.dosen',
+            'pilihan3.laboratorium'
+        ])
+            ->pendingKalabReview()
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        $pengajuanSelesai = Pengajuan::with([
+            'mahasiswa',
+            'periode',
             'judulDitetapkan',
-            'judulDitetapkan.dosen',
             'reviewerKalab'
+        ])
+            ->whereNotNull('status_kalab')
+            ->orderBy('tanggal_review_kalab', 'desc')
+            ->take(20)
+            ->get();
+
+        return view('kepala-lab.pengajuan.index', [
+            'title' => 'Review Pengajuan Mahasiswa',
+            'pengajuanPending' => $pengajuanPending,
+            'pengajuanSelesai' => $pengajuanSelesai,
         ]);
-
-        // Filter by status
-        if ($status === 'pending') {
-            $query->where(function ($q) {
-                $q->where('status_kalab', 'pending')
-                    ->orWhereNull('status_kalab');
-            });
-        } elseif ($status === 'disetujui') {
-            $query->where('status_kalab', 'disetujui');
-        } elseif ($status === 'ditolak') {
-            $query->where('status_kalab', 'ditolak');
-        }
-
-        // Search mahasiswa
-        if ($search) {
-            $query->whereHas('mahasiswa', function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('nim', 'like', "%{$search}%");
-            });
-        }
-
-        $pengajuan = $query->latest()->paginate(10);
-
-        // Stats
-        $stats = [
-            'total' => Pengajuan::count(),
-            'pending' => Pengajuan::where(function ($q) {
-                $q->where('status_kalab', 'pending')
-                    ->orWhereNull('status_kalab');
-            })->count(),
-            'disetujui' => Pengajuan::where('status_kalab', 'disetujui')->count(),
-            'ditolak' => Pengajuan::where('status_kalab', 'ditolak')->count(),
-        ];
-
-        return view('ka_lab.pengajuan.index', compact('pengajuan', 'stats', 'status', 'search'));
     }
 
     /**
-     * Halaman Detail Pengajuan untuk review
+     * Tampilkan detail pengajuan untuk review
      */
     public function show($id)
     {
-        $user = Auth::user();
-
-        if ($user->role !== 'ka_lab') {
-            abort(403, 'Anda tidak memiliki akses sebagai Kepala Lab');
-        }
-
         $pengajuan = Pengajuan::with([
             'mahasiswa',
             'periode',
-            'pilihan1',
-            'pilihan1.dosen',
             'pilihan1.laboratorium',
-            'pilihan2',
-            'pilihan2.dosen',
+            'pilihan1.dosen',
             'pilihan2.laboratorium',
-            'pilihan3',
-            'pilihan3.dosen',
+            'pilihan2.dosen',
             'pilihan3.laboratorium',
-            'judulDitetapkan',
-            'judulDitetapkan.dosen',
-            'reviewerKalab',
-            'reviewerKoor',
-            'reviewerKaprodi'
+            'pilihan3.dosen',
         ])->findOrFail($id);
 
-        return view('ka_lab.pengajuan.show', compact('pengajuan'));
+        // Cek apakah Ka Lab bisa review pengajuan ini
+        if (!$pengajuan->canBeReviewedByKalab()) {
+            return redirect()
+                ->route('kepala-lab.pengajuan.index')
+                ->with('error', 'Pengajuan ini tidak dapat direview.');
+        }
+
+        return view('kepala-lab.pengajuan.show', [
+            'title' => 'Detail Pengajuan',
+            'pengajuan' => $pengajuan,
+        ]);
     }
 
     /**
@@ -126,15 +85,15 @@ class PengajuanController extends Controller
         ]);
 
         $pengajuan = Pengajuan::findOrFail($id);
-        $user = Auth::user();
 
         // Validasi apakah bisa direview
         if (!$pengajuan->canBeReviewedByKalab()) {
-            return back()->with('error', 'Pengajuan ini tidak dapat direview saat ini.');
+            return back()->with('error', 'Pengajuan ini tidak dapat direview.');
         }
 
         DB::beginTransaction();
         try {
+            $user = Auth::user();
             $sumberJudul = $request->judul_terpilih;
             $judulId = null;
 
@@ -166,8 +125,8 @@ class PengajuanController extends Controller
             DB::table('aktivitas')->insert([
                 'user_id' => $pengajuan->mahasiswa_id,
                 'tipe' => 'pengajuan_disetujui_kalab',
-                'pesan' => 'Pengajuan Anda telah disetujui oleh Kepala Lab.',
-                'is_read' => DB::raw('false'),
+                'pesan' => 'Pengajuan Anda telah disetujui oleh Kepala Lab. Menunggu review Koordinator Lab.',
+                'is_read' => false,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -175,8 +134,8 @@ class PengajuanController extends Controller
             DB::commit();
 
             return redirect()
-                ->route('ka-lab.pengajuan.index')
-                ->with('success', 'Pengajuan berhasil disetujui!');
+                ->route('kepala-lab.pengajuan.index')
+                ->with('success', 'Pengajuan berhasil disetujui dan diteruskan ke Koordinator Lab.');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -191,20 +150,19 @@ class PengajuanController extends Controller
     {
         $request->validate([
             'catatan_kalab' => 'required|string|max:1000',
-        ], [
-            'catatan_kalab.required' => 'Catatan penolakan wajib diisi.',
         ]);
 
         $pengajuan = Pengajuan::findOrFail($id);
-        $user = Auth::user();
 
         // Validasi apakah bisa direview
         if (!$pengajuan->canBeReviewedByKalab()) {
-            return back()->with('error', 'Pengajuan ini tidak dapat direview saat ini.');
+            return back()->with('error', 'Pengajuan ini tidak dapat direview.');
         }
 
         DB::beginTransaction();
         try {
+            $user = Auth::user();
+
             // Reject menggunakan method di model
             $success = $pengajuan->rejectByKalab(
                 userId: $user->id,
@@ -220,7 +178,7 @@ class PengajuanController extends Controller
                 'user_id' => $pengajuan->mahasiswa_id,
                 'tipe' => 'pengajuan_ditolak_kalab',
                 'pesan' => 'Pengajuan Anda ditolak oleh Kepala Lab. Catatan: ' . $request->catatan_kalab,
-                'is_read' => DB::raw('false'),
+                'is_read' => false,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -228,7 +186,7 @@ class PengajuanController extends Controller
             DB::commit();
 
             return redirect()
-                ->route('ka-lab.pengajuan.index')
+                ->route('kepala-lab.pengajuan.index')
                 ->with('success', 'Pengajuan berhasil ditolak.');
 
         } catch (\Exception $e) {

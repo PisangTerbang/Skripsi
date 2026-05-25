@@ -30,11 +30,14 @@ class ExportController extends Controller
         $status = $request->status ?? 'all';
         $periode = $periodeId ? Periode::find($periodeId) : null;
 
+        // ✅ fix: hapus karakter / \ dan spasi dari nama file
         $filename = 'pengajuan-ta';
-        if ($periode)
-            $filename .= '-' . str_replace(' ', '-', strtolower($periode->nama));
-        if ($status !== 'all')
+        if ($periode) {
+            $filename .= '-' . str_replace(['/', '\\', ' '], '-', strtolower($periode->nama));
+        }
+        if ($status !== 'all') {
             $filename .= '-' . $status;
+        }
         $filename .= '-' . now()->format('Ymd-His') . '.xlsx';
 
         return Excel::download(
@@ -98,11 +101,14 @@ class ExportController extends Controller
             'statusLabel',
         ))->setPaper('a4', 'landscape');
 
+        // ✅ fix: hapus karakter / \ dan spasi dari nama file
         $filename = 'pengajuan-ta';
-        if ($periode)
-            $filename .= '-' . str_replace(' ', '-', strtolower($periode->nama));
-        if ($status !== 'all')
+        if ($periode) {
+            $filename .= '-' . str_replace(['/', '\\', ' '], '-', strtolower($periode->nama));
+        }
+        if ($status !== 'all') {
             $filename .= '-' . $status;
+        }
         $filename .= '-' . now()->format('Ymd-His') . '.pdf';
 
         return $pdf->download($filename);

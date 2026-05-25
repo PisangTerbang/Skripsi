@@ -96,7 +96,7 @@ class PengajuanController extends Controller
                 'user_id' => $pengajuan->mahasiswa_id,
                 'tipe' => 'pengajuan_disetujui_kaprodi',
                 'pesan' => 'Selamat! Pengajuan judul TA Anda telah disetujui oleh Kaprodi. Judul yang ditetapkan: ' . $judulText,
-                'is_read' => false,
+                'is_read' => DB::raw('false'),
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -135,7 +135,7 @@ class PengajuanController extends Controller
                 'user_id' => $pengajuan->mahasiswa_id,
                 'tipe' => 'pengajuan_ditolak_kaprodi',
                 'pesan' => 'Pengajuan judul TA Anda ditolak oleh Kaprodi. Catatan: ' . $validated['catatan_kaprodi'],
-                'is_read' => false,
+                'is_read' => DB::raw('false'),
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);

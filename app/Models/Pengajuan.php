@@ -234,6 +234,13 @@ class Pengajuan extends Model
             return true;
         } catch (\Exception $e) {
             DB::rollBack();
+            // ✅ tambah ini untuk debug
+            \Illuminate\Support\Facades\Log::error('approveByKalab error: ' . $e->getMessage(), [
+                'pengajuan_id' => $this->id,
+                'judul_id' => $judulId,
+                'sumber_judul' => $sumberJudul,
+                'trace' => $e->getTraceAsString(),
+            ]);
             return false;
         }
     }
@@ -319,7 +326,7 @@ class Pengajuan extends Model
 
             if ($this->judul_ditetapkan_id) {
                 DB::table('judul')->where('id', $this->judul_ditetapkan_id)->update([
-                    'is_locked' => true,
+                    'is_locked' => DB::raw('true'),
                     'updated_at' => now(),
                 ]);
             }
@@ -330,6 +337,11 @@ class Pengajuan extends Model
             return true;
         } catch (\Exception $e) {
             DB::rollBack();
+            // ✅ tambah logging
+            \Illuminate\Support\Facades\Log::error('approveByKaprodi error: ' . $e->getMessage(), [
+                'pengajuan_id' => $this->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
             return false;
         }
     }
@@ -369,7 +381,7 @@ class Pengajuan extends Model
             'user_id' => $this->mahasiswa_id,
             'tipe' => $tipe,
             'pesan' => $fullPesan,
-            'is_read' => false,
+            'is_read' => DB::raw('false'),
             'created_at' => now(),
             'updated_at' => now(),
         ]);
