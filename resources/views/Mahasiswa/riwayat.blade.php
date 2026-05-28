@@ -44,7 +44,6 @@
 
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
 
-            {{-- Pending --}}
             <div
                 class="relative overflow-hidden rounded-2xl border-2 border-yellow-300 bg-gradient-to-br from-yellow-400 via-yellow-500 to-orange-500 p-6 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl">
                 <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10"></div>
@@ -65,7 +64,6 @@
                 </div>
             </div>
 
-            {{-- Disetujui --}}
             <div
                 class="relative overflow-hidden rounded-2xl border-2 border-emerald-300 bg-gradient-to-br from-emerald-500 via-emerald-600 to-green-700 p-6 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl">
                 <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10"></div>
@@ -87,7 +85,6 @@
                 </div>
             </div>
 
-            {{-- Ditolak --}}
             <div
                 class="relative overflow-hidden rounded-2xl border-2 border-red-300 bg-gradient-to-br from-red-500 via-red-600 to-rose-700 p-6 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl">
                 <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10"></div>
@@ -121,8 +118,6 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-3">
-
-            {{-- Status Filter Pills --}}
             <div class="flex items-center gap-1 rounded-2xl border-2 border-gray-200 bg-white p-1.5 shadow-sm">
                 @foreach ([
         'all' => 'Semua',
@@ -144,7 +139,6 @@
                 @endforeach
             </div>
 
-            {{-- Sort --}}
             <select x-model="sortBy" @change="applyFilter()"
                 class="rounded-2xl border-2 border-gray-200 bg-white px-4 py-2 text-xs font-bold text-gray-600 shadow-sm focus:border-indigo-400 focus:outline-none transition">
                 <option value="newest">Terbaru</option>
@@ -152,19 +146,16 @@
                 <option value="priority">Prioritas</option>
             </select>
 
-            {{-- Count --}}
             <div
                 class="flex items-center gap-1.5 rounded-2xl border-2 border-gray-200 bg-white px-4 py-2 shadow-sm text-xs font-bold text-gray-600">
                 <span x-text="filteredData.length"></span>
                 <span>dari {{ $pengajuan->count() }}</span>
             </div>
-
         </div>
 
         {{-- ===== TIMELINE ===== --}}
         <div class="overflow-hidden rounded-2xl border-2 border-gray-200 bg-white shadow-md">
 
-            {{-- Card Header --}}
             <div
                 class="flex items-center justify-between border-b-4 border-indigo-200 bg-gradient-to-r from-indigo-600 to-purple-700 px-6 py-4">
                 <div class="flex items-center gap-3">
@@ -179,7 +170,6 @@
                 </span>
             </div>
 
-            {{-- Empty State --}}
             <template x-if="filteredData.length === 0">
                 <div class="flex flex-col items-center justify-center py-24 text-center">
                     <div
@@ -202,15 +192,11 @@
                 </div>
             </template>
 
-            {{-- Timeline Items --}}
             <template x-if="filteredData.length > 0">
                 <div class="p-6">
                     <div class="relative">
-
-                        {{-- Timeline Line --}}
                         <div class="absolute left-5 top-0 bottom-0 w-0.5 bg-gradient-to-b from-indigo-300 to-gray-200">
                         </div>
-
                         <div class="space-y-6">
                             <template x-for="(item, index) in filteredData" :key="item.id">
                                 <div class="relative pl-16">
@@ -223,8 +209,7 @@
                                             'bg-red-500': item.status === 'ditolak'
                                         }">
                                         <span x-show="item.status === 'pending'"
-                                            class="h-1.5 w-1.5 animate-pulse rounded-full bg-white">
-                                        </span>
+                                            class="h-1.5 w-1.5 animate-pulse rounded-full bg-white"></span>
                                     </div>
 
                                     {{-- Card --}}
@@ -273,11 +258,6 @@
                                                             <span
                                                                 x-text="item.status === 'pending' ? 'Menunggu Review' : item.status === 'disetujui' ? 'Disetujui' : 'Ditolak'"></span>
                                                         </span>
-                                                        <span
-                                                            class="inline-flex items-center rounded-full border-2 border-indigo-200 bg-indigo-50 px-2.5 py-1 text-xs font-black text-indigo-700">
-                                                            Prioritas <span x-text="item.prioritas"
-                                                                class="ml-1"></span>
-                                                        </span>
                                                         <span x-show="item.jenis === 'mandiri'"
                                                             class="inline-flex items-center rounded-full border-2 border-violet-200 bg-violet-50 px-2.5 py-1 text-xs font-black text-violet-700">
                                                             Mandiri
@@ -292,65 +272,249 @@
                                             {{-- Details --}}
                                             <div class="space-y-3">
 
-                                                {{-- Kode --}}
-                                                <div x-show="item.kode" class="flex items-center gap-2">
-                                                    <span class="text-xs font-bold text-gray-500">Kode:</span>
-                                                    <span
-                                                        class="rounded-lg border-2 border-gray-200 bg-gray-50 px-2 py-0.5 font-mono text-xs font-black text-gray-600"
-                                                        x-text="item.kode">
-                                                    </span>
-                                                </div>
-
-                                                {{-- Lab --}}
-                                                <div x-show="item.lab" class="flex items-center gap-2">
-                                                    <span class="text-xs font-bold text-gray-500">Lab:</span>
-                                                    <span
-                                                        class="rounded-full border-2 border-indigo-200 bg-indigo-50 px-2.5 py-0.5 text-xs font-black text-indigo-700"
-                                                        x-text="item.lab">
-                                                    </span>
-                                                </div>
-
-                                                {{-- Deskripsi --}}
-                                                <div x-show="item.deskripsi">
-                                                    <p class="text-xs font-bold text-gray-500 mb-1">Deskripsi:</p>
-                                                    <p class="text-sm text-gray-600 leading-relaxed line-clamp-2"
-                                                        x-text="item.deskripsi"></p>
-                                                </div>
-
-                                                {{-- Alasan --}}
-                                                <div x-show="item.alasan">
+                                                {{-- Judul Mandiri --}}
+                                                <div x-show="item.judul_mandiri">
                                                     <div
-                                                        class="rounded-xl border-2 border-blue-200 bg-blue-50 px-4 py-3">
+                                                        class="rounded-xl border-2 border-violet-200 bg-violet-50 px-4 py-3">
                                                         <p
-                                                            class="text-xs font-black uppercase tracking-widest text-blue-500 mb-1">
-                                                            Alasan Anda</p>
-                                                        <p class="text-sm text-blue-800 leading-relaxed"
-                                                            x-text="item.alasan"></p>
+                                                            class="text-xs font-black uppercase tracking-widest text-violet-500 mb-1">
+                                                            Usulan Judul Mandiri</p>
+                                                        <p class="text-sm font-bold text-gray-800 leading-relaxed"
+                                                            x-text="item.judul_mandiri"></p>
+                                                        <p x-show="item.deskripsi_mandiri"
+                                                            class="text-xs text-gray-500 mt-1 leading-relaxed"
+                                                            x-text="item.deskripsi_mandiri"></p>
                                                     </div>
                                                 </div>
 
-                                                {{-- Catatan Dosen --}}
-                                                <div x-show="item.catatan_dosen">
-                                                    <div class="rounded-xl border-2 px-4 py-3"
-                                                        x-bind:class="{
-                                                            'border-emerald-200 bg-emerald-50': item
-                                                                .status === 'disetujui',
-                                                            'border-red-200 bg-red-50': item.status === 'ditolak'
-                                                        }">
-                                                        <p class="text-xs font-black uppercase tracking-widest mb-1"
+                                                {{-- 3 Pilihan Judul --}}
+                                                <div x-show="item.pilihan1 || item.pilihan2 || item.pilihan3">
+                                                    <p
+                                                        class="text-xs font-black uppercase tracking-widest text-gray-400 mb-2">
+                                                        Pilihan Judul</p>
+                                                    <div class="space-y-2">
+
+                                                        <div x-show="item.pilihan1"
+                                                            class="rounded-xl border-2 border-emerald-200 bg-emerald-50 p-3">
+                                                            <div class="flex items-start gap-2">
+                                                                <span
+                                                                    class="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-[10px] font-black text-white">1</span>
+                                                                <div class="flex-1 min-w-0">
+                                                                    <p class="text-sm font-bold text-gray-800 leading-relaxed"
+                                                                        x-text="item.pilihan1?.judul"></p>
+                                                                    <div
+                                                                        class="mt-1 flex flex-wrap gap-2 text-xs text-gray-500">
+                                                                        <span x-text="item.pilihan1?.dosen"></span>
+                                                                        <span
+                                                                            class="rounded-full border border-emerald-200 bg-white px-2 py-0.5 text-[10px] font-black text-emerald-700"
+                                                                            x-text="item.pilihan1?.lab"></span>
+                                                                    </div>
+                                                                    <div x-show="item.pilihan1?.alasan"
+                                                                        class="mt-1.5 rounded-lg bg-white border border-emerald-100 px-2 py-1">
+                                                                        <p class="text-xs text-gray-500 italic"
+                                                                            x-text="`Alasan: ${item.pilihan1?.alasan}`">
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div x-show="item.pilihan2"
+                                                            class="rounded-xl border-2 border-sky-200 bg-sky-50 p-3">
+                                                            <div class="flex items-start gap-2">
+                                                                <span
+                                                                    class="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-sky-600 text-[10px] font-black text-white">2</span>
+                                                                <div class="flex-1 min-w-0">
+                                                                    <p class="text-sm font-bold text-gray-800 leading-relaxed"
+                                                                        x-text="item.pilihan2?.judul"></p>
+                                                                    <div
+                                                                        class="mt-1 flex flex-wrap gap-2 text-xs text-gray-500">
+                                                                        <span x-text="item.pilihan2?.dosen"></span>
+                                                                        <span
+                                                                            class="rounded-full border border-sky-200 bg-white px-2 py-0.5 text-[10px] font-black text-sky-700"
+                                                                            x-text="item.pilihan2?.lab"></span>
+                                                                    </div>
+                                                                    <div x-show="item.pilihan2?.alasan"
+                                                                        class="mt-1.5 rounded-lg bg-white border border-sky-100 px-2 py-1">
+                                                                        <p class="text-xs text-gray-500 italic"
+                                                                            x-text="`Alasan: ${item.pilihan2?.alasan}`">
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div x-show="item.pilihan3"
+                                                            class="rounded-xl border-2 border-violet-200 bg-violet-50 p-3">
+                                                            <div class="flex items-start gap-2">
+                                                                <span
+                                                                    class="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-violet-600 text-[10px] font-black text-white">3</span>
+                                                                <div class="flex-1 min-w-0">
+                                                                    <p class="text-sm font-bold text-gray-800 leading-relaxed"
+                                                                        x-text="item.pilihan3?.judul"></p>
+                                                                    <div
+                                                                        class="mt-1 flex flex-wrap gap-2 text-xs text-gray-500">
+                                                                        <span x-text="item.pilihan3?.dosen"></span>
+                                                                        <span
+                                                                            class="rounded-full border border-violet-200 bg-white px-2 py-0.5 text-[10px] font-black text-violet-700"
+                                                                            x-text="item.pilihan3?.lab"></span>
+                                                                    </div>
+                                                                    <div x-show="item.pilihan3?.alasan"
+                                                                        class="mt-1.5 rounded-lg bg-white border border-violet-100 px-2 py-1">
+                                                                        <p class="text-xs text-gray-500 italic"
+                                                                            x-text="`Alasan: ${item.pilihan3?.alasan}`">
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+                                                </div>
+
+                                                {{-- Judul Ditetapkan --}}
+                                                <div x-show="item.judul_ditetapkan">
+                                                    <div
+                                                        class="rounded-xl border-2 border-emerald-300 bg-gradient-to-r from-emerald-50 to-green-50 px-4 py-3">
+                                                        <p
+                                                            class="text-xs font-black uppercase tracking-widest text-emerald-500 mb-1">
+                                                            ✓ Judul Ditetapkan</p>
+                                                        <p class="text-sm font-black text-gray-800 leading-relaxed"
+                                                            x-text="item.judul_ditetapkan"></p>
+                                                    </div>
+                                                </div>
+
+                                                {{-- Progress Review --}}
+                                                <div
+                                                    class="rounded-xl border-2 border-gray-100 bg-gray-50 p-3 space-y-2">
+                                                    <p
+                                                        class="text-xs font-black uppercase tracking-widest text-gray-400 mb-2">
+                                                        Progress Review</p>
+
+                                                    <div class="flex items-center justify-between">
+                                                        <span
+                                                            class="text-xs font-bold text-gray-500 flex items-center gap-1.5">
+                                                            <span class="h-1.5 w-1.5 rounded-full"
+                                                                x-bind:class="{
+                                                                    'bg-emerald-500': item
+                                                                        .status_kalab === 'disetujui',
+                                                                    'bg-red-500': item.status_kalab === 'ditolak',
+                                                                    'bg-yellow-500 animate-pulse': !item.status_kalab
+                                                                }">
+                                                            </span>
+                                                            Ka Lab
+                                                        </span>
+                                                        <span
+                                                            class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-black"
                                                             x-bind:class="{
-                                                                'text-emerald-500': item.status === 'disetujui',
-                                                                'text-red-500': item.status === 'ditolak'
-                                                            }">
-                                                            Catatan Dosen
-                                                        </p>
-                                                        <p class="text-sm italic leading-relaxed"
-                                                            x-bind:class="{
-                                                                'text-emerald-800': item.status === 'disetujui',
-                                                                'text-red-800': item.status === 'ditolak'
+                                                                'border-emerald-200 bg-emerald-100 text-emerald-700': item
+                                                                    .status_kalab === 'disetujui',
+                                                                'border-red-200 bg-red-100 text-red-700': item
+                                                                    .status_kalab === 'ditolak',
+                                                                'border-yellow-200 bg-yellow-100 text-yellow-700': !item
+                                                                    .status_kalab
                                                             }"
-                                                            x-text="item.catatan_dosen">
-                                                        </p>
+                                                            x-text="item.status_kalab === 'disetujui' ? 'Disetujui' : (item.status_kalab === 'ditolak' ? 'Ditolak' : 'Menunggu')">
+                                                        </span>
+                                                    </div>
+                                                    <div x-show="item.catatan_kalab" class="ml-3">
+                                                        <p class="text-xs italic text-gray-500"
+                                                            x-text="`&quot;${item.catatan_kalab}&quot;`"></p>
+                                                    </div>
+
+                                                    <div class="flex items-center justify-between">
+                                                        <span
+                                                            class="text-xs font-bold text-gray-500 flex items-center gap-1.5">
+                                                            <span class="h-1.5 w-1.5 rounded-full"
+                                                                x-bind:class="{
+                                                                    'bg-emerald-500': item
+                                                                        .status_kaprodi === 'disetujui',
+                                                                    'bg-red-500': item.status_kaprodi === 'ditolak',
+                                                                    'bg-gray-400': !item.status_kaprodi && item
+                                                                        .status_kalab === 'disetujui',
+                                                                    'bg-gray-300': !item.status_kalab
+                                                                }">
+                                                            </span>
+                                                            Kaprodi
+                                                        </span>
+                                                        <span
+                                                            class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-black"
+                                                            x-bind:class="{
+                                                                'border-emerald-200 bg-emerald-100 text-emerald-700': item
+                                                                    .status_kaprodi === 'disetujui',
+                                                                'border-red-200 bg-red-100 text-red-700': item
+                                                                    .status_kaprodi === 'ditolak',
+                                                                'border-gray-200 bg-gray-100 text-gray-500': !item
+                                                                    .status_kaprodi
+                                                            }"
+                                                            x-text="item.status_kaprodi === 'disetujui' ? 'Disetujui' : (item.status_kaprodi === 'ditolak' ? 'Ditolak' : 'Belum')">
+                                                        </span>
+                                                    </div>
+                                                    <div x-show="item.catatan_kaprodi" class="ml-3">
+                                                        <p class="text-xs italic text-gray-500"
+                                                            x-text="`&quot;${item.catatan_kaprodi}&quot;`"></p>
+                                                    </div>
+
+                                                    <div
+                                                        class="flex items-center justify-between border-t border-gray-200 pt-2 mt-1">
+                                                        <span
+                                                            class="text-xs font-bold text-gray-500 flex items-center gap-1.5">
+                                                            <span class="h-1.5 w-1.5 rounded-full"
+                                                                x-bind:class="item.sudah_diumumkan ? 'bg-indigo-500' :
+                                                                    'bg-gray-300 animate-pulse'">
+                                                            </span>
+                                                            Pengumuman KoorTA
+                                                        </span>
+                                                        <span
+                                                            class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-black"
+                                                            x-bind:class="item.sudah_diumumkan ?
+                                                                'border-indigo-200 bg-indigo-100 text-indigo-700' :
+                                                                'border-gray-200 bg-gray-100 text-gray-400'"
+                                                            x-text="item.sudah_diumumkan ? 'Sudah Diumumkan' : 'Menunggu'">
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                {{-- Banner pengumuman sudah dikirim --}}
+                                                <div x-show="item.sudah_diumumkan && item.status_kaprodi === 'disetujui'"
+                                                    class="rounded-xl border-2 border-emerald-200 bg-gradient-to-r from-emerald-50 to-green-50 px-4 py-3">
+                                                    <div class="flex items-center gap-2">
+                                                        <x-heroicon-o-megaphone
+                                                            class="h-4 w-4 shrink-0 text-emerald-500" />
+                                                        <div>
+                                                            <p class="text-xs font-black text-emerald-700">Pengumuman
+                                                                Resmi Sudah Dikirim</p>
+                                                            <p class="text-xs text-emerald-600 mt-0.5">Judul TA Anda
+                                                                telah resmi ditetapkan oleh Koordinator TA</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {{-- Banner menunggu pengumuman disetujui --}}
+                                                <div x-show="!item.sudah_diumumkan && item.status_kaprodi === 'disetujui'"
+                                                    class="rounded-xl border-2 border-blue-200 bg-blue-50 px-4 py-3">
+                                                    <div class="flex items-center gap-2">
+                                                        <x-heroicon-o-clock class="h-4 w-4 shrink-0 text-blue-500" />
+                                                        <div>
+                                                            <p class="text-xs font-black text-blue-700">Menunggu
+                                                                Pengumuman Resmi</p>
+                                                            <p class="text-xs text-blue-600 mt-0.5">Disetujui Kaprodi —
+                                                                hasil resmi akan diumumkan oleh Koordinator TA</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {{-- Banner ditolak menunggu pengumuman --}}
+                                                <div x-show="!item.sudah_diumumkan && item.status_kaprodi === 'ditolak'"
+                                                    class="rounded-xl border-2 border-orange-200 bg-orange-50 px-4 py-3">
+                                                    <div class="flex items-center gap-2">
+                                                        <x-heroicon-o-clock class="h-4 w-4 shrink-0 text-orange-500" />
+                                                        <div>
+                                                            <p class="text-xs font-black text-orange-700">Menunggu
+                                                                Pengumuman Resmi</p>
+                                                            <p class="text-xs text-orange-600 mt-0.5">Ditolak Kaprodi —
+                                                                hasil resmi akan diumumkan oleh Koordinator TA</p>
+                                                        </div>
                                                     </div>
                                                 </div>
 
@@ -373,7 +537,6 @@
                                 </div>
                             </template>
                         </div>
-
                     </div>
                 </div>
             </template>
@@ -405,6 +568,7 @@
             </template>
 
         </div>
+
         {{-- ===== MODAL DETAIL ===== --}}
         <div x-show="showModal" x-cloak @click.self="showModal = false"
             class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
@@ -455,20 +619,15 @@
                             <span
                                 x-text="selectedItem.status === 'pending' ? 'Menunggu Review' : selectedItem.status === 'disetujui' ? 'Disetujui' : 'Ditolak'"></span>
                         </span>
-                        <span
-                            class="inline-flex items-center rounded-full border-2 border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-black text-indigo-700">
-                            Prioritas <span x-text="selectedItem.prioritas" class="ml-1"></span>
-                        </span>
                         <span x-show="selectedItem.jenis === 'mandiri'"
                             class="inline-flex items-center rounded-full border-2 border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-black text-violet-700">
                             Judul Mandiri
                         </span>
-                    </div>
-
-                    {{-- Judul --}}
-                    <div class="rounded-xl border-2 border-indigo-200 bg-indigo-50 p-4">
-                        <p class="text-xs font-black uppercase tracking-widest text-indigo-500 mb-2">Judul</p>
-                        <p class="text-lg font-black text-gray-900 leading-relaxed" x-text="selectedItem.judul"></p>
+                        <span x-show="selectedItem.sudah_diumumkan"
+                            class="inline-flex items-center gap-1 rounded-full border-2 border-indigo-200 bg-indigo-100 px-3 py-1.5 text-xs font-black text-indigo-700">
+                            <x-heroicon-o-megaphone class="h-3 w-3" />
+                            Sudah Diumumkan
+                        </span>
                     </div>
 
                     {{-- Info Grid --}}
@@ -485,61 +644,236 @@
                         </div>
                     </div>
 
-                    {{-- Kode --}}
-                    <div x-show="selectedItem.kode">
-                        <p class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Kode Judul</p>
-                        <span
-                            class="rounded-lg border-2 border-gray-200 bg-gray-50 px-3 py-1.5 font-mono text-sm font-black text-gray-700"
-                            x-text="selectedItem.kode">
-                        </span>
-                    </div>
-
-                    {{-- Lab --}}
-                    <div x-show="selectedItem.lab">
-                        <p class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Laboratorium</p>
-                        <span
-                            class="inline-flex items-center rounded-full border-2 border-indigo-200 bg-indigo-50 px-3 py-1.5 text-sm font-black text-indigo-700"
-                            x-text="selectedItem.lab">
-                        </span>
-                    </div>
-
-                    {{-- Deskripsi --}}
-                    <div x-show="selectedItem.deskripsi">
-                        <p class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Deskripsi</p>
-                        <div class="rounded-xl border-2 border-gray-100 bg-gray-50 px-4 py-3">
-                            <p class="text-sm text-gray-700 leading-relaxed" x-text="selectedItem.deskripsi"></p>
+                    {{-- Judul Ditetapkan --}}
+                    <div x-show="selectedItem.judul_ditetapkan">
+                        <div
+                            class="rounded-xl border-2 border-emerald-300 bg-gradient-to-r from-emerald-50 to-green-50 px-4 py-3">
+                            <p class="text-xs font-black uppercase tracking-widest text-emerald-500 mb-1">✓ Judul
+                                Ditetapkan</p>
+                            <p class="text-sm font-black text-gray-800 leading-relaxed"
+                                x-text="selectedItem.judul_ditetapkan"></p>
                         </div>
                     </div>
 
-                    {{-- Alasan --}}
-                    <div x-show="selectedItem.alasan">
-                        <p class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Alasan Anda</p>
-                        <div class="rounded-xl border-2 border-blue-200 bg-blue-50 px-4 py-3">
-                            <p class="text-sm text-blue-800 leading-relaxed" x-text="selectedItem.alasan"></p>
+                    {{-- Judul Mandiri --}}
+                    <div x-show="selectedItem.judul_mandiri">
+                        <div class="rounded-xl border-2 border-violet-200 bg-violet-50 px-4 py-3">
+                            <p class="text-xs font-black uppercase tracking-widest text-violet-500 mb-1">Usulan Judul
+                                Mandiri</p>
+                            <p class="text-sm font-bold text-gray-800 leading-relaxed"
+                                x-text="selectedItem.judul_mandiri"></p>
+                            <p x-show="selectedItem.deskripsi_mandiri"
+                                class="text-xs text-gray-500 mt-1 leading-relaxed"
+                                x-text="selectedItem.deskripsi_mandiri"></p>
                         </div>
                     </div>
 
-                    {{-- Catatan Dosen --}}
-                    <div x-show="selectedItem.catatan_dosen">
-                        <p class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Catatan Dosen</p>
-                        <div class="rounded-xl border-2 px-4 py-3"
-                            x-bind:class="{
-                                'border-emerald-200 bg-emerald-50': selectedItem.status === 'disetujui',
-                                'border-red-200 bg-red-50': selectedItem.status === 'ditolak',
-                                'border-gray-200 bg-gray-50': selectedItem.status === 'pending'
-                            }">
-                            <p class="text-sm italic leading-relaxed"
-                                x-bind:class="{
-                                    'text-emerald-800': selectedItem.status === 'disetujui',
-                                    'text-red-800': selectedItem.status === 'ditolak',
-                                    'text-gray-700': selectedItem.status === 'pending'
-                                }"
-                                x-text="selectedItem.catatan_dosen">
-                            </p>
+                    {{-- Semua Pilihan Judul --}}
+                    <div x-show="selectedItem.pilihan1 || selectedItem.pilihan2 || selectedItem.pilihan3">
+                        <p class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Pilihan Judul</p>
+                        <div class="space-y-2">
+
+                            <div x-show="selectedItem.pilihan1"
+                                class="rounded-xl border-2 border-emerald-200 bg-emerald-50 p-3">
+                                <div class="flex items-start gap-2">
+                                    <span
+                                        class="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-[10px] font-black text-white">1</span>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-bold text-gray-800 leading-relaxed"
+                                            x-text="selectedItem.pilihan1?.judul"></p>
+                                        <div class="mt-1 flex flex-wrap gap-2 text-xs text-gray-500">
+                                            <span x-text="selectedItem.pilihan1?.dosen"></span>
+                                            <span
+                                                class="rounded-full border border-emerald-200 bg-white px-2 py-0.5 text-[10px] font-black text-emerald-700"
+                                                x-text="selectedItem.pilihan1?.lab"></span>
+                                            <span class="font-mono text-[10px] text-gray-400"
+                                                x-text="selectedItem.pilihan1?.kode"></span>
+                                        </div>
+                                        <div x-show="selectedItem.pilihan1?.alasan"
+                                            class="mt-1.5 rounded-lg bg-white border border-emerald-100 px-2 py-1">
+                                            <p class="text-xs text-gray-500 italic"
+                                                x-text="`Alasan: ${selectedItem.pilihan1?.alasan}`"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div x-show="selectedItem.pilihan2"
+                                class="rounded-xl border-2 border-sky-200 bg-sky-50 p-3">
+                                <div class="flex items-start gap-2">
+                                    <span
+                                        class="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-sky-600 text-[10px] font-black text-white">2</span>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-bold text-gray-800 leading-relaxed"
+                                            x-text="selectedItem.pilihan2?.judul"></p>
+                                        <div class="mt-1 flex flex-wrap gap-2 text-xs text-gray-500">
+                                            <span x-text="selectedItem.pilihan2?.dosen"></span>
+                                            <span
+                                                class="rounded-full border border-sky-200 bg-white px-2 py-0.5 text-[10px] font-black text-sky-700"
+                                                x-text="selectedItem.pilihan2?.lab"></span>
+                                            <span class="font-mono text-[10px] text-gray-400"
+                                                x-text="selectedItem.pilihan2?.kode"></span>
+                                        </div>
+                                        <div x-show="selectedItem.pilihan2?.alasan"
+                                            class="mt-1.5 rounded-lg bg-white border border-sky-100 px-2 py-1">
+                                            <p class="text-xs text-gray-500 italic"
+                                                x-text="`Alasan: ${selectedItem.pilihan2?.alasan}`"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div x-show="selectedItem.pilihan3"
+                                class="rounded-xl border-2 border-violet-200 bg-violet-50 p-3">
+                                <div class="flex items-start gap-2">
+                                    <span
+                                        class="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-violet-600 text-[10px] font-black text-white">3</span>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-bold text-gray-800 leading-relaxed"
+                                            x-text="selectedItem.pilihan3?.judul"></p>
+                                        <div class="mt-1 flex flex-wrap gap-2 text-xs text-gray-500">
+                                            <span x-text="selectedItem.pilihan3?.dosen"></span>
+                                            <span
+                                                class="rounded-full border border-violet-200 bg-white px-2 py-0.5 text-[10px] font-black text-violet-700"
+                                                x-text="selectedItem.pilihan3?.lab"></span>
+                                            <span class="font-mono text-[10px] text-gray-400"
+                                                x-text="selectedItem.pilihan3?.kode"></span>
+                                        </div>
+                                        <div x-show="selectedItem.pilihan3?.alasan"
+                                            class="mt-1.5 rounded-lg bg-white border border-violet-100 px-2 py-1">
+                                            <p class="text-xs text-gray-500 italic"
+                                                x-text="`Alasan: ${selectedItem.pilihan3?.alasan}`"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
 
-                    {{-- Close Button --}}
+                    {{-- Progress Review --}}
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-3">Progress Review</p>
+                        <div class="space-y-2 rounded-xl border-2 border-gray-100 bg-gray-50 p-3">
+
+                            {{-- Ka Lab --}}
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-gray-600 flex items-center gap-1.5">
+                                    <span class="h-1.5 w-1.5 rounded-full"
+                                        x-bind:class="{
+                                            'bg-emerald-500': selectedItem.status_kalab === 'disetujui',
+                                            'bg-red-500': selectedItem.status_kalab === 'ditolak',
+                                            'bg-yellow-500 animate-pulse': !selectedItem.status_kalab
+                                        }">
+                                    </span>
+                                    Ka Lab
+                                </span>
+                                <span
+                                    class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-black"
+                                    x-bind:class="{
+                                        'border-emerald-200 bg-emerald-100 text-emerald-700': selectedItem
+                                            .status_kalab === 'disetujui',
+                                        'border-red-200 bg-red-100 text-red-700': selectedItem
+                                            .status_kalab === 'ditolak',
+                                        'border-yellow-200 bg-yellow-100 text-yellow-700': !selectedItem.status_kalab
+                                    }"
+                                    x-text="selectedItem.status_kalab === 'disetujui' ? 'Disetujui' : (selectedItem.status_kalab === 'ditolak' ? 'Ditolak' : 'Menunggu')">
+                                </span>
+                            </div>
+                            <div x-show="selectedItem.catatan_kalab"
+                                class="rounded-lg bg-white border border-gray-200 px-3 py-2">
+                                <p class="text-xs italic text-gray-500"
+                                    x-text="`Catatan: ${selectedItem.catatan_kalab}`"></p>
+                            </div>
+
+                            {{-- Kaprodi --}}
+                            <div class="flex items-center justify-between border-t border-gray-200 pt-2">
+                                <span class="text-xs font-bold text-gray-600 flex items-center gap-1.5">
+                                    <span class="h-1.5 w-1.5 rounded-full"
+                                        x-bind:class="{
+                                            'bg-emerald-500': selectedItem.status_kaprodi === 'disetujui',
+                                            'bg-red-500': selectedItem.status_kaprodi === 'ditolak',
+                                            'bg-gray-400': !selectedItem.status_kaprodi
+                                        }">
+                                    </span>
+                                    Kaprodi
+                                </span>
+                                <span
+                                    class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-black"
+                                    x-bind:class="{
+                                        'border-emerald-200 bg-emerald-100 text-emerald-700': selectedItem
+                                            .status_kaprodi === 'disetujui',
+                                        'border-red-200 bg-red-100 text-red-700': selectedItem
+                                            .status_kaprodi === 'ditolak',
+                                        'border-gray-200 bg-gray-100 text-gray-500': !selectedItem.status_kaprodi
+                                    }"
+                                    x-text="selectedItem.status_kaprodi === 'disetujui' ? 'Disetujui' : (selectedItem.status_kaprodi === 'ditolak' ? 'Ditolak' : 'Belum')">
+                                </span>
+                            </div>
+                            <div x-show="selectedItem.catatan_kaprodi"
+                                class="rounded-lg bg-white border border-gray-200 px-3 py-2">
+                                <p class="text-xs italic text-gray-500"
+                                    x-text="`Catatan: ${selectedItem.catatan_kaprodi}`"></p>
+                            </div>
+
+                            {{-- Pengumuman --}}
+                            <div class="flex items-center justify-between border-t border-gray-200 pt-2">
+                                <span class="text-xs font-bold text-gray-600 flex items-center gap-1.5">
+                                    <span class="h-1.5 w-1.5 rounded-full"
+                                        x-bind:class="selectedItem.sudah_diumumkan ? 'bg-indigo-500' : 'bg-gray-300 animate-pulse'">
+                                    </span>
+                                    Pengumuman KoorTA
+                                </span>
+                                <span
+                                    class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-black"
+                                    x-bind:class="selectedItem.sudah_diumumkan ?
+                                        'border-indigo-200 bg-indigo-100 text-indigo-700' :
+                                        'border-gray-200 bg-gray-100 text-gray-400'"
+                                    x-text="selectedItem.sudah_diumumkan ? 'Sudah Diumumkan' : 'Menunggu'">
+                                </span>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    {{-- Banner kontekstual --}}
+                    <div x-show="selectedItem.sudah_diumumkan && selectedItem.status_kaprodi === 'disetujui'"
+                        class="rounded-xl border-2 border-emerald-200 bg-gradient-to-r from-emerald-50 to-green-50 px-4 py-3">
+                        <div class="flex items-center gap-2">
+                            <x-heroicon-o-megaphone class="h-4 w-4 shrink-0 text-emerald-500" />
+                            <div>
+                                <p class="text-xs font-black text-emerald-700">Pengumuman Resmi Sudah Dikirim</p>
+                                <p class="text-xs text-emerald-600 mt-0.5">Judul TA Anda telah resmi ditetapkan oleh
+                                    Koordinator TA</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div x-show="!selectedItem.sudah_diumumkan && selectedItem.status_kaprodi === 'disetujui'"
+                        class="rounded-xl border-2 border-blue-200 bg-blue-50 px-4 py-3">
+                        <div class="flex items-center gap-2">
+                            <x-heroicon-o-clock class="h-4 w-4 shrink-0 text-blue-500" />
+                            <div>
+                                <p class="text-xs font-black text-blue-700">Menunggu Pengumuman Resmi</p>
+                                <p class="text-xs text-blue-600 mt-0.5">Disetujui Kaprodi — hasil resmi akan diumumkan
+                                    oleh Koordinator TA</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div x-show="!selectedItem.sudah_diumumkan && selectedItem.status_kaprodi === 'ditolak'"
+                        class="rounded-xl border-2 border-orange-200 bg-orange-50 px-4 py-3">
+                        <div class="flex items-center gap-2">
+                            <x-heroicon-o-clock class="h-4 w-4 shrink-0 text-orange-500" />
+                            <div>
+                                <p class="text-xs font-black text-orange-700">Menunggu Pengumuman Resmi</p>
+                                <p class="text-xs text-orange-600 mt-0.5">Ditolak Kaprodi — hasil resmi akan diumumkan
+                                    oleh Koordinator TA</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Close --}}
                     <div class="border-t-2 border-gray-100 pt-4">
                         <button @click="showModal = false"
                             class="w-full rounded-xl border-2 border-gray-200 bg-white px-5 py-3 text-sm font-bold text-gray-600 transition hover:bg-gray-50">
@@ -552,9 +886,11 @@
         </div>
 
     </div>
+
+    {{-- ✅ Data embed di luar modal dan di luar x-data div --}}
     <script id="riwayat-data" type="application/json">
-    {!! json_encode($pengajuanJson) !!}
-</script>
+        {!! json_encode($pengajuanJson) !!}
+    </script>
 
     @push('scripts')
         <script>
@@ -599,6 +935,5 @@
             }
         </script>
     @endpush
-
 
 </x-layout>

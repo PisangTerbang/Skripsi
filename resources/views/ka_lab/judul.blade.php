@@ -286,7 +286,6 @@
                                     <th class="px-6 py-4">Dosen</th>
                                     <th class="px-6 py-4">Lab</th>
                                     <th class="px-6 py-4 text-center">Peminat</th>
-                                    <th class="px-6 py-4 text-center">Ditetapkan</th>
                                     <th class="px-6 py-4">Status</th>
                                     <th class="px-6 py-4 text-center">Aksi</th>
                                 </tr>
@@ -359,14 +358,6 @@
                                             <span
                                                 class="inline-flex h-8 w-8 items-center justify-center rounded-full border-2 border-violet-200 bg-violet-100 text-xs font-black text-violet-700"
                                                 x-text="item.total_peminat">
-                                            </span>
-                                        </td>
-
-                                        {{-- Ditetapkan --}}
-                                        <td class="px-6 py-4 text-center">
-                                            <span
-                                                class="inline-flex h-8 w-8 items-center justify-center rounded-full border-2 border-emerald-200 bg-emerald-100 text-xs font-black text-emerald-700"
-                                                x-text="item.jumlah_ditetapkan">
                                             </span>
                                         </td>
 
@@ -548,15 +539,10 @@
                         <div class="h-px flex-1 bg-gray-200"></div>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-3">
+                    <div class="grid grid-cols-1 gap-3">
                         <div class="rounded-xl border-2 border-violet-200 bg-violet-50 p-4 text-center">
                             <p class="text-4xl font-black text-violet-700" x-text="selectedItem.total_peminat"></p>
                             <p class="text-xs font-bold text-violet-500 mt-1">Total Peminat</p>
-                        </div>
-                        <div class="rounded-xl border-2 border-emerald-200 bg-emerald-50 p-4 text-center">
-                            <p class="text-4xl font-black text-emerald-700" x-text="selectedItem.jumlah_ditetapkan">
-                            </p>
-                            <p class="text-xs font-bold text-emerald-500 mt-1">Sudah Ditetapkan</p>
                         </div>
                     </div>
 

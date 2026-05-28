@@ -5,52 +5,39 @@ namespace App\Http\Controllers\KaLab;
 use App\Http\Controllers\Controller;
 use App\Models\Pengajuan;
 use App\Models\Judul;
-use App\Models\Periode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class PengajuanController extends Controller
 {
-    /**
-     * Halaman List Pengajuan yang perlu direview Ka Lab
-     */
     public function index(Request $request)
     {
         $user = Auth::user();
 
-        // Validasi role
         if ($user->role !== 'ka_lab') {
             abort(403, 'Anda tidak memiliki akses sebagai Kepala Lab');
         }
 
-        // Filter status
         $status = $request->get('status', 'all');
         $search = $request->get('search', '');
 
-        // Query pengajuan yang perlu direview oleh Ka Lab
         $query = Pengajuan::with([
             'mahasiswa',
             'periode',
-            'pilihan1',
             'pilihan1.laboratorium',
             'pilihan1.dosen',
-            'pilihan2',
             'pilihan2.laboratorium',
             'pilihan2.dosen',
-            'pilihan3',
             'pilihan3.laboratorium',
             'pilihan3.dosen',
-            'judulDitetapkan',
             'judulDitetapkan.dosen',
-            'reviewerKalab'
+            'reviewerKalab',
         ]);
 
-        // Filter by status
         if ($status === 'pending') {
             $query->where(function ($q) {
-                $q->where('status_kalab', 'pending')
-                    ->orWhereNull('status_kalab');
+                $q->where('status_kalab', 'pending')->orWhereNull('status_kalab');
             });
         } elseif ($status === 'disetujui') {
             $query->where('status_kalab', 'disetujui');
@@ -58,7 +45,6 @@ class PengajuanController extends Controller
             $query->where('status_kalab', 'ditolak');
         }
 
-        // Search mahasiswa
         if ($search) {
             $query->whereHas('mahasiswa', function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
@@ -68,12 +54,10 @@ class PengajuanController extends Controller
 
         $pengajuan = $query->latest()->paginate(10);
 
-        // Stats
         $stats = [
             'total' => Pengajuan::count(),
             'pending' => Pengajuan::where(function ($q) {
-                $q->where('status_kalab', 'pending')
-                    ->orWhereNull('status_kalab');
+                $q->where('status_kalab', 'pending')->orWhereNull('status_kalab');
             })->count(),
             'disetujui' => Pengajuan::where('status_kalab', 'disetujui')->count(),
             'ditolak' => Pengajuan::where('status_kalab', 'ditolak')->count(),
@@ -82,9 +66,6 @@ class PengajuanController extends Controller
         return view('ka_lab.pengajuan.index', compact('pengajuan', 'stats', 'status', 'search'));
     }
 
-    /**
-     * Halaman Detail Pengajuan untuk review
-     */
     public function show($id)
     {
         $user = Auth::user();
@@ -96,28 +77,51 @@ class PengajuanController extends Controller
         $pengajuan = Pengajuan::with([
             'mahasiswa',
             'periode',
-            'pilihan1',
             'pilihan1.dosen',
             'pilihan1.laboratorium',
-            'pilihan2',
             'pilihan2.dosen',
             'pilihan2.laboratorium',
-            'pilihan3',
             'pilihan3.dosen',
             'pilihan3.laboratorium',
-            'judulDitetapkan',
             'judulDitetapkan.dosen',
             'reviewerKalab',
             'reviewerKoor',
-            'reviewerKaprodi'
+            'reviewerKaprodi',
         ])->findOrFail($id);
 
-        return view('ka_lab.pengajuan.show', compact('pengajuan'));
+        $pilihanStatus = [];
+
+        foreach ([
+            'pilihan_1' => $pengajuan->pilihan_1_id,
+            'pilihan_2' => $pengajuan->pilihan_2_id,
+            'pilihan_3' => $pengajuan->pilihan_3_id,
+        ] as $key => $judulId) {
+            if (!$judulId) {
+                $pilihanStatus[$key] = null;
+                continue;
+            }
+
+            $sudahDiambil = Pengajuan::with('mahasiswa')
+                ->where('judul_ditetapkan_id', $judulId)
+                ->where('status_kalab', 'disetujui')
+                ->where('id', '!=', $pengajuan->id)
+                ->first();
+
+            $pilihanStatus[$key] = $sudahDiambil ? [
+                'diambil' => true,
+                'nama' => $sudahDiambil->mahasiswa->name ?? '-',
+                'nim' => $sudahDiambil->mahasiswa->nim ?? '-',
+                'email' => $sudahDiambil->mahasiswa->email ?? '-',
+            ] : ['diambil' => false];
+        }
+
+        $semuaPilihanDiambil = collect($pilihanStatus)
+            ->filter(fn($s) => $s !== null)
+            ->every(fn($s) => $s['diambil'] === true);
+
+        return view('ka_lab.pengajuan.show', compact('pengajuan', 'pilihanStatus', 'semuaPilihanDiambil'));
     }
 
-    /**
-     * Approve pengajuan dan tetapkan judul
-     */
     public function approve(Request $request, $id)
     {
         $request->validate([
@@ -127,30 +131,39 @@ class PengajuanController extends Controller
 
         $pengajuan = Pengajuan::findOrFail($id);
         $user = Auth::user();
+        $sumberJudul = $request->judul_terpilih;
+        $judulId = null;
 
-        // Validasi apakah bisa direview
         if (!$pengajuan->canBeReviewedByKalab()) {
             return back()->with('error', 'Pengajuan ini tidak dapat direview saat ini.');
         }
 
+        if ($sumberJudul === 'pilihan_1') {
+            $judulId = $pengajuan->pilihan_1_id;
+        } elseif ($sumberJudul === 'pilihan_2') {
+            $judulId = $pengajuan->pilihan_2_id;
+        } elseif ($sumberJudul === 'pilihan_3') {
+            $judulId = $pengajuan->pilihan_3_id;
+        }
+
+        // Cek apakah judul sudah diambil mahasiswa lain
+        if ($judulId && $sumberJudul !== 'mandiri') {
+            $sudahDiambil = Pengajuan::where('judul_ditetapkan_id', $judulId)
+                ->where('status_kalab', 'disetujui')
+                ->where('id', '!=', $pengajuan->id)
+                ->exists();
+
+            if ($sudahDiambil) {
+                return back()->with('error', 'Judul ini sudah diambil oleh mahasiswa lain. Pilih judul alternatif lainnya.');
+            }
+        }
+
         DB::beginTransaction();
         try {
-            $sumberJudul = $request->judul_terpilih;
-            $judulId = null;
-
-            // Tentukan judul yang dipilih
-            if ($sumberJudul === 'pilihan_1') {
-                $judulId = $pengajuan->pilihan_1_id;
-            } elseif ($sumberJudul === 'pilihan_2') {
-                $judulId = $pengajuan->pilihan_2_id;
-            } elseif ($sumberJudul === 'pilihan_3') {
-                $judulId = $pengajuan->pilihan_3_id;
-            } elseif ($sumberJudul === 'mandiri') {
-                // Buat judul baru dari judul mandiri
+            if ($sumberJudul === 'mandiri') {
                 $judulId = $this->createJudulMandiri($pengajuan);
             }
 
-            // Approve menggunakan method di model
             $success = $pengajuan->approveByKalab(
                 userId: $user->id,
                 judulId: $judulId,
@@ -162,21 +175,13 @@ class PengajuanController extends Controller
                 throw new \Exception('Gagal menyetujui pengajuan.');
             }
 
-            // Notifikasi ke mahasiswa
-            DB::table('aktivitas')->insert([
-                'user_id' => $pengajuan->mahasiswa_id,
-                'tipe' => 'pengajuan_disetujui_kalab',
-                'pesan' => 'Pengajuan Anda telah disetujui oleh Kepala Lab.',
-                'is_read' => DB::raw('false'),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            // ✅ Tidak ada notifikasi ke mahasiswa — menunggu pengumuman KoorTA
 
             DB::commit();
 
             return redirect()
                 ->route('ka-lab.pengajuan.index')
-                ->with('success', 'Pengajuan berhasil disetujui!');
+                ->with('success', 'Pengajuan berhasil disetujui! Mahasiswa akan mendapat notifikasi setelah pengumuman resmi dari Koordinator TA.');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -184,9 +189,6 @@ class PengajuanController extends Controller
         }
     }
 
-    /**
-     * Reject pengajuan
-     */
     public function reject(Request $request, $id)
     {
         $request->validate([
@@ -198,14 +200,12 @@ class PengajuanController extends Controller
         $pengajuan = Pengajuan::findOrFail($id);
         $user = Auth::user();
 
-        // Validasi apakah bisa direview
         if (!$pengajuan->canBeReviewedByKalab()) {
             return back()->with('error', 'Pengajuan ini tidak dapat direview saat ini.');
         }
 
         DB::beginTransaction();
         try {
-            // Reject menggunakan method di model
             $success = $pengajuan->rejectByKalab(
                 userId: $user->id,
                 catatan: $request->catatan_kalab
@@ -215,21 +215,13 @@ class PengajuanController extends Controller
                 throw new \Exception('Gagal menolak pengajuan.');
             }
 
-            // Notifikasi ke mahasiswa
-            DB::table('aktivitas')->insert([
-                'user_id' => $pengajuan->mahasiswa_id,
-                'tipe' => 'pengajuan_ditolak_kalab',
-                'pesan' => 'Pengajuan Anda ditolak oleh Kepala Lab. Catatan: ' . $request->catatan_kalab,
-                'is_read' => DB::raw('false'),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            // ✅ Tidak ada notifikasi ke mahasiswa — menunggu pengumuman KoorTA
 
             DB::commit();
 
             return redirect()
                 ->route('ka-lab.pengajuan.index')
-                ->with('success', 'Pengajuan berhasil ditolak.');
+                ->with('success', 'Pengajuan berhasil ditolak. Mahasiswa akan mendapat notifikasi setelah pengumuman resmi dari Koordinator TA.');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -237,16 +229,13 @@ class PengajuanController extends Controller
         }
     }
 
-    /**
-     * Helper: Buat judul baru dari judul mandiri mahasiswa
-     */
     private function createJudulMandiri($pengajuan)
     {
         $judul = Judul::create([
             'nama_judul' => $pengajuan->judul_mandiri,
             'deskripsi' => $pengajuan->deskripsi_mandiri,
-            'dosen_id' => null, // Belum ada dosen pembimbing
-            'laboratorium_id' => null, // Akan ditentukan kemudian
+            'dosen_id' => null,
+            'laboratorium_id' => null,
             'status_judul' => 'ditawarkan',
             'aktif' => true,
             'is_locked' => false,
@@ -255,7 +244,6 @@ class PengajuanController extends Controller
             'updated_at' => now(),
         ]);
 
-        // Log pembuatan judul mandiri
         DB::table('judul_logs')->insert([
             'judul_id' => $judul->id,
             'user_id' => Auth::id(),

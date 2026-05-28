@@ -4,7 +4,7 @@
     <div x-data="dashboardMahasiswa()" x-init="init()" class="min-h-screen bg-slate-100">
         <div class="px-6 py-6 space-y-6">
 
-           
+
 
             {{-- ===== WELCOME BANNER ===== --}}
             <div
@@ -55,8 +55,8 @@
                 </div>
             </div>
 
-            {{-- ===== HERO: JUDUL DISETUJUI ===== --}}
-            @if ($disetujui)
+            {{-- ===== HERO: JUDUL DISETUJUI (hanya muncul setelah pengumuman KoorTA) ===== --}}
+            @if ($disetujui && $sudahDiumumkan)
                 <div
                     class="relative overflow-hidden rounded-2xl border-2 border-emerald-300 bg-gradient-to-br from-emerald-500 via-emerald-600 to-green-700 p-7 shadow-xl">
                     <div class="absolute -right-10 -top-10 h-48 w-48 rounded-full bg-white/10"></div>
@@ -71,11 +71,11 @@
                                 </span>
                                 <span
                                     class="inline-flex items-center gap-1.5 rounded-full border-2 border-emerald-300/50 bg-emerald-400/20 px-3 py-1 text-xs font-black text-emerald-200">
-                                    <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-300"></span>
-                                    Final Disetujui
+                                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-300"></span>
+                                    Resmi Diumumkan
                                 </span>
                             </div>
-                            <h2 class="text-xl font-black text-white mb-2">Judul Anda Telah Disetujui</h2>
+                            <h2 class="text-xl font-black text-white mb-2">Judul TA Anda Telah Ditetapkan</h2>
                             <p class="text-base font-bold text-emerald-100 leading-relaxed mb-4">
                                 "{{ $disetujui->judulDitetapkan->nama_judul ?? ($disetujui->judulDitetapkan->judul ?? ($disetujui->judul_mandiri ?? '-')) }}"
                             </p>
@@ -83,6 +83,10 @@
                                 <span class="flex items-center gap-1">
                                     <x-heroicon-o-check-circle class="h-4 w-4" />
                                     Disetujui {{ $disetujui->updated_at->diffForHumans() }}
+                                </span>
+                                <span class="flex items-center gap-1">
+                                    <x-heroicon-o-megaphone class="h-4 w-4" />
+                                    Pengumuman sudah dikirim
                                 </span>
                             </div>
                             <a href="{{ route('mahasiswa.riwayat') }}"
@@ -93,7 +97,51 @@
                         </div>
                     </div>
                 </div>
+
+                {{-- ===== HERO: MENUNGGU PENGUMUMAN (Kaprodi sudah approve tapi belum diumumkan) ===== --}}
+            @elseif ($disetujui && !$sudahDiumumkan)
+                <div
+                    class="relative overflow-hidden rounded-2xl border-2 border-blue-300 bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 p-7 shadow-xl">
+                    <div class="absolute -right-10 -top-10 h-48 w-48 rounded-full bg-white/10"></div>
+                    <div class="absolute -bottom-12 -left-6 h-40 w-40 rounded-full bg-white/5"></div>
+
+                    <div class="relative flex items-start justify-between gap-6">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-3">
+                                <span
+                                    class="inline-flex items-center gap-1.5 rounded-full border-2 border-white/30 bg-white/20 px-3 py-1 text-xs font-black text-white">
+                                    ✅ Disetujui Kaprodi
+                                </span>
+                                <span
+                                    class="inline-flex items-center gap-1.5 rounded-full border-2 border-yellow-300/50 bg-yellow-400/20 px-3 py-1 text-xs font-black text-yellow-200">
+                                    <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-yellow-300"></span>
+                                    Menunggu Pengumuman
+                                </span>
+                            </div>
+                            <h2 class="text-xl font-black text-white mb-2">Pengajuan Disetujui — Menunggu Pengumuman
+                                Resmi</h2>
+                            <p class="text-base font-bold text-blue-100 leading-relaxed mb-2">
+                                "{{ $disetujui->judulDitetapkan->nama_judul ?? ($disetujui->judulDitetapkan->judul ?? ($disetujui->judul_mandiri ?? '-')) }}"
+                            </p>
+                            <p class="text-xs text-blue-200 leading-relaxed mb-4">
+                                Pengajuan Anda telah disetujui oleh Kaprodi. Hasil resmi akan diumumkan oleh Koordinator
+                                TA. Harap menunggu pengumuman.
+                            </p>
+                            <div class="flex items-center gap-3 text-xs text-blue-200">
+                                <span class="flex items-center gap-1">
+                                    <x-heroicon-o-check-circle class="h-4 w-4" />
+                                    Disetujui {{ $disetujui->updated_at->diffForHumans() }}
+                                </span>
+                                <span class="flex items-center gap-1">
+                                    <x-heroicon-o-clock class="h-4 w-4" />
+                                    Menunggu pengumuman KoorTA
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             @endif
+
 
             {{-- ===== STATS ===== --}}
             <div class="flex items-center gap-3">
@@ -195,14 +243,15 @@
                 <div class="p-6">
                     {{-- Steps --}}
                     <div class="relative mb-6">
-                        {{-- Line --}}
+                        {{-- Line background --}}
                         <div class="absolute top-4 left-4 right-4 h-0.5 bg-gray-200 z-0"></div>
+                        {{-- Line progress --}}
                         <div class="absolute top-4 left-4 h-0.5 bg-gradient-to-r from-indigo-500 to-purple-500 z-0 transition-all duration-700"
-                            x-bind:style="`width: calc(${progressWidth}% - 2rem)`">
+                            x-bind:style="`width: calc(${Math.min(progressWidth, 100)}% - 2rem)`">
                         </div>
 
                         <div class="relative z-10 flex justify-between">
-                            @foreach ([['icon' => 'plus', 'label' => 'Ajukan', 'step' => 1], ['icon' => 'clock', 'label' => 'Diproses', 'step' => 2], ['icon' => 'eye', 'label' => 'Review', 'step' => 3], ['icon' => 'check', 'label' => 'Selesai', 'step' => 4]] as $s)
+                            @foreach ([['icon' => 'plus', 'label' => 'Ajukan', 'step' => 1], ['icon' => 'clock', 'label' => 'Ka Lab', 'step' => 2], ['icon' => 'eye', 'label' => 'Kaprodi', 'step' => 3], ['icon' => 'megaphone', 'label' => 'Pengumuman', 'step' => 4]] as $s)
                                 <div class="flex flex-col items-center gap-2">
                                     <div class="flex h-9 w-9 items-center justify-center rounded-full border-2 transition-all duration-300"
                                         x-bind:class="step >= {{ $s['step'] }} ?
@@ -212,7 +261,7 @@
                                             x-bind:class="step >= {{ $s['step'] }} ? 'text-white' : 'text-gray-400'"
                                             class="h-4 w-4" />
                                     </div>
-                                    <span class="text-xs font-bold transition-colors"
+                                    <span class="text-xs font-bold transition-colors text-center"
                                         x-bind:class="step >= {{ $s['step'] }} ? 'text-indigo-600' : 'text-gray-400'">
                                         {{ $s['label'] }}
                                     </span>
@@ -227,8 +276,12 @@
                             x-bind:style="`width: ${progressWidth}%`">
                         </div>
                     </div>
+
+                    {{-- Step label --}}
+                    <p class="mt-3 text-center text-xs font-semibold text-gray-500" x-text="stepLabel"></p>
                 </div>
             </div>
+
             {{-- ===== SECTION: RIWAYAT + QUICK ACCESS ===== --}}
             <div class="flex items-center gap-3">
                 <div class="h-px flex-1 bg-gradient-to-r from-transparent to-gray-200"></div>
@@ -456,97 +509,126 @@
     {{-- Toast Container --}}
     <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
 
-    <script>
-        function dashboardMahasiswa() {
-            return {
-                stats: {
-                    total: {{ $total }},
-                    pending: {{ $pending }},
-                    ditolak: {{ $ditolak }}
-                },
-                riwayat: @json($riwayat),
-                lastRiwayat: [],
-                status: '{{ $disetujui ? 'disetujui' : ($pending > 0 ? 'pending' : 'none') }}',
-                lastStatus: null,
-                step: 1,
-                progressWidth: 25,
-                interval: null,
+    @push('scripts')
+        <script>
+            function dashboardMahasiswa() {
+                return {
+                    stats: {
+                        total: {{ $total }},
+                        pending: {{ $pending }},
+                        ditolak: {{ $ditolak }}
+                    },
+                    riwayat: @json($riwayat),
+                    lastRiwayat: [],
+                    // ✅ pakai statusProgress dari controller
+                    status: '{{ $statusProgress }}',
+                    lastStatus: null,
+                    step: 1,
+                    progressWidth: 25,
+                    stepLabel: '',
+                    interval: null,
 
-                mapStatus(status) {
-                    switch (status) {
-                        case 'pending':
-                            return 2;
-                        case 'review':
-                            return 3;
-                        case 'disetujui':
-                            return 4;
-                        case 'ditolak':
-                            return 4;
-                        default:
-                            return 1;
-                    }
-                },
-
-                updateProgress(status) {
-                    this.step = this.mapStatus(status);
-                    this.progressWidth = this.step * 25;
-                },
-
-                async fetch() {
-                    try {
-                        const res = await fetch("{{ route('mahasiswa.beranda.data') }}", {
-                            method: 'GET',
-                            credentials: 'same-origin',
-                            headers: {
-                                'X-Requested-With': 'XMLHttpRequest'
-                            }
-                        });
-                        if (!res.ok) throw new Error('Network error');
-                        const data = await res.json();
-
-                        const old = this.lastRiwayat.map(i => i.judul);
-                        data.riwayat = data.riwayat.map(item => ({
-                            ...item,
-                            isNew: !old.includes(item.judul)
-                        }));
-
-                        this.lastRiwayat = data.riwayat;
-                        this.riwayat = data.riwayat;
-                        this.status = data.status;
-
-                        this.updateProgress(data.status);
-
-                        if (this.lastStatus && this.lastStatus !== data.status) {
-                            this.showToast('Status pengajuan berubah: ' + data.status, 'success');
+                    // ✅ 4 step sekarang
+                    mapStatus(status) {
+                        switch (status) {
+                            case 'pending':
+                                return 2;
+                            case 'review':
+                                return 3;
+                            case 'disetujui':
+                                return 3; // kaprodi approve, belum diumumkan
+                            case 'diumumkan':
+                                return 4; // sudah diumumkan = selesai
+                            case 'ditolak':
+                                return 4; // ditolak juga step 4 setelah diumumkan
+                            default:
+                                return 1;
                         }
-                        this.lastStatus = data.status;
+                    },
 
-                    } catch (e) {
-                        console.error('Fetch error:', e);
+                    // ✅ Label per step
+                    getStepLabel(status) {
+                        switch (status) {
+                            case 'none':
+                                return 'Belum ada pengajuan';
+                            case 'pending':
+                                return 'Menunggu review Ka Lab';
+                            case 'review':
+                                return 'Menunggu review Kaprodi';
+                            case 'disetujui':
+                                return 'Menunggu pengumuman Koordinator TA';
+                            case 'diumumkan':
+                                return '✓ Pengumuman sudah dikirim';
+                            case 'ditolak':
+                                return 'Pengajuan ditolak';
+                            default:
+                                return '';
+                        }
+                    },
+
+                    updateProgress(status) {
+                        this.step = this.mapStatus(status);
+                        this.progressWidth = this.step * 25;
+                        this.stepLabel = this.getStepLabel(status);
+                    },
+
+                    async fetch() {
+                        try {
+                            const res = await fetch("{{ route('mahasiswa.beranda.data') }}", {
+                                method: 'GET',
+                                credentials: 'same-origin',
+                                headers: {
+                                    'X-Requested-With': 'XMLHttpRequest'
+                                }
+                            });
+                            if (!res.ok) throw new Error('Network error');
+                            const data = await res.json();
+
+                            const old = this.lastRiwayat.map(i => i.judul);
+                            data.riwayat = data.riwayat.map(item => ({
+                                ...item,
+                                isNew: !old.includes(item.judul)
+                            }));
+
+                            this.lastRiwayat = data.riwayat;
+                            this.riwayat = data.riwayat;
+                            this.status = data.status;
+
+                            this.updateProgress(data.status);
+
+                            if (this.lastStatus && this.lastStatus !== data.status) {
+                                this.showToast('Status pengajuan diperbarui', 'success');
+                            }
+                            this.lastStatus = data.status;
+
+                        } catch (e) {
+                            console.error('Fetch error:', e);
+                        }
+                    },
+
+                    showToast(message, type = 'success') {
+                        const toast = document.createElement('div');
+                        toast.className = `flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-white text-sm font-semibold transition-all duration-300 ${
+                    type === 'success' ? 'bg-emerald-500' : 'bg-red-500'
+                }`;
+                        toast.innerHTML = `<span>${message}</span>`;
+                        document.getElementById('toast-container').appendChild(toast);
+                        setTimeout(() => {
+                            toast.style.opacity = '0';
+                            setTimeout(() => toast.remove(), 300);
+                        }, 3000);
+                    },
+
+                    init() {
+                        this.updateProgress(this.status);
+                        this.fetch();
+                        if (this.interval) clearInterval(this.interval);
+                        this.interval = setInterval(() => this.fetch(), 5000);
                     }
-                },
-
-                showToast(message, type = 'success') {
-                    const toast = document.createElement('div');
-                    toast.className = `flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-white text-sm font-semibold transition-all duration-300 ${
-                        type === 'success' ? 'bg-emerald-500' : 'bg-red-500'
-                    }`;
-                    toast.innerHTML = `<span>${message}</span>`;
-                    document.getElementById('toast-container').appendChild(toast);
-                    setTimeout(() => {
-                        toast.style.opacity = '0';
-                        setTimeout(() => toast.remove(), 300);
-                    }, 3000);
-                },
-
-                init() {
-                    this.updateProgress(this.status);
-                    this.fetch();
-                    if (this.interval) clearInterval(this.interval);
-                    this.interval = setInterval(() => this.fetch(), 5000);
                 }
             }
-        }
-    </script>
+        </script>
+    @endpush
+
 
 </x-layout>

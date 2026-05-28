@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Mahasiswa;
 use App\Http\Controllers\Controller;
 use App\Models\Judul;
 use App\Models\Pengajuan;
-use App\Models\Aktivitas;
 use App\Models\Laboratorium;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -23,8 +22,7 @@ class PengajuanController extends Controller
                 'laboratorium',
                 'dosen',
                 'pengajuan' => function ($q) {
-                    $q->where('status', 'disetujui')
-                        ->with('mahasiswa');
+                    $q->where('status', 'disetujui')->with('mahasiswa');
                 }
             ])
             ->withCount([
@@ -62,7 +60,6 @@ class PengajuanController extends Controller
             ->latest()
             ->get();
 
-        // ✅ Mapping untuk Alpine.js — dilakukan di PHP supaya @json() aman
         $judulJson = $judul->map(function ($j) {
             return [
                 'id' => $j->id,
@@ -82,17 +79,15 @@ class PengajuanController extends Controller
             'pengajuanSaya',
             'laboratorium',
             'mySubmissions',
-            'judulJson'  // ✅ tambah ini
+            'judulJson'
         ))->with('title', 'Pengajuan Judul');
     }
-
 
     public function store(Request $request)
     {
         $mahasiswaId = Auth::id();
         $mahasiswaName = Auth::user()->name;
 
-        // Cek apakah sudah pernah mengajukan
         $jumlahAktif = Pengajuan::where('mahasiswa_id', $mahasiswaId)
             ->whereIn('status', ['pending', 'disetujui'])
             ->count();
@@ -101,7 +96,6 @@ class PengajuanController extends Controller
             return back()->with('error', 'Anda sudah mengajukan judul sebelumnya.');
         }
 
-        // Validasi input
         $validated = $request->validate([
             'judul_mandiri' => 'nullable|string|max:255',
             'deskripsi_mandiri' => 'nullable|string|max:1000',
@@ -119,15 +113,13 @@ class PengajuanController extends Controller
             'pilihan_3_id.different' => 'Pilihan 3 harus berbeda dengan Pilihan 1 dan 2',
         ]);
 
-        // Ambil periode aktif
         $periodeAktif = \App\Models\Periode::periodeAktif();
 
         if (!$periodeAktif) {
             return back()->with('error', 'Tidak ada periode aktif saat ini. Silakan hubungi koordinator.');
         }
 
-        // Simpan pengajuan
-        $pengajuan = Pengajuan::create([
+        Pengajuan::create([
             'mahasiswa_id' => $mahasiswaId,
             'periode_id' => $periodeAktif->id,
             'judul_mandiri' => $validated['judul_mandiri'] ?? null,
@@ -142,31 +134,15 @@ class PengajuanController extends Controller
             'status' => 'pending',
         ]);
 
-        // Notifikasi ke dosen (pilihan 1, 2, 3)
         $dosenIds = [];
 
-        if ($validated['pilihan_1_id']) {
-            $judul1 = Judul::find($validated['pilihan_1_id']);
-            if ($judul1 && $judul1->dosen_id) {
-                $dosenIds[] = $judul1->dosen_id;
+        foreach (['pilihan_1_id', 'pilihan_2_id', 'pilihan_3_id'] as $key) {
+            $j = Judul::find($validated[$key]);
+            if ($j && $j->dosen_id && !in_array($j->dosen_id, $dosenIds)) {
+                $dosenIds[] = $j->dosen_id;
             }
         }
 
-        if ($validated['pilihan_2_id']) {
-            $judul2 = Judul::find($validated['pilihan_2_id']);
-            if ($judul2 && $judul2->dosen_id && !in_array($judul2->dosen_id, $dosenIds)) {
-                $dosenIds[] = $judul2->dosen_id;
-            }
-        }
-
-        if ($validated['pilihan_3_id']) {
-            $judul3 = Judul::find($validated['pilihan_3_id']);
-            if ($judul3 && $judul3->dosen_id && !in_array($judul3->dosen_id, $dosenIds)) {
-                $dosenIds[] = $judul3->dosen_id;
-            }
-        }
-
-        // Kirim notifikasi ke dosen yang terlibat
         foreach ($dosenIds as $dosenId) {
             DB::table('aktivitas')->insert([
                 'user_id' => $dosenId,
@@ -178,7 +154,6 @@ class PengajuanController extends Controller
             ]);
         }
 
-        // Jika ada usulan mandiri, notifikasi ke semua dosen
         if (!empty($validated['judul_mandiri'])) {
             $allDosenIds = \App\Models\User::where('role', 'dosen')->pluck('id');
             foreach ($allDosenIds as $dosenId) {
@@ -205,19 +180,29 @@ class PengajuanController extends Controller
 
         $pengajuan = Pengajuan::with([
             'pilihan1.laboratorium',
+            'pilihan1.dosen',
             'pilihan2.laboratorium',
+            'pilihan2.dosen',
             'pilihan3.laboratorium',
+            'pilihan3.dosen',
+            'judulDitetapkan',
+            'reviewerKalab',
+            'reviewerKaprodi',
         ])
             ->where('mahasiswa_id', $mahasiswaId)
             ->latest()
             ->get();
 
-        // ✅ Mapping di PHP supaya @json() aman di view
-        $pengajuanJson = $pengajuan->map(function ($p) {
+        $sudahDiumumkan = DB::table('aktivitas')
+            ->where('user_id', $mahasiswaId)
+            ->whereIn('tipe', ['pengumuman_disetujui', 'pengumuman_ditolak'])
+            ->exists();
+
+        $pengajuanJson = $pengajuan->map(function ($p) use ($sudahDiumumkan) {
             return [
                 'id' => $p->id,
                 'judul' => $p->jenis === 'pilih'
-                    ? ($p->pilihan1->nama_judul ?? $p->pilihan2->nama_judul ?? $p->pilihan3->nama_judul ?? '-')
+                    ? ($p->pilihan1->nama_judul ?? '-')
                     : ($p->judul_mandiri ?? '-'),
                 'jenis' => $p->jenis,
                 'status' => $p->status,
@@ -225,13 +210,48 @@ class PengajuanController extends Controller
                 'kode' => $p->jenis === 'pilih' ? ($p->pilihan1->kode ?? '') : '',
                 'deskripsi' => $p->jenis === 'mandiri' ? ($p->deskripsi_mandiri ?? '') : '',
                 'lab' => $p->jenis === 'pilih' && $p->pilihan1
-                    ? ($p->pilihan1->laboratorium->nama ?? '')
-                    : '',
-                'alasan' => $p->alasan_1 ?? $p->alasan ?? '',
+                    ? ($p->pilihan1->laboratorium->nama ?? '') : '',
+                'alasan' => $p->alasan_1 ?? '',
+
+                // ✅ Semua pilihan judul
+                'pilihan1' => $p->pilihan1 ? [
+                    'judul' => $p->pilihan1->nama_judul ?? '-',
+                    'kode' => $p->pilihan1->kode ?? '-',
+                    'dosen' => $p->pilihan1->dosen->name ?? '-',
+                    'lab' => $p->pilihan1->laboratorium->nama ?? '-',
+                    'alasan' => $p->alasan_1 ?? '',
+                ] : null,
+                'pilihan2' => $p->pilihan2 ? [
+                    'judul' => $p->pilihan2->nama_judul ?? '-',
+                    'kode' => $p->pilihan2->kode ?? '-',
+                    'dosen' => $p->pilihan2->dosen->name ?? '-',
+                    'lab' => $p->pilihan2->laboratorium->nama ?? '-',
+                    'alasan' => $p->alasan_2 ?? '',
+                ] : null,
+                'pilihan3' => $p->pilihan3 ? [
+                    'judul' => $p->pilihan3->nama_judul ?? '-',
+                    'kode' => $p->pilihan3->kode ?? '-',
+                    'dosen' => $p->pilihan3->dosen->name ?? '-',
+                    'lab' => $p->pilihan3->laboratorium->nama ?? '-',
+                    'alasan' => $p->alasan_3 ?? '',
+                ] : null,
+                'judul_mandiri' => $p->judul_mandiri ?? null,
+                'deskripsi_mandiri' => $p->deskripsi_mandiri ?? null,
+
                 'catatan_dosen' => $p->catatan_dosen ?? '',
                 'waktu' => $p->created_at->diffForHumans(),
                 'tanggal' => $p->created_at->format('d M Y H:i'),
                 'timestamp' => $p->created_at->timestamp,
+                'status_kalab' => $p->status_kalab,
+                'status_kaprodi' => $p->status_kaprodi,
+                'catatan_kalab' => $p->catatan_kalab_pengajuan ?? '',
+                'catatan_kaprodi' => $p->catatan_kaprodi ?? '',
+                'judul_ditetapkan' => $p->judulDitetapkan
+                    ? ($p->judulDitetapkan->nama_judul ?? $p->judulDitetapkan->judul ?? '-')
+                    : null,
+                'reviewer_kalab' => $p->reviewerKalab->name ?? null,
+                'reviewer_kaprodi' => $p->reviewerKaprodi->name ?? null,
+                'sudah_diumumkan' => $sudahDiumumkan,
             ];
         })->values();
 
@@ -241,5 +261,4 @@ class PengajuanController extends Controller
             'title' => 'Riwayat Pengajuan',
         ]);
     }
-
 }

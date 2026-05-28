@@ -4,6 +4,7 @@ namespace App\Http\Controllers\KaLab;
 
 use App\Http\Controllers\Controller;
 use App\Models\Judul;
+use App\Models\Pengajuan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -81,7 +82,6 @@ class ValidasiController extends Controller
             ->count();
 
         // ========== JSON DATA UNTUK ALPINE.JS ==========
-        // ✅ Mapping dilakukan di controller supaya @json() di view tidak konflik dengan Blade
         $judulPendingJson = $judulPending->map(function ($j) {
             return [
                 'id' => $j->id,
@@ -99,10 +99,17 @@ class ValidasiController extends Controller
                 'total_peminat' => $j->total_peminat ?? 0,
                 'jumlah_ditetapkan' => $j->jumlah_ditetapkan ?? 0,
                 'kuota_maksimal' => $j->kuota_maksimal,
+                'mahasiswa_ditetapkan' => null,
             ];
         })->values();
 
         $judulSelesaiJson = $judulSelesai->map(function ($j) {
+            // ✅ Cari mahasiswa yang judulnya ditetapkan
+            $pengajuanDitetapkan = Pengajuan::with('mahasiswa')
+                ->where('judul_ditetapkan_id', $j->id)
+                ->where('status_kalab', 'disetujui')
+                ->first();
+
             return [
                 'id' => $j->id,
                 'kode' => $j->kode ?? '',
@@ -119,6 +126,13 @@ class ValidasiController extends Controller
                 'total_peminat' => $j->total_peminat ?? 0,
                 'jumlah_ditetapkan' => $j->jumlah_ditetapkan ?? 0,
                 'kuota_maksimal' => $j->kuota_maksimal,
+                // ✅ Data mahasiswa yang ditetapkan
+                'mahasiswa_ditetapkan' => $pengajuanDitetapkan ? [
+                    'nama' => $pengajuanDitetapkan->mahasiswa->name ?? '-',
+                    'nim' => $pengajuanDitetapkan->mahasiswa->nim ?? '-',
+                    'email' => $pengajuanDitetapkan->mahasiswa->email ?? '-',
+                    'status' => $pengajuanDitetapkan->status_kaprodi ?? 'pending',
+                ] : null,
             ];
         })->values();
 
@@ -178,14 +192,13 @@ class ValidasiController extends Controller
                     'user_id' => $judul->dosen_id,
                     'tipe' => 'judul_divalidasi_kalab',
                     'pesan' => "Judul '{$judul->nama_judul}' telah divalidasi oleh Kepala Lab dan siap ditawarkan ke mahasiswa.",
-                    'is_read' => false,
+                    'is_read' => DB::raw('false'),
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
             }
 
             DB::commit();
-
             return back()->with('success', 'Judul berhasil divalidasi dan ditawarkan ke mahasiswa!');
 
         } catch (\Exception $e) {
@@ -238,14 +251,13 @@ class ValidasiController extends Controller
                     'user_id' => $judul->dosen_id,
                     'tipe' => 'judul_ditolak_kalab',
                     'pesan' => "Judul '{$judul->nama_judul}' ditolak oleh Kepala Lab. Catatan: {$request->catatan_kalab}",
-                    'is_read' => false,
+                    'is_read' => DB::raw('false'),
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
             }
 
             DB::commit();
-
             return back()->with('success', 'Judul ditolak dan perlu revisi.');
 
         } catch (\Exception $e) {

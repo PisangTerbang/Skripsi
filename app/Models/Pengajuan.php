@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class Pengajuan extends Model
 {
@@ -107,22 +108,17 @@ class Pengajuan extends Model
 
     public function scopePendingKalabReview($query)
     {
-        return $query->where('status', 'pending')
-            ->whereNull('status_kalab');
+        return $query->where('status', 'pending')->whereNull('status_kalab');
     }
 
-    // Dibiarkan untuk histori / Koordinator TA nanti
     public function scopePendingKoorReview($query)
     {
-        return $query->where('status_kalab', 'disetujui')
-            ->whereNull('status_koor');
+        return $query->where('status_kalab', 'disetujui')->whereNull('status_koor');
     }
 
-    // ✅ Fix: dari status_koor → status_kalab
     public function scopePendingKaprodiReview($query)
     {
-        return $query->where('status_kalab', 'disetujui')
-            ->whereNull('status_kaprodi');
+        return $query->where('status_kalab', 'disetujui')->whereNull('status_kaprodi');
     }
 
     public function scopeApprovedByKalab($query)
@@ -184,13 +180,11 @@ class Pengajuan extends Model
         return $this->status === 'pending' && is_null($this->status_kalab);
     }
 
-    // Dibiarkan untuk histori
     public function needsKoorReview()
     {
         return $this->status_kalab === 'disetujui' && is_null($this->status_koor);
     }
 
-    // ✅ Fix: dari status_koor → status_kalab
     public function needsKaprodiReview()
     {
         return $this->status_kalab === 'disetujui' && is_null($this->status_kaprodi);
@@ -201,13 +195,11 @@ class Pengajuan extends Model
         return $this->status === 'pending' && is_null($this->status_kalab);
     }
 
-    // Dibiarkan untuk histori
     public function canBeReviewedByKoor()
     {
         return $this->status_kalab === 'disetujui' && is_null($this->status_koor);
     }
 
-    // ✅ Fix: dari status_koor → status_kalab
     public function canBeReviewedByKaprodi()
     {
         return $this->status_kalab === 'disetujui' && is_null($this->status_kaprodi);
@@ -234,8 +226,7 @@ class Pengajuan extends Model
             return true;
         } catch (\Exception $e) {
             DB::rollBack();
-            // ✅ tambah ini untuk debug
-            \Illuminate\Support\Facades\Log::error('approveByKalab error: ' . $e->getMessage(), [
+            Log::error('approveByKalab error: ' . $e->getMessage(), [
                 'pengajuan_id' => $this->id,
                 'judul_id' => $judulId,
                 'sumber_judul' => $sumberJudul,
@@ -267,7 +258,6 @@ class Pengajuan extends Model
         }
     }
 
-    // Dibiarkan untuk histori / Koordinator TA nanti
     public function approveByKoor($userId, $catatan = null)
     {
         DB::beginTransaction();
@@ -289,7 +279,6 @@ class Pengajuan extends Model
         }
     }
 
-    // Dibiarkan untuk histori / Koordinator TA nanti
     public function rejectByKoor($userId, $catatan)
     {
         DB::beginTransaction();
@@ -337,8 +326,7 @@ class Pengajuan extends Model
             return true;
         } catch (\Exception $e) {
             DB::rollBack();
-            // ✅ tambah logging
-            \Illuminate\Support\Facades\Log::error('approveByKaprodi error: ' . $e->getMessage(), [
+            Log::error('approveByKaprodi error: ' . $e->getMessage(), [
                 'pengajuan_id' => $this->id,
                 'trace' => $e->getTraceAsString(),
             ]);
@@ -385,6 +373,15 @@ class Pengajuan extends Model
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+    }
+
+    // ✅ Helper: cek apakah sudah diumumkan KoorTA
+    private function sudahDiumumkan(): bool
+    {
+        return DB::table('aktivitas')
+            ->where('user_id', $this->mahasiswa_id)
+            ->whereIn('tipe', ['pengumuman_disetujui', 'pengumuman_ditolak'])
+            ->exists();
     }
 
     public function getJudulOptions()
@@ -474,29 +471,34 @@ class Pengajuan extends Model
 
     // ==================== PROGRESS TRACKER ====================
 
-    // ✅ Fix: 3 steps, hapus step Koor
     public function getProgressPercentageAttribute()
     {
-        $steps = 3;
+        $steps = 4; // ✅ Submit, Ka Lab, Kaprodi, Pengumuman
         $completed = 0;
 
+        // Step 1: Submitted
         if ($this->status !== null)
             $completed++;
+
+        // Step 2: Ka Lab approve
         if ($this->status_kalab === 'disetujui')
             $completed++;
+
+        // Step 3: Kaprodi approve
         if ($this->status_kaprodi === 'disetujui')
+            $completed++;
+
+        // Step 4: Pengumuman KoorTA
+        if ($this->sudahDiumumkan())
             $completed++;
 
         return ($completed / $steps) * 100;
     }
 
-    // ✅ Fix: hapus step Koor
     public function getCurrentStepAttribute()
     {
         if ($this->status === 'ditolak')
             return 'Ditolak';
-        if ($this->status === 'disetujui')
-            return 'Selesai';
 
         if (is_null($this->status_kalab))
             return 'Menunggu Review Ka Lab';
@@ -506,8 +508,12 @@ class Pengajuan extends Model
         if (is_null($this->status_kaprodi))
             return 'Menunggu Review Kaprodi';
         if ($this->status_kaprodi === 'ditolak')
-            return 'Ditolak oleh Kaprodi';
+            return 'Ditolak oleh Kaprodi — Menunggu Pengumuman';
 
-        return 'Selesai';
+        // Kaprodi sudah approve — cek pengumuman
+        if ($this->sudahDiumumkan())
+            return 'Selesai — Pengumuman Sudah Dikirim';
+
+        return 'Menunggu Pengumuman Koordinator TA';
     }
 }
