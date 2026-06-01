@@ -33,6 +33,12 @@ $watch('$store.notifDosen.unread', (val, oldVal) => {
                 Manajemen Judul
             </x-nav-link-dosen>
 
+            {{-- Konsultasi --}}
+            <x-nav-link-dosen route="dosen.konsultasi.index" icon="chat-bubble-left-right">
+                Konsultasi
+            </x-nav-link-dosen>
+
+
         </div>
     </div>
 

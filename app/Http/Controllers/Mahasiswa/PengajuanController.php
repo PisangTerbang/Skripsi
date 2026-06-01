@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Judul;
 use App\Models\Pengajuan;
 use App\Models\Laboratorium;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -73,13 +74,19 @@ class PengajuanController extends Controller
             ];
         })->values();
 
+        // ✅ Daftar dosen untuk dropdown judul mandiri
+        $dosenList = User::where('role', 'dosen')
+            ->orderBy('name')
+            ->get();
+
         return view('mahasiswa.pengajuan', compact(
             'judul',
             'jumlahPengajuan',
             'pengajuanSaya',
             'laboratorium',
             'mySubmissions',
-            'judulJson'
+            'judulJson',
+            'dosenList' // ✅ tambah ini
         ))->with('title', 'Pengajuan Judul');
     }
 
@@ -99,6 +106,8 @@ class PengajuanController extends Controller
         $validated = $request->validate([
             'judul_mandiri' => 'nullable|string|max:255',
             'deskripsi_mandiri' => 'nullable|string|max:1000',
+            // ✅ Wajib pilih dosen kalau ada judul mandiri
+            'dosen_pembimbing_id' => 'required_with:judul_mandiri|nullable|exists:users,id',
             'pilihan_1_id' => 'required|exists:judul,id',
             'pilihan_2_id' => 'required|exists:judul,id|different:pilihan_1_id',
             'pilihan_3_id' => 'required|exists:judul,id|different:pilihan_1_id,pilihan_2_id',
@@ -106,6 +115,7 @@ class PengajuanController extends Controller
             'alasan_2' => 'nullable|string|max:500',
             'alasan_3' => 'nullable|string|max:500',
         ], [
+            'dosen_pembimbing_id.required_with' => 'Dosen pembimbing wajib dipilih jika mengajukan judul mandiri.',
             'pilihan_1_id.required' => 'Pilihan 1 wajib diisi',
             'pilihan_2_id.required' => 'Pilihan 2 wajib diisi',
             'pilihan_2_id.different' => 'Pilihan 2 harus berbeda dengan Pilihan 1',
@@ -124,6 +134,7 @@ class PengajuanController extends Controller
             'periode_id' => $periodeAktif->id,
             'judul_mandiri' => $validated['judul_mandiri'] ?? null,
             'deskripsi_mandiri' => $validated['deskripsi_mandiri'] ?? null,
+            'dosen_pembimbing_id' => $validated['dosen_pembimbing_id'] ?? null, // ✅
             'pilihan_1_id' => $validated['pilihan_1_id'],
             'pilihan_2_id' => $validated['pilihan_2_id'],
             'pilihan_3_id' => $validated['pilihan_3_id'],
@@ -143,6 +154,14 @@ class PengajuanController extends Controller
             }
         }
 
+        // ✅ Notifikasi ke dosen pembimbing yang dipilih untuk judul mandiri
+        if (!empty($validated['judul_mandiri']) && !empty($validated['dosen_pembimbing_id'])) {
+            $dosenPembimbingId = $validated['dosen_pembimbing_id'];
+            if (!in_array($dosenPembimbingId, $dosenIds)) {
+                $dosenIds[] = $dosenPembimbingId;
+            }
+        }
+
         foreach ($dosenIds as $dosenId) {
             DB::table('aktivitas')->insert([
                 'user_id' => $dosenId,
@@ -155,7 +174,7 @@ class PengajuanController extends Controller
         }
 
         if (!empty($validated['judul_mandiri'])) {
-            $allDosenIds = \App\Models\User::where('role', 'dosen')->pluck('id');
+            $allDosenIds = User::where('role', 'dosen')->pluck('id');
             foreach ($allDosenIds as $dosenId) {
                 if (!in_array($dosenId, $dosenIds)) {
                     DB::table('aktivitas')->insert([
@@ -212,8 +231,6 @@ class PengajuanController extends Controller
                 'lab' => $p->jenis === 'pilih' && $p->pilihan1
                     ? ($p->pilihan1->laboratorium->nama ?? '') : '',
                 'alasan' => $p->alasan_1 ?? '',
-
-                // ✅ Semua pilihan judul
                 'pilihan1' => $p->pilihan1 ? [
                     'judul' => $p->pilihan1->nama_judul ?? '-',
                     'kode' => $p->pilihan1->kode ?? '-',
@@ -237,7 +254,6 @@ class PengajuanController extends Controller
                 ] : null,
                 'judul_mandiri' => $p->judul_mandiri ?? null,
                 'deskripsi_mandiri' => $p->deskripsi_mandiri ?? null,
-
                 'catatan_dosen' => $p->catatan_dosen ?? '',
                 'waktu' => $p->created_at->diffForHumans(),
                 'tanggal' => $p->created_at->format('d M Y H:i'),

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\KaLab;
 use App\Http\Controllers\Controller;
 use App\Models\Pengajuan;
 use App\Models\Judul;
+use App\Models\Laboratorium;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -119,7 +120,15 @@ class PengajuanController extends Controller
             ->filter(fn($s) => $s !== null)
             ->every(fn($s) => $s['diambil'] === true);
 
-        return view('ka_lab.pengajuan.show', compact('pengajuan', 'pilihanStatus', 'semuaPilihanDiambil'));
+        // ✅ Daftar laboratorium untuk dropdown judul mandiri
+        $laboratorium = Laboratorium::orderBy('nama')->get();
+
+        return view('ka_lab.pengajuan.show', compact(
+            'pengajuan',
+            'pilihanStatus',
+            'semuaPilihanDiambil',
+            'laboratorium'
+        ));
     }
 
     public function approve(Request $request, $id)
@@ -127,6 +136,10 @@ class PengajuanController extends Controller
         $request->validate([
             'judul_terpilih' => 'required|in:pilihan_1,pilihan_2,pilihan_3,mandiri',
             'catatan_kalab' => 'nullable|string|max:1000',
+            // ✅ Wajib pilih lab kalau judul mandiri
+            'laboratorium_id' => 'required_if:judul_terpilih,mandiri|nullable|exists:laboratorium,id',
+        ], [
+            'laboratorium_id.required_if' => 'Laboratorium wajib dipilih untuk judul mandiri.',
         ]);
 
         $pengajuan = Pengajuan::findOrFail($id);
@@ -161,7 +174,8 @@ class PengajuanController extends Controller
         DB::beginTransaction();
         try {
             if ($sumberJudul === 'mandiri') {
-                $judulId = $this->createJudulMandiri($pengajuan);
+                // ✅ Pass laboratorium_id dari request
+                $judulId = $this->createJudulMandiri($pengajuan, $request->laboratorium_id);
             }
 
             $success = $pengajuan->approveByKalab(
@@ -174,8 +188,6 @@ class PengajuanController extends Controller
             if (!$success) {
                 throw new \Exception('Gagal menyetujui pengajuan.');
             }
-
-            // ✅ Tidak ada notifikasi ke mahasiswa — menunggu pengumuman KoorTA
 
             DB::commit();
 
@@ -215,8 +227,6 @@ class PengajuanController extends Controller
                 throw new \Exception('Gagal menolak pengajuan.');
             }
 
-            // ✅ Tidak ada notifikasi ke mahasiswa — menunggu pengumuman KoorTA
-
             DB::commit();
 
             return redirect()
@@ -229,16 +239,17 @@ class PengajuanController extends Controller
         }
     }
 
-    private function createJudulMandiri($pengajuan)
+    // ✅ Terima laboratorium_id sebagai parameter
+    private function createJudulMandiri($pengajuan, $laboratoriumId = null)
     {
         $judul = Judul::create([
             'nama_judul' => $pengajuan->judul_mandiri,
             'deskripsi' => $pengajuan->deskripsi_mandiri,
             'dosen_id' => null,
-            'laboratorium_id' => null,
+            'laboratorium_id' => $laboratoriumId,
             'status_judul' => 'ditawarkan',
-            'aktif' => true,
-            'is_locked' => false,
+            'aktif' => DB::raw('true'),
+            'is_locked' => DB::raw('false'),
             'sumber' => 'mahasiswa',
             'created_at' => now(),
             'updated_at' => now(),

@@ -126,9 +126,9 @@
                                     class="border-b-2 border-gray-200 bg-gray-50 text-left text-xs font-black uppercase tracking-wider text-gray-500">
                                     <th class="px-6 py-4">No</th>
                                     <th class="px-6 py-4">Mahasiswa</th>
-                                    <th class="px-6 py-4">Judul Ditetapkan</th>
+                                    <th class="px-6 py-4 min-w-[180px]">Judul Ditetapkan</th>
                                     <th class="px-6 py-4">Dosen / Lab</th>
-                                    <th class="px-6 py-4">Periode</th>
+                                    <th class="px-6 py-4 whitespace-nowrap">Periode</th>
                                     <th class="px-6 py-4">Status Ka Lab</th>
                                     <th class="px-6 py-4">Status Kaprodi</th>
                                     <th class="px-6 py-4">Progress</th>
@@ -172,7 +172,7 @@
                                         </td>
 
                                         {{-- Judul --}}
-                                        <td class="max-w-[200px] px-6 py-4">
+                                        <td class="px-6 py-4 min-w-[180px]">
                                             @if ($item->judulDitetapkan)
                                                 <p class="line-clamp-2 text-sm font-semibold text-gray-800">
                                                     {{ $item->judulDitetapkan->nama_judul ?? $item->judulDitetapkan->judul }}
@@ -183,7 +183,8 @@
                                         </td>
 
                                         {{-- Dosen / Lab --}}
-                                        <td class="px-6 py-4">
+                                        <td class="px-6 py-4 min-w-[140px]">
+
                                             @if ($item->judulDitetapkan)
                                                 <p class="text-sm font-bold text-gray-700">
                                                     {{ $item->judulDitetapkan->dosen->name ?? '-' }}
@@ -197,13 +198,12 @@
                                         </td>
 
                                         {{-- Periode --}}
-                                        <td class="px-6 py-4">
+                                        <td class="px-6 py-4 whitespace-nowrap">
                                             <span
-                                                class="rounded-lg border-2 border-indigo-200 bg-indigo-50 px-2.5 py-1 text-xs font-black text-indigo-700">
+                                                class="inline-flex items-center rounded-full border-2 border-indigo-200 bg-indigo-50 px-2.5 py-1 text-xs font-black text-indigo-700 whitespace-nowrap">
                                                 {{ $item->periode->nama ?? '-' }}
                                             </span>
                                         </td>
-
                                         {{-- Status Ka Lab --}}
                                         <td class="px-6 py-4">
                                             @if ($item->status_kalab === 'disetujui')
@@ -257,7 +257,7 @@
                                         {{-- Progress --}}
                                         <td class="px-6 py-4">
                                             @php $pct = $item->progress_percentage; @endphp
-                                            <div class="w-24">
+                                            <div class="w-20">
                                                 <div class="flex items-center justify-between mb-1">
                                                     <span
                                                         class="text-xs font-black text-gray-700">{{ round($pct) }}%</span>
@@ -268,9 +268,9 @@
                                                         style="width: {{ $pct }}%">
                                                     </div>
                                                 </div>
-                                                <p class="mt-1 text-xs text-gray-400">{{ $item->current_step }}</p>
                                             </div>
                                         </td>
+
 
                                     </tr>
                                 @endforeach

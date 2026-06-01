@@ -44,6 +44,7 @@ class Pengajuan extends Model
         'judul_ditetapkan_id',
         'sumber_judul',
         'jenis',
+        'dosen_pembimbing_id',
     ];
 
     protected $casts = [

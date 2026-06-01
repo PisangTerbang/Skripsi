@@ -258,32 +258,46 @@
                                                             <span
                                                                 x-text="item.status === 'pending' ? 'Menunggu Review' : item.status === 'disetujui' ? 'Disetujui' : 'Ditolak'"></span>
                                                         </span>
-                                                        <span x-show="item.jenis === 'mandiri'"
-                                                            class="inline-flex items-center rounded-full border-2 border-violet-200 bg-violet-50 px-2.5 py-1 text-xs font-black text-violet-700">
-                                                            Mandiri
-                                                        </span>
                                                     </div>
-                                                    <h3 class="text-base font-black text-gray-800 leading-relaxed"
-                                                        x-text="item.judul"></h3>
                                                     <p class="mt-1 text-xs text-gray-400" x-text="item.waktu"></p>
                                                 </div>
                                             </div>
 
                                             {{-- Details --}}
                                             <div class="space-y-3">
-
-                                                {{-- Judul Mandiri --}}
-                                                <div x-show="item.judul_mandiri">
+                                                {{-- Judul Ditetapkan --}}
+                                                <div x-show="item.judul_ditetapkan">
                                                     <div
-                                                        class="rounded-xl border-2 border-violet-200 bg-violet-50 px-4 py-3">
+                                                        class="rounded-xl border-2 border-emerald-300 bg-gradient-to-r from-emerald-50 to-green-50 px-4 py-3">
                                                         <p
-                                                            class="text-xs font-black uppercase tracking-widest text-violet-500 mb-1">
-                                                            Usulan Judul Mandiri</p>
-                                                        <p class="text-sm font-bold text-gray-800 leading-relaxed"
-                                                            x-text="item.judul_mandiri"></p>
-                                                        <p x-show="item.deskripsi_mandiri"
-                                                            class="text-xs text-gray-500 mt-1 leading-relaxed"
-                                                            x-text="item.deskripsi_mandiri"></p>
+                                                            class="text-xs font-black uppercase tracking-widest text-emerald-500 mb-1">
+                                                            ✓ Judul Ditetapkan</p>
+                                                        <p class="text-sm font-black text-gray-800 leading-relaxed"
+                                                            x-text="item.judul_ditetapkan"></p>
+                                                    </div>
+                                                </div>
+
+                                                {{-- Usulan Judul Mandiri --}}
+                                                <div x-show="item.jenis === 'mandiri' && item.judul_mandiri">
+                                                    <p
+                                                        class="text-xs font-black uppercase tracking-widest text-gray-400 mb-2">
+                                                        Usulan Judul Mandiri
+                                                    </p>
+                                                    <div
+                                                        class="rounded-xl border-2 border-violet-200 bg-violet-50 p-3">
+                                                        <div class="flex items-start gap-2">
+                                                            <span
+                                                                class="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-violet-600 text-[10px] font-black text-white">M</span>
+                                                            <div class="flex-1 min-w-0">
+                                                                <p class="text-sm font-bold text-gray-800 leading-relaxed"
+                                                                    x-text="item.judul_mandiri"></p>
+                                                                <div x-show="item.deskripsi_mandiri"
+                                                                    class="mt-1.5 rounded-lg bg-white border border-violet-100 px-2 py-1">
+                                                                    <p class="text-xs text-gray-500 italic"
+                                                                        x-text="item.deskripsi_mandiri"></p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
 
@@ -291,7 +305,7 @@
                                                 <div x-show="item.pilihan1 || item.pilihan2 || item.pilihan3">
                                                     <p
                                                         class="text-xs font-black uppercase tracking-widest text-gray-400 mb-2">
-                                                        Pilihan Judul</p>
+                                                        Usulan Judul Pilihan</p>
                                                     <div class="space-y-2">
 
                                                         <div x-show="item.pilihan1"
@@ -372,17 +386,7 @@
                                                     </div>
                                                 </div>
 
-                                                {{-- Judul Ditetapkan --}}
-                                                <div x-show="item.judul_ditetapkan">
-                                                    <div
-                                                        class="rounded-xl border-2 border-emerald-300 bg-gradient-to-r from-emerald-50 to-green-50 px-4 py-3">
-                                                        <p
-                                                            class="text-xs font-black uppercase tracking-widest text-emerald-500 mb-1">
-                                                            ✓ Judul Ditetapkan</p>
-                                                        <p class="text-sm font-black text-gray-800 leading-relaxed"
-                                                            x-text="item.judul_ditetapkan"></p>
-                                                    </div>
-                                                </div>
+
 
                                                 {{-- Progress Review --}}
                                                 <div
@@ -619,10 +623,6 @@
                             <span
                                 x-text="selectedItem.status === 'pending' ? 'Menunggu Review' : selectedItem.status === 'disetujui' ? 'Disetujui' : 'Ditolak'"></span>
                         </span>
-                        <span x-show="selectedItem.jenis === 'mandiri'"
-                            class="inline-flex items-center rounded-full border-2 border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-black text-violet-700">
-                            Judul Mandiri
-                        </span>
                         <span x-show="selectedItem.sudah_diumumkan"
                             class="inline-flex items-center gap-1 rounded-full border-2 border-indigo-200 bg-indigo-100 px-3 py-1.5 text-xs font-black text-indigo-700">
                             <x-heroicon-o-megaphone class="h-3 w-3" />
@@ -632,12 +632,6 @@
 
                     {{-- Info Grid --}}
                     <div class="grid grid-cols-2 gap-3">
-                        <div class="rounded-xl border-2 border-gray-100 bg-gray-50 p-3">
-                            <p class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-1">Jenis</p>
-                            <p class="text-sm font-black text-gray-800"
-                                x-text="selectedItem.jenis === 'mandiri' ? 'Judul Mandiri' : 'Pilih Judul Dosen'">
-                            </p>
-                        </div>
                         <div class="rounded-xl border-2 border-gray-100 bg-gray-50 p-3">
                             <p class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-1">Tanggal</p>
                             <p class="text-sm font-black text-gray-800" x-text="selectedItem.tanggal"></p>

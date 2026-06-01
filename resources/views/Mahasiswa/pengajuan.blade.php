@@ -209,6 +209,8 @@
                     </div>
                 </div>
                 <div class="p-6 space-y-4">
+
+                    {{-- Judul Usulan --}}
                     <div>
                         <label class="mb-1.5 block text-sm font-bold text-gray-700">
                             Judul Usulan
@@ -217,6 +219,8 @@
                             placeholder="Contoh: Sistem Informasi Manajemen Perpustakaan Berbasis Web"
                             class="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-100 transition" />
                     </div>
+
+                    {{-- Deskripsi Usulan --}}
                     <div>
                         <label class="mb-1.5 block text-sm font-bold text-gray-700">
                             Deskripsi Usulan
@@ -224,10 +228,30 @@
                         <textarea name="deskripsi_mandiri" rows="4" maxlength="1000"
                             placeholder="Jelaskan latar belakang, tujuan, dan ruang lingkup penelitian..."
                             class="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-100 resize-none transition">
-                        </textarea>
+            </textarea>
                     </div>
+
+                    {{-- Pilih Dosen Pembimbing --}}
+                    <div>
+                        <label class="mb-1.5 block text-sm font-bold text-gray-700">
+                            Calon Dosen Pembimbing
+                            <span class="text-gray-400 font-normal">(opsional)</span>
+                        </label>
+                        <select name="dosen_pembimbing_id"
+                            class="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-sm text-gray-800 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-100 transition">
+                            <option value="">-- Pilih Dosen Pembimbing --</option>
+                            @foreach ($dosenList as $dosen)
+                                <option value="{{ $dosen->id }}">{{ $dosen->name }}</option>
+                            @endforeach
+                        </select>
+                        <p class="mt-1 text-xs text-gray-400">
+                            Pilih dosen yang ingin Anda ajak konsultasi terkait judul ini
+                        </p>
+                    </div>
+
                 </div>
             </div>
+
 
             {{-- ===== REUSABLE SECTION TEMPLATE ===== --}}
             @foreach ([['num' => 1, 'label' => 'Pilihan Pertama', 'sub' => 'Wajib — Pilih 1 judul sebagai prioritas utama', 'color' => 'blue', 'grad' => 'from-blue-600 to-indigo-700', 'border' => 'border-blue-200'], ['num' => 2, 'label' => 'Pilihan Kedua', 'sub' => 'Wajib — Pilih 1 judul sebagai alternatif kedua', 'color' => 'emerald', 'grad' => 'from-emerald-600 to-teal-700', 'border' => 'border-emerald-200'], ['num' => 3, 'label' => 'Pilihan Ketiga', 'sub' => 'Wajib — Pilih 1 judul sebagai alternatif ketiga', 'color' => 'orange', 'grad' => 'from-orange-500 to-amber-600', 'border' => 'border-orange-200']] as $s)

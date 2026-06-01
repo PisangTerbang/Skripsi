@@ -129,7 +129,6 @@
                                     <th class="px-6 py-4">Dosen</th>
                                     <th class="px-6 py-4">Laboratorium</th>
                                     <th class="px-6 py-4 text-center">Peminat</th>
-                                    <th class="px-6 py-4 text-center">Ditetapkan</th>
                                     <th class="px-6 py-4">Status</th>
                                 </tr>
                             </thead>
@@ -165,9 +164,10 @@
 
                                         {{-- Judul --}}
                                         <td class="max-w-[220px] px-6 py-4">
-                                            <p class="line-clamp-2 text-sm font-semibold text-gray-800">
+                                            <p class="text-sm font-semibold text-gray-800 leading-relaxed">
                                                 {{ $item->nama_judul }}
                                             </p>
+
                                         </td>
 
                                         {{-- Dosen --}}
@@ -202,14 +202,6 @@
                                             <span
                                                 class="rounded-full border-2 border-blue-200 bg-blue-50 px-3 py-1 text-xs font-black text-blue-700">
                                                 {{ $item->pengajuan_pilihan1_count + $item->pengajuan_pilihan2_count + $item->pengajuan_pilihan3_count }}
-                                            </span>
-                                        </td>
-
-                                        {{-- Ditetapkan --}}
-                                        <td class="px-6 py-4 text-center">
-                                            <span
-                                                class="rounded-full border-2 border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700">
-                                                {{ $item->pengajuan_ditetapkan_count }}
                                             </span>
                                         </td>
 

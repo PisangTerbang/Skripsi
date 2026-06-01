@@ -16,37 +16,106 @@ class DosenPengajuanController extends Controller
     public function index()
     {
         $user = Auth::user();
+        $dosenId = $user->id;
 
-        $pengajuan = Pengajuan::with(['mahasiswa', 'judul.laboratorium', 'judul.dosen'])
+        // ✅ Fix: hanya tampilkan pengajuan yang relevan untuk dosen ini
+        // yaitu: pengajuan mandiri ATAU pengajuan pilih judul milik dosen ini
+        $pengajuan = Pengajuan::with([
+            'mahasiswa',
+            'judul.laboratorium',
+            'judul.dosen',
+        ])
+            ->where(function ($q) use ($dosenId) {
+                // Pengajuan mandiri — semua dosen bisa lihat
+                $q->where('jenis', 'mandiri')
+                    // ATAU pengajuan pilih judul milik dosen ini
+                    ->orWhereHas('judul', function ($q2) use ($dosenId) {
+                    $q2->where('dosen_id', $dosenId);
+                });
+            })
             ->orderBy('created_at', 'desc')
             ->get()
-            ->groupBy('judul_id');
+            ->groupBy(function ($item) {
+                return $item->jenis === 'mandiri'
+                    ? 'mandiri_' . $item->id
+                    : ($item->judul_id ?? 'no_judul_' . $item->id);
+            });
 
         $laboratorium = Laboratorium::all();
+        $totalPengajuan = $pengajuan->flatten()->count();
+        $pending = $pengajuan->flatten()->where('status', 'pending')->count();
+        $disetujui = $pengajuan->flatten()->where('status', 'disetujui')->count();
+        $ditolak = $pengajuan->flatten()->where('status', 'ditolak')->count();
 
-        $totalPengajuan = Pengajuan::count();
-        $pending = Pengajuan::where('status', 'pending')->count();
-        $disetujui = Pengajuan::where('status', 'disetujui')->count();
-        $ditolak = Pengajuan::where('status', 'ditolak')->count();
+        $pengajuanJson = $pengajuan->map(function ($items) use ($dosenId) {
+            $first = $items->first();
+            $pemenang = $items->firstWhere('status', 'disetujui');
 
-        $recentPending = Pengajuan::with(['mahasiswa', 'judul'])
-            ->where('status', 'pending')
-            ->latest()
-            ->take(5)
-            ->get();
+            $isOwner = false;
+            if ($first->jenis === 'pilih' && $first->judul) {
+                $isOwner = $first->judul->dosen_id === $dosenId;
+            } elseif ($first->jenis === 'mandiri') {
+                $isOwner = true;
+            }
+
+            return [
+                'judul_id' => $first->jenis === 'pilih'
+                    ? ($first->judul_id ?? $first->id)
+                    : 'mandiri_' . $first->id,
+                'judul' => $first->jenis === 'pilih'
+                    ? ($first->judul->nama_judul ?? '-')
+                    : ($first->judul_mandiri ?? '-'),
+                'kode' => $first->jenis === 'pilih' ? ($first->judul->kode ?? '') : '',
+                'deskripsi' => $first->jenis === 'mandiri' ? ($first->deskripsi_mandiri ?? '') : '',
+                'jenis' => $first->jenis,
+                'pemenang' => $pemenang ? ($pemenang->mahasiswa->name ?? '') : '',
+                'is_owner' => $isOwner,
+                'items' => $items->map(function ($p) use ($dosenId) {
+                    $sudahPunyaJudul = Pengajuan::where('mahasiswa_id', $p->mahasiswa_id)
+                        ->where('status', 'disetujui')
+                        ->exists();
+
+                    $itemIsOwner = false;
+                    if ($p->jenis === 'pilih' && $p->judul) {
+                        $itemIsOwner = $p->judul->dosen_id === $dosenId;
+                    } elseif ($p->jenis === 'mandiri') {
+                        $itemIsOwner = true;
+                    }
+
+                    return [
+                        'id' => $p->id,
+                        'mahasiswa' => $p->mahasiswa->name ?? '-',
+                        'status' => $p->status,
+                        'prioritas' => $p->prioritas ?? 1,
+                        'jenis' => $p->jenis,
+                        'judul_text' => $p->jenis === 'mandiri'
+                            ? ($p->judul_mandiri ?? '-')
+                            : ($p->judul->nama_judul ?? '-'),
+                        'alasan' => $p->alasan ?? '',
+                        'catatan_dosen' => $p->catatan_dosen ?? '',
+                        'waktu' => $p->created_at->diffForHumans(),
+                        'sudah_punya_judul' => $sudahPunyaJudul,
+                        'is_owner' => $itemIsOwner,
+                        'status_kaprodi' => $p->status_kaprodi ?? '',
+                    ];
+                })->values(),
+            ];
+        })->values();
 
         return view('dosen.pengajuan', [
             'pengajuan' => $pengajuan,
+            'pengajuanJson' => $pengajuanJson,
             'laboratorium' => $laboratorium,
             'totalPengajuan' => $totalPengajuan,
             'pending' => $pending,
             'disetujui' => $disetujui,
             'ditolak' => $ditolak,
-            'recentPending' => $recentPending,
-            'dosenId' => $user->id,
-            'title' => 'Review Pengajuan Mahasiswa'
+            'dosenId' => $dosenId,
+            'title' => 'Review Pengajuan Mahasiswa',
         ]);
     }
+
+
 
     public function update(Request $request, $id)
     {

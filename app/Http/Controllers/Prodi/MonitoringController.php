@@ -13,21 +13,19 @@ use Illuminate\Support\Facades\DB;
 
 class MonitoringController extends Controller
 {
-    /**
-     * VIEW-ONLY: Monitoring semua pengajuan dan judul (tanpa approval)
-     */
     public function index()
     {
         $user = Auth::user();
 
-        // Validasi role
         if ($user->role !== 'prodi') {
             abort(403, 'Anda tidak memiliki akses sebagai Program Studi');
         }
 
         // ========== STATISTIK PENGAJUAN ==========
         $totalPengajuan = Pengajuan::count();
-        $menungguDosen = Pengajuan::where('status_kalab', 'pending')->orWhereNull('status_kalab')->count();
+        $menungguDosen = Pengajuan::where(function ($q) {
+            $q->where('status_kalab', 'pending')->orWhereNull('status_kalab');
+        })->count();
         $disetujuiDosen = Pengajuan::where('status_kalab', 'disetujui')->count();
         $ditolakDosen = Pengajuan::where('status_kalab', 'ditolak')->count();
         $ditetapkan = Pengajuan::where('status', 'ditetapkan')->count();
@@ -50,7 +48,6 @@ class MonitoringController extends Controller
             ->take(20)
             ->get()
             ->map(function ($item) {
-                // Tentukan status display
                 if ($item->status === 'ditetapkan') {
                     $item->status_display = 'Ditetapkan';
                     $item->status_class = 'success';
@@ -64,11 +61,30 @@ class MonitoringController extends Controller
                     $item->status_display = 'Menunggu Ka Lab';
                     $item->status_class = 'warning';
                 }
-
                 return $item;
             });
 
-        // ========== JUDUL DENGAN PEMINAT TERBANYAK ==========
+        // ✅ Mapping untuk Alpine.js — dilakukan di PHP supaya @json() aman
+        $pengajuanJson = $pengajuanTerbaru->map(function ($p) {
+            return [
+                'id' => $p->id,
+                'mahasiswa' => $p->mahasiswa->name ?? '-',
+                'nim' => $p->mahasiswa->nim ?? '-',
+                'judul1' => $p->pilihan1->nama_judul ?? '-',
+                'dosen1' => $p->pilihan1->dosen->name ?? '-',
+                'judul2' => $p->pilihan2->nama_judul ?? '',
+                'dosen2' => $p->pilihan2->dosen->name ?? '',
+                'judul3' => $p->pilihan3->nama_judul ?? '',
+                'dosen3' => $p->pilihan3->dosen->name ?? '',
+                'judul_ditetapkan' => $p->judulDitetapkan->nama_judul ?? '',
+                'dosen_ditetapkan' => $p->judulDitetapkan->dosen->name ?? '',
+                'status_display' => $p->status_display,
+                'status_raw' => $p->status_kalab ?? 'pending',
+                'is_ditetapkan' => $p->status === 'ditetapkan',
+            ];
+        })->values();
+
+        // ========== JUDUL POPULER ==========
         $judulPopuler = Judul::with(['dosen', 'laboratorium'])
             ->withCount([
                 'pengajuanPilihan1',
@@ -84,14 +100,14 @@ class MonitoringController extends Controller
                 return $item;
             })
             ->sortByDesc('total_peminat')
-            ->take(10);
+            ->take(10)
+            ->values();
 
         // ========== STATISTIK PER LABORATORIUM ==========
         $statsPerLab = Laboratorium::with(['judul'])
             ->get()
             ->map(function ($lab) {
                 $judul = $lab->judul;
-
                 return [
                     'nama' => $lab->nama,
                     'total_judul' => $judul->count(),
@@ -115,10 +131,9 @@ class MonitoringController extends Controller
             ->get()
             ->map(function ($dosen) {
                 $judul = $dosen->judulDosen;
-
                 return [
                     'nama' => $dosen->name,
-                    'nip' => $dosen->nip,
+                    'nip' => $dosen->nip ?? '',
                     'total_judul' => $judul->count(),
                     'tersedia' => $judul->where('status_judul', 'ditawarkan')->count(),
                     'total_peminat' => $judul->sum(function ($j) {
@@ -134,29 +149,24 @@ class MonitoringController extends Controller
             ->sortByDesc('total_judul')
             ->take(10);
 
-        // ========== MAHASISWA YANG BELUM MENGAJUKAN ==========
+        // ========== MAHASISWA BELUM MENGAJUKAN ==========
         $mahasiswaBelumMengajukan = User::where('role', 'mahasiswa')
             ->whereDoesntHave('pengajuanMahasiswa')
             ->count();
 
         return view('prodi.monitoring', [
             'title' => 'Monitoring Sistem',
-
-            // Statistik Pengajuan
             'totalPengajuan' => $totalPengajuan,
             'menungguDosen' => $menungguDosen,
             'disetujuiDosen' => $disetujuiDosen,
             'ditolakDosen' => $ditolakDosen,
             'ditetapkan' => $ditetapkan,
-
-            // Statistik Judul
             'totalJudul' => $totalJudul,
             'judulDraft' => $judulDraft,
             'judulTersedia' => $judulTersedia,
             'judulNonaktif' => $judulNonaktif,
-
-            // Data Detail
             'pengajuanTerbaru' => $pengajuanTerbaru,
+            'pengajuanJson' => $pengajuanJson,
             'judulPopuler' => $judulPopuler,
             'statsPerLab' => $statsPerLab,
             'statsPerDosen' => $statsPerDosen,

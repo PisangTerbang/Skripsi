@@ -319,7 +319,7 @@
                                     x-bind:class="item.isNew ? 'bg-yellow-50/60' : 'hover:bg-indigo-50/20'">
 
                                     {{-- Status indicator --}}
-                                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 text-xs font-black text-white shadow-sm"
+                                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border-2 text-white shadow-sm"
                                         x-bind:class="{
                                             'bg-gradient-to-br from-yellow-400 to-orange-500 border-yellow-200': item
                                                 .status === 'pending',
@@ -329,32 +329,85 @@
                                                 .status === 'ditolak'
                                         }">
                                         <template x-if="item.status === 'pending'">
-                                            <x-heroicon-o-clock class="h-4 w-4" />
+                                            <x-heroicon-o-clock class="h-5 w-5" />
                                         </template>
                                         <template x-if="item.status === 'disetujui'">
-                                            <x-heroicon-o-check class="h-4 w-4" />
+                                            <x-heroicon-o-check class="h-5 w-5" />
                                         </template>
                                         <template x-if="item.status === 'ditolak'">
-                                            <x-heroicon-o-x-mark class="h-4 w-4" />
+                                            <x-heroicon-o-x-mark class="h-5 w-5" />
                                         </template>
                                     </div>
 
                                     <div class="flex-1 min-w-0">
-                                        <p class="text-sm font-bold text-gray-800 line-clamp-1" x-text="item.judul">
+                                        {{-- Label --}}
+                                        <p
+                                            class="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-0.5">
+                                            Pengajuan Judul TA
                                         </p>
-                                        <p class="mt-0.5 text-xs text-gray-400" x-text="item.waktu"></p>
-                                        <template x-if="item.isNew">
+
+                                        {{-- Judul utama --}}
+                                        <p class="text-sm font-black text-gray-800 leading-snug line-clamp-1"
+                                            x-text="item.judul"></p>
+
+                                        {{-- Meta info --}}
+                                        <div class="mt-1.5 flex flex-wrap items-center gap-2">
+                                            <span class="text-xs text-gray-400" x-text="item.waktu"></span>
+                                            <span class="text-gray-300 text-xs">·</span>
+
+                                            {{-- Badge 3 pilihan --}}
                                             <span
-                                                class="mt-1 inline-flex items-center gap-1 text-xs font-black text-yellow-600">
-                                                <span
-                                                    class="h-1.5 w-1.5 animate-pulse rounded-full bg-yellow-500"></span>
-                                                Baru diperbarui
+                                                class="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[10px] font-black text-indigo-600">
+                                                <x-heroicon-o-list-bullet class="h-3 w-3" />
+                                                3 pilihan judul
                                             </span>
-                                        </template>
+
+                                            {{-- Badge baru diperbarui --}}
+                                            <template x-if="item.isNew">
+                                                <span
+                                                    class="inline-flex items-center gap-1 rounded-full border border-yellow-200 bg-yellow-50 px-2 py-0.5 text-[10px] font-black text-yellow-600">
+                                                    <span
+                                                        class="h-1.5 w-1.5 animate-pulse rounded-full bg-yellow-500"></span>
+                                                    Baru diperbarui
+                                                </span>
+                                            </template>
+                                        </div>
+
+                                        {{-- Progress mini --}}
+                                        <div class="mt-2 flex items-center gap-1.5">
+                                            {{-- Step 1: Submit --}}
+                                            <div class="flex items-center gap-1">
+                                                <div class="h-1.5 w-1.5 rounded-full bg-indigo-500"></div>
+                                                <span class="text-[10px] text-gray-400">Submit</span>
+                                            </div>
+                                            <div class="h-px w-4 bg-gray-200"></div>
+                                            {{-- Step 2: Ka Lab --}}
+                                            <div class="flex items-center gap-1">
+                                                <div class="h-1.5 w-1.5 rounded-full"
+                                                    x-bind:class="item.status !== 'pending' ? 'bg-indigo-500' : 'bg-gray-300'">
+                                                </div>
+                                                <span class="text-[10px] text-gray-400">Ka Lab</span>
+                                            </div>
+                                            <div class="h-px w-4 bg-gray-200"></div>
+                                            {{-- Step 3: Kaprodi --}}
+                                            <div class="flex items-center gap-1">
+                                                <div class="h-1.5 w-1.5 rounded-full"
+                                                    x-bind:class="item.status === 'disetujui' ? 'bg-indigo-500' : 'bg-gray-300'">
+                                                </div>
+                                                <span class="text-[10px] text-gray-400">Kaprodi</span>
+                                            </div>
+                                            <div class="h-px w-4 bg-gray-200"></div>
+                                            {{-- Step 4: Pengumuman --}}
+                                            <div class="flex items-center gap-1">
+                                                <div class="h-1.5 w-1.5 rounded-full bg-gray-300"></div>
+                                                <span class="text-[10px] text-gray-400">Pengumuman</span>
+                                            </div>
+                                        </div>
                                     </div>
 
+                                    {{-- Status badge --}}
                                     <span
-                                        class="shrink-0 inline-flex items-center gap-1.5 rounded-full border-2 px-2.5 py-1 text-xs font-black"
+                                        class="shrink-0 inline-flex items-center gap-1.5 rounded-full border-2 px-3 py-1.5 text-xs font-black"
                                         x-bind:class="{
                                             'border-yellow-200 bg-yellow-100 text-yellow-700': item
                                                 .status === 'pending',
@@ -392,6 +445,7 @@
                         </div>
                     </template>
                 </div>
+
 
                 {{-- Kolom Kanan --}}
                 <div class="space-y-4">

@@ -270,6 +270,20 @@
                                             class="space-y-3">
                                             @csrf
                                             <input type="hidden" name="judul_terpilih" value="mandiri" />
+                                            {{-- ✅ Dropdown pilih laboratorium --}}
+                                            <div>
+                                                <label class="mb-1 block text-xs font-bold text-gray-600">
+                                                    Laboratorium <span class="text-red-500">*</span>
+                                                </label>
+                                                <select name="laboratorium_id" required
+                                                    class="w-full rounded-xl border-2 border-gray-200 px-3 py-2 text-sm text-gray-800 focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-100 transition">
+                                                    <option value="">-- Pilih Laboratorium --</option>
+                                                    @foreach ($laboratorium as $lab)
+                                                        <option value="{{ $lab->id }}">{{ $lab->nama }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
                                             <div>
                                                 <label class="mb-1 block text-xs font-bold text-gray-600">Catatan <span
                                                         class="text-gray-400 font-normal">(opsional)</span></label>

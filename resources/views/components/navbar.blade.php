@@ -1,18 +1,14 @@
 <nav x-data="{
-        loading: true,
-        bellShake: false,
-    }"
-    x-init="
-        setTimeout(() => loading = false, 300);
-        $watch('$store.notif.unread', (val, oldVal) => {
-            if (val > oldVal && val > 0) {
-                bellShake = true;
-                setTimeout(() => bellShake = false, 1000);
-            }
-        });
-    "
-    class="flex-1 flex flex-col px-3 py-4 text-sm overflow-y-auto scrollbar-hide"
-    role="navigation"
+    loading: true,
+    bellShake: false,
+}" x-init="setTimeout(() => loading = false, 300);
+$watch('$store.notif.unread', (val, oldVal) => {
+    if (val > oldVal && val > 0) {
+        bellShake = true;
+        setTimeout(() => bellShake = false, 1000);
+    }
+});"
+    class="flex-1 flex flex-col px-3 py-4 text-sm overflow-y-auto scrollbar-hide" role="navigation"
     aria-label="Main Navigation">
 
     {{-- ======== SECTION: Menu Utama ========== --}}
@@ -36,6 +32,12 @@
             <x-nav-link route="mahasiswa.riwayat" icon="clipboard-document-list">
                 Riwayat Pengajuan
             </x-nav-link>
+
+            {{-- Konsultasi --}}
+            <x-nav-link route="mahasiswa.konsultasi.index" icon="chat-bubble-left-right">
+                Konsultasi
+            </x-nav-link>
+
         </div>
     </div>
 
@@ -59,19 +61,17 @@
                     {{-- Loading Skeleton --}}
                     <span x-show="$store.notif.loading" x-transition class="ml-auto">
                         <span class="block w-6 h-6 rounded-full bg-white/20 animate-pulse"></span>
-                </span>
+                    </span>
 
                     {{-- Badge Counter --}}
-                    <span x-cloak
-                          x-show="!$store.notif.loading && $store.notif.unread > 0"
-                          x-transition:enter="transition ease-out duration-300"
-                          x-transition:enter-start="opacity-0 scale-0 rotate-12"
-                          x-transition:enter-end="opacity-100 scale-100 rotate-0"
-                          x-transition:leave="transition ease-in duration-200"
-                          x-transition:leave-start="opacity-100 scale-100"
-                          x-transition:leave-end="opacity-0 scale-0"
-                          x-text="$store.notif.unread > 99 ? '99+' : $store.notif.unread"
-                          class="ml-auto min-w-[1.5rem] h-6 flex items-center justify-center
+                    <span x-cloak x-show="!$store.notif.loading && $store.notif.unread > 0"
+                        x-transition:enter="transition ease-out duration-300"
+                        x-transition:enter-start="opacity-0 scale-0 rotate-12"
+                        x-transition:enter-end="opacity-100 scale-100 rotate-0"
+                        x-transition:leave="transition ease-in duration-200"
+                        x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-0"
+                        x-text="$store.notif.unread > 99 ? '99+' : $store.notif.unread"
+                        class="ml-auto min-w-[1.5rem] h-6 flex items-center justify-center
                                  bg-gradient-to-br from-red-400 to-red-600
                                  text-white text-xs font-bold
                                  px-2 rounded-full
@@ -97,10 +97,7 @@
 
         <form method="POST" action="{{ route('logout') }}">
             @csrf
-            <button type="submit"
-                x-data="{ hover: false }"
-                @mouseenter="hover = true"
-                @mouseleave="hover = false"
+            <button type="submit" x-data="{ hover: false }" @mouseenter="hover = true" @mouseleave="hover = false"
                 class="group relative w-full flex items-center gap-3 px-4 py-2.5 rounded-xl
                 text-indigo-200 hover:text-red-300 hover:bg-red-500/10
                        transition-all duration-200 ease-out">
@@ -112,11 +109,9 @@
                 <span class="font-medium">Keluar</span>
 
                 {{-- Hover Effect --}}
-                <span x-show="hover"
-                      x-transition:enter="transition ease-out duration-200"
-                      x-transition:enter-start="opacity-0"
-                      x-transition:enter-end="opacity-100"
-                      class="absolute inset-0 bg-red-500/5 rounded-xl pointer-events-none">
+                <span x-show="hover" x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                    class="absolute inset-0 bg-red-500/5 rounded-xl pointer-events-none">
                 </span>
             </button>
         </form>
@@ -127,14 +122,37 @@
 {{-- Bell Shake Animation --}}
 <style>
     @keyframes bell-shake {
-        0% { transform: rotate(0); }
-        15% { transform: rotate(12deg); }
-        30% { transform: rotate(-10deg); }
-        45% { transform: rotate(8deg); }
-        60% { transform: rotate(-6deg); }
-        75% { transform: rotate(3deg); }
-        90% { transform: rotate(-1deg); }
-        100% { transform: rotate(0); }
+        0% {
+            transform: rotate(0);
+        }
+
+        15% {
+            transform: rotate(12deg);
+        }
+
+        30% {
+            transform: rotate(-10deg);
+        }
+
+        45% {
+            transform: rotate(8deg);
+        }
+
+        60% {
+            transform: rotate(-6deg);
+        }
+
+        75% {
+            transform: rotate(3deg);
+        }
+
+        90% {
+            transform: rotate(-1deg);
+        }
+
+        100% {
+            transform: rotate(0);
+        }
     }
 
     .animate-bell-shake {
@@ -147,6 +165,7 @@
     .scrollbar-hide:-webkit-scrollbar {
         display: none;
     }
+
     .scrollbar-hide {
         -ms-overflow-style: none;
         scrollbar-width: none;

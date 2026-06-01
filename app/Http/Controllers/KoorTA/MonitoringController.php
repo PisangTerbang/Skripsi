@@ -12,7 +12,9 @@ class MonitoringController extends Controller
 {
     public function index()
     {
-        $periode = Periode::orderBy('created_at', 'desc')->get();
+        $periode = Periode::withCount('pengajuan')
+            ->orderBy('created_at', 'desc')
+            ->get();
 
         $stats = [
             'total_pengajuan' => Pengajuan::count(),
@@ -27,6 +29,7 @@ class MonitoringController extends Controller
 
         return view('koor-ta.monitoring.index', compact('periode', 'stats'));
     }
+
 
     public function pengajuan(Request $request)
     {
