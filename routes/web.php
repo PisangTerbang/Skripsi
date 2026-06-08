@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ProfileController;
 
 // MAHASISWA
 use App\Http\Controllers\Mahasiswa\BerandaController;
@@ -33,8 +32,6 @@ use App\Http\Controllers\KoorTA\PeriodeController as KoorTAPeriodeController;
 use App\Http\Controllers\KoorTA\PengumumanController as KoorTAPengumumanController;
 use App\Http\Controllers\KoorTA\MonitoringController as KoorTAMonitoringController;
 
-use App\Http\Controllers\PeriodeController;
-
 /*
 |--------------------------------------------------------------------------
 | ROOT
@@ -63,18 +60,6 @@ Route::get('/dashboard', function () {
         default => redirect()->route('login'),
     };
 })->middleware('auth')->name('dashboard');
-
-/*
-|--------------------------------------------------------------------------
-| PROFILE
-|--------------------------------------------------------------------------
-*/
-
-Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-});
 
 /*
 |--------------------------------------------------------------------------
@@ -136,9 +121,8 @@ Route::middleware(['auth', 'role:dosen'])
         // DASHBOARD
         Route::get('/', [DosenDashboardController::class, 'index'])->name('dashboard');
 
-        // PENGAJUAN MAHASISWA
+        // PENGAJUAN MAHASISWA (view-only — keputusan ada di Ka Lab → Prodi)
         Route::get('/pengajuan', [DosenPengajuanController::class, 'index'])->name('pengajuan');
-        Route::put('/pengajuan/{id}', [DosenPengajuanController::class, 'update'])->name('pengajuan.update');
 
         // JUDUL MANAGEMENT
         Route::prefix('judul')->name('judul.')->group(function () {
@@ -287,7 +271,6 @@ Route::middleware(['auth', 'role:koordinator_ta'])
             Route::get('/create', [KoorTAUserController::class, 'create'])->name('create');
             Route::post('/', [KoorTAUserController::class, 'store'])->name('store');
             Route::post('/{user}/reset-password', [KoorTAUserController::class, 'resetPassword'])->name('reset-password');
-            Route::post('/{user}/toggle-active', [KoorTAUserController::class, 'toggleActive'])->name('toggle-active');
             Route::get('/{user}/edit', [KoorTAUserController::class, 'edit'])->name('edit');
             Route::put('/{user}', [KoorTAUserController::class, 'update'])->name('update');
             Route::delete('/{user}', [KoorTAUserController::class, 'destroy'])->name('destroy');

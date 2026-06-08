@@ -361,6 +361,12 @@
                                                     <x-heroicon-o-building-office class="h-3.5 w-3.5" />
                                                     {{ $p['judul']->laboratorium->nama ?? '-' }}
                                                 </span>
+                                                @if ($p['judul']->dosen)
+                                                    <span class="flex items-center gap-1">
+                                                        <x-heroicon-o-users class="h-3.5 w-3.5" />
+                                                        Kuota: {{ $p['judul']->dosen->jumlahBimbingan() }}/{{ $p['judul']->dosen->kuota_bimbingan ?? '∞' }}
+                                                    </span>
+                                                @endif
                                             </div>
 
                                             @if ($p['alasan'])

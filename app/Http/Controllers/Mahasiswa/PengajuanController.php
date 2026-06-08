@@ -162,31 +162,42 @@ class PengajuanController extends Controller
             }
         }
 
+        $now = now();
+        $rows = [];
+
+        // Dosen pemilik judul yang dipilih (termasuk pembimbing judul mandiri)
         foreach ($dosenIds as $dosenId) {
-            DB::table('aktivitas')->insert([
+            $rows[] = [
                 'user_id' => $dosenId,
                 'tipe' => 'pengajuan_baru',
                 'pesan' => $mahasiswaName . ' mengajukan judul TA dengan salah satu judul Anda sebagai pilihan',
                 'is_read' => DB::raw('false'),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
         }
 
+        // Judul mandiri: beri tahu sisa dosen lainnya
         if (!empty($validated['judul_mandiri'])) {
-            $allDosenIds = User::where('role', 'dosen')->pluck('id');
-            foreach ($allDosenIds as $dosenId) {
-                if (!in_array($dosenId, $dosenIds)) {
-                    DB::table('aktivitas')->insert([
-                        'user_id' => $dosenId,
-                        'tipe' => 'pengajuan_baru',
-                        'pesan' => $mahasiswaName . ' mengajukan usulan judul mandiri: ' . $validated['judul_mandiri'],
-                        'is_read' => DB::raw('false'),
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-                }
+            $otherDosenIds = User::where('role', 'dosen')
+                ->whereNotIn('id', $dosenIds)
+                ->pluck('id');
+
+            foreach ($otherDosenIds as $dosenId) {
+                $rows[] = [
+                    'user_id' => $dosenId,
+                    'tipe' => 'pengajuan_baru',
+                    'pesan' => $mahasiswaName . ' mengajukan usulan judul mandiri: ' . $validated['judul_mandiri'],
+                    'is_read' => DB::raw('false'),
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
             }
+        }
+
+        // ✅ Satu kali batch insert, bukan N query
+        if (!empty($rows)) {
+            DB::table('aktivitas')->insert($rows);
         }
 
         return redirect()->route('mahasiswa.pengajuan')

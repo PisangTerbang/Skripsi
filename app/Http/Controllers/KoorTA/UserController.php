@@ -128,21 +128,4 @@ class UserController extends Controller
 
         return back()->with('success', "Password berhasil direset ke: {$newPassword}");
     }
-
-    public function toggleActive(User $user)
-    {
-        // Cegah nonaktifkan diri sendiri
-        if ($user->id === auth()->id()) {
-            return back()->with('error', 'Tidak dapat menonaktifkan akun sendiri');
-        }
-
-        // Cek apakah kolom is_active ada
-        $user->update([
-            'is_active' => !$user->is_active,
-        ]);
-
-        $status = $user->is_active ? 'diaktifkan' : 'dinonaktifkan';
-
-        return back()->with('success', "User berhasil {$status}");
-    }
 }

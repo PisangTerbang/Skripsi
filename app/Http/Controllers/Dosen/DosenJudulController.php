@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Judul;
 use App\Models\Laboratorium;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DosenJudulController extends Controller
 {
@@ -68,12 +69,17 @@ class DosenJudulController extends Controller
             'status' => 'nullable|in:draft,available,inactive',
         ]);
 
+        // Field form 'judul' dipetakan ke kolom asli 'nama_judul'
+        $validated['nama_judul'] = $validated['judul'];
+        unset($validated['judul']);
+
         $validated['dosen_id'] = auth()->id();
 
         // Default values untuk kolom baru
         $validated['status'] = $validated['status'] ?? 'draft'; // Default: draft
-        $validated['is_available'] = ($validated['status'] === 'available'); // Auto-set berdasarkan status
-        $validated['is_active'] = true; // Backward compatibility
+        // Kolom boolean PostgreSQL — wajib DB::raw agar tidak dikirim sebagai integer
+        $validated['is_available'] = DB::raw($validated['status'] === 'available' ? 'true' : 'false');
+        $validated['aktif'] = DB::raw('true');
 
         Judul::create($validated);
 
@@ -96,12 +102,19 @@ class DosenJudulController extends Controller
             'status' => 'nullable|in:draft,available,inactive',
         ]);
 
-        // Update is_available sesuai status
-        if (isset($validated['status'])) {
-            $validated['is_available'] = ($validated['status'] === 'available');
-        }
+        // Field form 'judul' dipetakan ke kolom asli 'nama_judul'
+        $validated['nama_judul'] = $validated['judul'];
+        unset($validated['judul']);
 
         $judul->update($validated);
+
+        // Kolom boolean PostgreSQL ditulis via query builder + DB::raw
+        // (Eloquent update tidak mem-persist Expression pada kolom ber-cast)
+        if (isset($validated['status'])) {
+            DB::table('judul')->where('id', $judul->id)->update([
+                'is_available' => DB::raw($validated['status'] === 'available' ? 'true' : 'false'),
+            ]);
+        }
 
         return back()->with('success', 'Judul berhasil diperbarui');
     }
@@ -116,11 +129,11 @@ class DosenJudulController extends Controller
 
         // Toggle antara available dan inactive
         $newStatus = $judul->status === 'available' ? 'inactive' : 'available';
-        $newIsAvailable = ($newStatus === 'available');
 
-        $judul->update([
+        DB::table('judul')->where('id', $judul->id)->update([
             'status' => $newStatus,
-            'is_available' => $newIsAvailable,
+            'is_available' => DB::raw($newStatus === 'available' ? 'true' : 'false'),
+            'updated_at' => now(),
         ]);
 
         $statusText = $newStatus === 'available' ? 'diaktifkan' : 'dinonaktifkan';
@@ -138,9 +151,10 @@ class DosenJudulController extends Controller
             return back()->with('error', 'Hanya judul draft yang bisa dipublikasikan');
         }
 
-        $judul->update([
+        DB::table('judul')->where('id', $judul->id)->update([
             'status' => 'available',
-            'is_available' => true,
+            'is_available' => DB::raw('true'),
+            'updated_at' => now(),
         ]);
 
         return back()->with('success', 'Judul berhasil dipublikasikan dan tersedia untuk mahasiswa');
@@ -162,9 +176,10 @@ class DosenJudulController extends Controller
             return back()->with('error', 'Judul tidak dapat dikembalikan ke draft karena sudah dipilih oleh mahasiswa');
         }
 
-        $judul->update([
+        DB::table('judul')->where('id', $judul->id)->update([
             'status' => 'draft',
-            'is_available' => false,
+            'is_available' => DB::raw('false'),
+            'updated_at' => now(),
         ]);
 
         return back()->with('success', 'Judul dikembalikan ke draft');
@@ -182,11 +197,14 @@ class DosenJudulController extends Controller
             return back()->with('error', 'Hanya judul dengan status "available" yang bisa di-toggle ketersediaannya');
         }
 
-        $judul->update([
-            'is_available' => !$judul->is_available,
+        $newAvailable = !$judul->is_available;
+
+        DB::table('judul')->where('id', $judul->id)->update([
+            'is_available' => DB::raw($newAvailable ? 'true' : 'false'),
+            'updated_at' => now(),
         ]);
 
-        $statusText = $judul->is_available ? 'dibuka' : 'ditutup sementara';
+        $statusText = $newAvailable ? 'dibuka' : 'ditutup sementara';
         return back()->with('success', "Ketersediaan judul berhasil {$statusText}");
     }
 

@@ -86,7 +86,6 @@ class PengajuanController extends Controller
             'pilihan3.laboratorium',
             'judulDitetapkan.dosen',
             'reviewerKalab',
-            'reviewerKoor',
             'reviewerKaprodi',
         ])->findOrFail($id);
 

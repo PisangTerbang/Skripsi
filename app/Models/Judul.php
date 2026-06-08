@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class Judul extends Model
 {
@@ -14,10 +15,10 @@ class Judul extends Model
     protected $fillable = [
         'dosen_id',
         'laboratorium_id',
-        'judul',
+        'kode',
         'nama_judul',
         'deskripsi',
-        'is_active',
+        'aktif',
         'is_locked',
         'status_judul',
         'kuota_maksimal',
@@ -30,7 +31,7 @@ class Judul extends Model
     ];
 
     protected $casts = [
-        'is_active' => 'boolean',
+        'aktif' => 'boolean',
         'is_locked' => 'boolean',
         'is_available' => 'boolean',
         'reviewed_at_kalab' => 'datetime',
@@ -87,7 +88,7 @@ class Judul extends Model
      */
     public function scopeActive($query)
     {
-        return $query->whereRaw("is_active = true")
+        return $query->whereRaw("aktif = true")
             ->whereRaw("is_available = true")
             ->where('status', 'available');
     }
@@ -178,7 +179,7 @@ class Judul extends Model
     {
         return $this->status === 'available'
             && $this->is_available
-            && $this->is_active
+            && $this->aktif
             && !$this->isKuotaPenuh();
     }
 
@@ -203,12 +204,14 @@ class Judul extends Model
      */
     public function approveByKalab($userId, $catatan = null)
     {
-        return $this->update([
+        // Kolom boolean PostgreSQL (is_available) ditulis via query builder + DB::raw
+        return DB::table('judul')->where('id', $this->id)->update([
             'status' => 'available',
-            'is_available' => true,
+            'is_available' => DB::raw('true'),
             'catatan_kalab' => $catatan,
             'reviewed_by_kalab' => $userId,
             'reviewed_at_kalab' => now(),
+            'updated_at' => now(),
         ]);
     }
 
@@ -217,12 +220,14 @@ class Judul extends Model
      */
     public function rejectByKalab($userId, $catatan)
     {
-        return $this->update([
+        // Kolom boolean PostgreSQL (is_available) ditulis via query builder + DB::raw
+        return DB::table('judul')->where('id', $this->id)->update([
             'status' => 'draft',
-            'is_available' => false,
+            'is_available' => DB::raw('false'),
             'catatan_kalab' => $catatan,
             'reviewed_by_kalab' => $userId,
             'reviewed_at_kalab' => now(),
+            'updated_at' => now(),
         ]);
     }
 }

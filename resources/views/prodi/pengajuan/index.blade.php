@@ -209,10 +209,11 @@
                     </div>
                 @else
                     <div class="overflow-x-auto">
-                        <table class="w-full text-sm">
+                        <table class="min-w-full divide-y divide-gray-200 text-sm">
+                            <caption class="sr-only">Daftar Pengajuan Judul TA</caption>
                             <thead>
                                 <tr
-                                    class="border-b-2 border-gray-200 bg-gray-50 text-left text-xs font-black uppercase tracking-wider text-gray-500">
+                                    class="sticky top-0 z-20 border-b border-gray-200 bg-gray-50/95 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 backdrop-blur-sm">
                                     <th class="px-6 py-4">No</th>
                                     <th class="px-6 py-4">Mahasiswa</th>
                                     <th class="px-6 py-4">Judul Ditetapkan</th>
@@ -223,12 +224,12 @@
                                     <th class="px-6 py-4 text-center">Aksi</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y-2 divide-gray-100">
+                            <tbody class="divide-y divide-gray-100 bg-white">
                                 @foreach ($pengajuan as $index => $item)
-                                    <tr class="group transition-colors hover:bg-violet-50/40">
+                                    <tr class="group transition-colors duration-200 hover:bg-violet-50/40">
 
                                         {{-- No --}}
-                                        <td class="px-6 py-4">
+                                        <td class="whitespace-nowrap px-6 py-4">
                                             <div class="flex items-center gap-2">
                                                 <div
                                                     class="h-9 w-1.5 rounded-full bg-gradient-to-b from-violet-400 to-purple-500">
@@ -296,15 +297,23 @@
                                         </td>
 
                                         {{-- Periode --}}
-                                        <td class="px-6 py-4">
+                                        <td class="whitespace-nowrap px-6 py-4">
                                             <span
-                                                class="rounded-lg border-2 border-violet-200 bg-violet-50 px-2.5 py-1 text-xs font-black text-violet-700">
+                                                class="inline-flex items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-700 shadow-sm transition-all hover:bg-violet-100">
+                                                <svg class="h-3.5 w-3.5 text-violet-500" fill="none"
+                                                    stroke="currentColor" viewBox="0 0 24 24"
+                                                    xmlns="http://www.w3.org/2000/svg">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                                                    </path>
+                                                </svg>
                                                 {{ $item->periode->nama ?? '-' }}
                                             </span>
                                         </td>
 
                                         {{-- Status Kalab --}}
-                                        <td class="px-6 py-4">
+                                        <td class="whitespace-nowrap px-6 py-4">
                                             <div class="space-y-1.5">
                                                 <span
                                                     class="inline-flex items-center gap-1.5 rounded-full border-2 border-emerald-200 bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-700">
@@ -319,24 +328,20 @@
                                         </td>
 
                                         {{-- Status Koor --}}
-                                        <td class="px-6 py-4">
+                                        <td class="whitespace-nowrap px-6 py-4">
                                             <div class="space-y-1.5">
                                                 <span
                                                     class="inline-flex items-center gap-1.5 rounded-full border-2 border-emerald-200 bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-700">
                                                     <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
                                                     Disetujui
                                                 </span>
-                                                @if ($item->reviewerKoor)
-                                                    <p class="text-xs text-gray-400">{{ $item->reviewerKoor->name }}
-                                                    </p>
-                                                @endif
                                             </div>
                                         </td>
 
                                         {{-- Aksi --}}
-                                        <td class="px-6 py-4 text-center">
+                                        <td class="whitespace-nowrap px-6 py-4 text-center">
                                             <a href="{{ route('prodi.pengajuan.show', $item->id) }}"
-                                                class="inline-flex items-center gap-1.5 rounded-xl border-2 border-violet-300 bg-violet-600 px-4 py-2 text-xs font-black text-white shadow-sm transition hover:bg-violet-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-1">
+                                                class="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border-2 border-violet-300 bg-violet-600 px-3 py-2 text-xs font-black text-white shadow-sm transition hover:bg-violet-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-1 sm:w-auto">
                                                 <x-heroicon-o-eye class="h-3.5 w-3.5" />
                                                 Review
                                             </a>

@@ -221,6 +221,26 @@
                                 class="w-full rounded-xl border-2 border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-500 cursor-not-allowed" />
                         </div>
 
+                        {{-- Kuota Mahasiswa Bimbingan --}}
+                        <div>
+                            <label class="mb-1.5 block text-sm font-bold text-gray-700">
+                                Kuota Mahasiswa Bimbingan
+                            </label>
+                            <input type="number" name="kuota_bimbingan" min="1" max="100"
+                                value="{{ old('kuota_bimbingan', $user->kuota_bimbingan) }}"
+                                placeholder="Kosongkan jika tanpa batas"
+                                class="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-sm text-gray-800 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 transition
+                                    {{ $errors->has('kuota_bimbingan') ? 'border-red-400 bg-red-50' : '' }}" />
+                            <p class="mt-1.5 text-xs font-semibold text-gray-500">
+                                Batas maksimal mahasiswa yang Anda bimbing. Saat ini membimbing
+                                <span class="font-black text-emerald-600">{{ $jumlahBimbingan }}</span> mahasiswa.
+                                Ka Lab &amp; Prodi dapat melihat kuota ini.
+                            </p>
+                            @error('kuota_bimbingan')
+                                <p class="mt-1.5 text-xs font-semibold text-red-500">{{ $message }}</p>
+                            @enderror
+                        </div>
+
                         <div class="border-t-2 border-gray-100 pt-4">
                             <button type="submit"
                                 class="inline-flex items-center gap-2 rounded-xl border-2 border-emerald-300 bg-emerald-600 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-emerald-700 hover:shadow-md">

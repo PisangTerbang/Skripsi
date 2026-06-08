@@ -50,6 +50,12 @@ class PengajuanController extends Controller
             'reviewerKalab',
         ])->findOrFail($id);
 
+        // Validation: Check if pengajuan can be reviewed by Kaprodi
+        if ($pengajuan->isRejectedByKalab()) {
+            return redirect()->route('prodi.pengajuan.index')
+                ->with('error', 'Pengajuan ini telah ditolak oleh Ka Lab dan tidak dapat direview.');
+        }
+
         if (!$pengajuan->canBeReviewedByKaprodi()) {
             return redirect()->route('prodi.pengajuan.index')
                 ->with('error', 'Pengajuan ini tidak dapat direview saat ini.');

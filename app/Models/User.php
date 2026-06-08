@@ -26,7 +26,8 @@ class User extends Authenticatable
         'role',
         'nim',
         'avatar',
-        'laboratorium_id'
+        'laboratorium_id',
+        'kuota_bimbingan',
     ];
 
     /**
@@ -49,7 +50,33 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'kuota_bimbingan' => 'integer',
         ];
+    }
+
+    /**
+     * Jumlah mahasiswa bimbingan saat ini (judul final yang ditetapkan & disetujui
+     * untuk salah satu judul milik dosen ini).
+     */
+    public function jumlahBimbingan(): int
+    {
+        return Pengajuan::where('status', 'disetujui')
+            ->whereHas('judulDitetapkan', function ($q) {
+                $q->where('dosen_id', $this->id);
+            })
+            ->count();
+    }
+
+    /**
+     * Sisa kuota bimbingan. Null jika kuota belum diatur (tanpa batas).
+     */
+    public function sisaKuotaBimbingan(): ?int
+    {
+        if (is_null($this->kuota_bimbingan)) {
+            return null;
+        }
+
+        return max(0, $this->kuota_bimbingan - $this->jumlahBimbingan());
     }
 
     public function pengajuanMahasiswa()
@@ -82,19 +109,19 @@ class User extends Authenticatable
         return $this->belongsTo(Laboratorium::class);
     }
 
-    public function isKoorLab()
+    public function isKaLab()
     {
-        return $this->role === 'koor_lab';
+        return $this->role === 'ka_lab';
     }
 
-    public function isKepalaLab()
+    public function isProdi()
     {
-        return $this->role === 'kepala_lab';
+        return $this->role === 'prodi';
     }
 
-    public function isKaprodi()
+    public function isKoordinatorTa()
     {
-        return $this->role === 'kaprodi';
+        return $this->role === 'koordinator_ta';
     }
 
 }

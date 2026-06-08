@@ -20,6 +20,7 @@ class DosenPengaturanController extends Controller
 
         return view('dosen.pengaturan', [
             'user' => $user,
+            'jumlahBimbingan' => $user->jumlahBimbingan(),
             'title' => 'Pengaturan Akun'
         ]);
     }
@@ -34,13 +35,22 @@ class DosenPengaturanController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email,' . $user->id,
-            'avatar' => 'nullable|image|mimes:jpeg,png,jpg|max:2048'
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'kuota_bimbingan' => 'nullable|integer|min:1|max:100',
+        ], [
+            'kuota_bimbingan.integer' => 'Kuota bimbingan harus berupa angka.',
+            'kuota_bimbingan.min' => 'Kuota bimbingan minimal 1.',
+            'kuota_bimbingan.max' => 'Kuota bimbingan maksimal 100.',
         ]);
 
         try {
             // Update basic info
             $user->name = $request->name;
             $user->email = $request->email;
+            // Batas kuota mahasiswa bimbingan (kosong = tanpa batas)
+            $user->kuota_bimbingan = $request->filled('kuota_bimbingan')
+                ? (int) $request->kuota_bimbingan
+                : null;
 
             // Handle avatar upload
             if ($request->hasFile('avatar')) {

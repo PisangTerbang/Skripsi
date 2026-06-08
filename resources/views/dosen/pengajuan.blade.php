@@ -327,24 +327,15 @@
                                                         </span>
                                                     </div>
                                                     <div class="mt-0.5 flex items-center gap-2 text-xs text-gray-400">
-                                                        <span>Prioritas <span class="font-black"
+                                                        <span x-show="item.prioritas">Pilihan ke-<span class="font-black"
                                                                 x-text="item.prioritas"></span></span>
                                                         <span x-show="item.prioritas === 1"
                                                             class="font-black text-blue-600">(Utama)</span>
-                                                        <span>•</span>
+                                                        <span x-show="item.prioritas">•</span>
                                                         <span x-text="item.waktu"></span>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-
-                                        {{-- Warning sudah punya judul --}}
-                                        <div x-show="item.sudah_punya_judul && item.status === 'pending'"
-                                            class="mb-3 flex items-center gap-2 rounded-xl border-2 border-orange-200 bg-orange-50 px-4 py-3">
-                                            <x-heroicon-o-exclamation-triangle
-                                                class="h-4 w-4 shrink-0 text-orange-500" />
-                                            <p class="text-xs font-semibold text-orange-700">Mahasiswa sudah memiliki
-                                                judul yang disetujui</p>
                                         </div>
 
                                         {{-- Alasan --}}
@@ -417,33 +408,12 @@
                                             </div>
                                         </div>
 
-                                        {{-- Action Buttons --}}
-                                        <div x-show="item.status === 'pending'">
-                                            <template x-if="!item.is_owner">
-                                                <div
-                                                    class="rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 px-4 py-3 text-center">
-                                                    <p class="text-xs font-semibold text-gray-400">Hanya dosen pemilik
-                                                        judul yang dapat menindaklanjuti pengajuan ini</p>
-                                                </div>
-                                            </template>
-                                            <template x-if="item.is_owner">
-                                                <div class="grid grid-cols-2 gap-3">
-                                                    <button @click="openReviewModal(item, 'disetujui')"
-                                                        x-bind:disabled="item.sudah_punya_judul"
-                                                        x-bind:class="item.sudah_punya_judul ?
-                                                            'opacity-50 cursor-not-allowed bg-gray-300 border-gray-300' :
-                                                            'bg-emerald-600 border-emerald-300 hover:bg-emerald-700 hover:shadow-md'"
-                                                        class="inline-flex items-center justify-center gap-2 rounded-xl border-2 px-4 py-2.5 text-sm font-black text-white shadow-sm transition">
-                                                        <x-heroicon-o-check-circle class="h-4 w-4" />
-                                                        Setujui
-                                                    </button>
-                                                    <button @click="openReviewModal(item, 'ditolak')"
-                                                        class="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-red-300 bg-red-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-red-700 hover:shadow-md">
-                                                        <x-heroicon-o-x-circle class="h-4 w-4" />
-                                                        Tolak
-                                                    </button>
-                                                </div>
-                                            </template>
+                                        {{-- View-only: dosen memantau; keputusan ada di Ka Lab → Prodi --}}
+                                        <div x-show="item.status === 'pending'"
+                                            class="rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 px-4 py-3 text-center">
+                                            <p class="text-xs font-semibold text-gray-400">
+                                                Menunggu keputusan Ka Lab &amp; Prodi
+                                            </p>
                                         </div>
 
                                     </div>
@@ -469,126 +439,6 @@
             </div>{{-- end px-6 py-6 --}}
         </div>{{-- end min-h-screen --}}
 
-        {{-- ✅ MODAL di dalam x-data scope --}}
-        <div x-show="showModal" x-cloak @click.self="showModal = false"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95"
-                x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-150"
-                x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
-                class="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border-2 border-gray-200 bg-white shadow-2xl">
-
-                {{-- Modal Header --}}
-                <div class="sticky top-0 z-10 flex items-center justify-between border-b-4 px-6 py-4"
-                    x-bind:class="reviewAction === 'disetujui' ? 'border-emerald-200 bg-gradient-to-r from-emerald-600 to-teal-700' :
-                        'border-red-200 bg-gradient-to-r from-red-600 to-rose-700'">
-                    <div class="flex items-center gap-3">
-                        <div
-                            class="flex h-9 w-9 items-center justify-center rounded-xl border-2 border-white/30 bg-white/20">
-                            <template x-if="reviewAction === 'disetujui'">
-                                <x-heroicon-o-check-circle class="h-5 w-5 text-white" />
-                            </template>
-                            <template x-if="reviewAction === 'ditolak'">
-                                <x-heroicon-o-x-circle class="h-5 w-5 text-white" />
-                            </template>
-                        </div>
-                        <div>
-                            <h3 class="font-extrabold text-white"
-                                x-text="reviewAction === 'disetujui' ? 'Setujui Pengajuan' : 'Tolak Pengajuan'"></h3>
-                            <p class="text-xs text-white/70" x-text="selectedItem.mahasiswa"></p>
-                        </div>
-                    </div>
-                    <button @click="showModal = false"
-                        class="flex h-8 w-8 items-center justify-center rounded-xl border-2 border-white/30 bg-white/20 text-white transition hover:bg-white/30">
-                        <x-heroicon-o-x-mark class="h-5 w-5" />
-                    </button>
-                </div>
-
-                {{-- Modal Body --}}
-                <div class="p-6 space-y-5">
-                    {{-- Info --}}
-                    <div class="rounded-xl border-2 border-gray-100 bg-gray-50 p-4">
-                        <p class="text-xs font-black uppercase tracking-widest text-gray-400 mb-1">Mahasiswa</p>
-                        <p class="text-base font-black text-gray-800" x-text="selectedItem.mahasiswa"></p>
-                        <p class="text-xs font-black uppercase tracking-widest text-gray-400 mt-3 mb-1">Judul</p>
-                        <p class="text-sm font-bold text-gray-700 leading-relaxed" x-text="selectedItem.judul_text">
-                        </p>
-                    </div>
-
-                    <form method="POST" x-bind:action="'/dosen/pengajuan/' + selectedItem.id" class="space-y-4">
-                        @csrf
-                        @method('PUT')
-                        <input type="hidden" name="status" x-bind:value="reviewAction" />
-
-                        {{-- Pilih Lab (mandiri + approve) --}}
-                        <template x-if="selectedItem.jenis === 'mandiri' && reviewAction === 'disetujui'">
-                            <div>
-                                <label class="mb-1.5 block text-sm font-bold text-gray-700">
-                                    Pilih Laboratorium <span class="text-red-500">*</span>
-                                </label>
-                                <select name="laboratorium_id" required
-                                    class="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-sm text-gray-800 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 transition">
-                                    <option value="">-- Pilih Laboratorium --</option>
-                                    @foreach ($laboratorium as $lab)
-                                        <option value="{{ $lab->id }}">{{ $lab->nama }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </template>
-
-                        {{-- Catatan --}}
-                        <div>
-                            <label class="mb-1.5 block text-sm font-bold text-gray-700">
-                                Catatan untuk Mahasiswa
-                                <span x-show="reviewAction === 'ditolak'" class="text-red-500">*</span>
-                                <span x-show="reviewAction === 'disetujui'"
-                                    class="text-gray-400 font-normal">(opsional)</span>
-                            </label>
-                            <textarea name="catatan_dosen" rows="4" placeholder="Berikan catatan atau alasan keputusan Anda..."
-                                class="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 resize-none transition"
-                                x-bind:class="reviewAction === 'disetujui' ? 'focus:border-emerald-400 focus:ring-emerald-100' :
-                                    'focus:border-red-400 focus:ring-red-100'">
-                            </textarea>
-                        </div>
-
-                        {{-- Info approve --}}
-                        <div x-show="reviewAction === 'disetujui'"
-                            class="rounded-xl border-2 border-blue-200 bg-blue-50 px-4 py-3">
-                            <div class="flex items-start gap-2">
-                                <x-heroicon-o-information-circle class="h-4 w-4 shrink-0 text-blue-500 mt-0.5" />
-                                <p class="text-xs font-semibold text-blue-700 leading-relaxed">
-                                    Setelah disetujui, judul akan terkunci dan pengajuan lain akan otomatis ditolak.
-                                </p>
-                            </div>
-                        </div>
-
-                        {{-- Actions --}}
-                        <div class="flex items-center gap-3 border-t-2 border-gray-100 pt-4">
-                            <button type="button" @click="showModal = false"
-                                class="flex-1 rounded-xl border-2 border-gray-200 bg-white px-5 py-3 text-sm font-bold text-gray-600 transition hover:bg-gray-50">
-                                Batal
-                            </button>
-                            <button type="submit"
-                                class="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border-2 px-5 py-3 text-sm font-black text-white shadow-sm transition hover:shadow-md"
-                                x-bind:class="reviewAction === 'disetujui' ?
-                                    'bg-emerald-600 border-emerald-300 hover:bg-emerald-700' :
-                                    'bg-red-600 border-red-300 hover:bg-red-700'">
-                                <template x-if="reviewAction === 'disetujui'">
-                                    <x-heroicon-o-check-circle class="h-4 w-4" />
-                                </template>
-                                <template x-if="reviewAction === 'ditolak'">
-                                    <x-heroicon-o-x-circle class="h-4 w-4" />
-                                </template>
-                                <span
-                                    x-text="reviewAction === 'disetujui' ? 'Setujui Pengajuan' : 'Tolak Pengajuan'"></span>
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>{{-- end modal-content --}}
-
-        </div>{{-- end modal --}}
-
-
     </div>{{-- ✅ closing x-data --}}
 
     <script id="pengajuan-dosen-data" type="application/json">
@@ -602,14 +452,6 @@
                     searchQuery: '',
                     filterStatus: 'all',
                     filterJenis: 'all',
-                    showModal: false,
-                    reviewAction: '',
-                    selectedItem: {
-                        id: null,
-                        mahasiswa: '',
-                        judul_text: '',
-                        jenis: ''
-                    },
                     allData: [],
                     filteredData: [],
 
@@ -651,12 +493,6 @@
                         }
 
                         this.filteredData = result;
-                    },
-
-                    openReviewModal(item, action) {
-                        this.selectedItem = item;
-                        this.reviewAction = action;
-                        this.showModal = true;
                     }
                 }
             }

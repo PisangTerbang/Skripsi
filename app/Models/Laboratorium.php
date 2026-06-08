@@ -17,19 +17,4 @@ class Laboratorium extends Model
     {
         return $this->hasMany(Judul::class);
     }
-
-    public function jumlahPeminat()
-    {
-        return \App\Models\Pengajuan::whereIn('judul_id', $this->judul()->pluck('id'))
-            ->where('jenis', 'pilih')
-            ->count();
-    }
-
-    public function jumlahDisetujui()
-    {
-        return \App\Models\Pengajuan::whereIn('judul_id', $this->judul()->pluck('id'))
-            ->where('jenis', 'pilih')
-            ->where('status', 'disetujui')
-            ->count();
-    }
 }
