@@ -220,7 +220,6 @@
                                     <th class="px-6 py-4">Dosen Pembimbing</th>
                                     <th class="px-6 py-4">Periode</th>
                                     <th class="px-6 py-4">Status Kalab</th>
-                                    <th class="px-6 py-4">Status Koor</th>
                                     <th class="px-6 py-4 text-center">Aksi</th>
                                 </tr>
                             </thead>
@@ -324,17 +323,6 @@
                                                     <p class="text-xs text-gray-400">{{ $item->reviewerKalab->name }}
                                                     </p>
                                                 @endif
-                                            </div>
-                                        </td>
-
-                                        {{-- Status Koor --}}
-                                        <td class="whitespace-nowrap px-6 py-4">
-                                            <div class="space-y-1.5">
-                                                <span
-                                                    class="inline-flex items-center gap-1.5 rounded-full border-2 border-emerald-200 bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-700">
-                                                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-                                                    Disetujui
-                                                </span>
                                             </div>
                                         </td>
 

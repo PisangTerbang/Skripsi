@@ -15,16 +15,16 @@
                             </div>
                             <div class="h-8 w-px bg-gray-200"></div>
                             <div>
-                                <h1 class="text-lg font-extrabold text-gray-900">Review Pengajuan Mahasiswa</h1>
-                                <p class="mt-0.5 text-xs text-gray-400">Tinjau dan berikan keputusan untuk pengajuan
-                                    judul TA</p>
+                                <h1 class="text-lg font-extrabold text-gray-900">Pengajuan Mahasiswa</h1>
+                                <p class="mt-0.5 text-xs text-gray-400">Pantau pengajuan mahasiswa yang memilih judul
+                                    Anda — keputusan ada di Ka Lab &amp; Prodi</p>
                             </div>
                         </div>
                         @if ($pending > 0)
                             <span
                                 class="inline-flex items-center gap-1.5 rounded-full border-2 border-yellow-200 bg-yellow-100 px-4 py-1.5 text-xs font-black text-yellow-700">
                                 <span class="h-2 w-2 animate-pulse rounded-full bg-yellow-500"></span>
-                                {{ $pending }} perlu review
+                                {{ $pending }} menunggu proses
                             </span>
                         @endif
                     </div>
@@ -99,9 +99,9 @@
                         <div class="absolute -bottom-6 -left-4 h-20 w-20 rounded-full bg-white/5"></div>
                         <div class="relative flex items-start justify-between">
                             <div>
-                                <p class="text-xs font-bold uppercase tracking-widest text-yellow-100">Perlu Review</p>
+                                <p class="text-xs font-bold uppercase tracking-widest text-yellow-100">Menunggu Proses</p>
                                 <p class="mt-3 text-5xl font-black leading-none text-white">{{ $pending }}</p>
-                                <p class="mt-2 text-xs font-medium text-yellow-100">menunggu keputusan</p>
+                                <p class="mt-2 text-xs font-medium text-yellow-100">menunggu keputusan Ka Lab &amp; Prodi</p>
                             </div>
                             <div
                                 class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border-2 border-white/20 bg-white/20">
