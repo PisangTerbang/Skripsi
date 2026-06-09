@@ -22,7 +22,6 @@ class Judul extends Model
         'is_locked',
         'status_judul',
         'kuota_maksimal',
-        'jumlah_peminat',
         'status',
         'is_available',
         'catatan_kalab',           // BARU

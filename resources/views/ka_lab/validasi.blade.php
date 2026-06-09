@@ -537,15 +537,6 @@
                         </div>
                     </div>
 
-                    {{-- Catatan Koor --}}
-                    <div x-show="selectedItem.catatan_koor"
-                        class="rounded-xl border-2 border-indigo-200 bg-indigo-50 p-4">
-                        <p class="text-xs font-bold uppercase tracking-widest text-indigo-500 mb-2">Catatan Koordinator
-                            Lab
-                        </p>
-                        <p class="text-sm text-indigo-800 italic" x-text="selectedItem.catatan_koor"></p>
-                    </div>
-
                     {{-- Form Validasi (hanya pending) --}}
                     <div x-show="selectedItem.status === 'pending_kalab'">
                         <div class="flex items-center gap-3 mb-4">
