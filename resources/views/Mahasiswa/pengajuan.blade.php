@@ -107,12 +107,6 @@
                                     <p class="text-xs text-white/70">{{ $submission->created_at->diffForHumans() }}</p>
                                 </div>
                             </div>
-                            <span
-                                class="inline-flex items-center gap-1.5 rounded-full border-2 border-white/30 bg-white/20 px-3 py-1 text-xs font-black text-white">
-                                <span
-                                    class="h-1.5 w-1.5 rounded-full {{ $submission->status === 'pending' ? 'animate-pulse bg-yellow-200' : 'bg-white' }}"></span>
-                                {{ ucfirst($submission->status) }}
-                            </span>
                         </div>
 
                         <div class="p-6 space-y-4">
