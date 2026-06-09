@@ -244,12 +244,12 @@ class PengajuanController extends Controller
         $judul = Judul::create([
             'nama_judul' => $pengajuan->judul_mandiri,
             'deskripsi' => $pengajuan->deskripsi_mandiri,
-            'dosen_id' => null,
+            // Dosen pembimbing yang dipilih mahasiswa untuk judul mandiri
+            'dosen_id' => $pengajuan->dosen_pembimbing_id,
             'laboratorium_id' => $laboratoriumId,
             'status_judul' => 'ditawarkan',
             'aktif' => DB::raw('true'),
             'is_locked' => DB::raw('false'),
-            'sumber' => 'mahasiswa',
             'created_at' => now(),
             'updated_at' => now(),
         ]);
