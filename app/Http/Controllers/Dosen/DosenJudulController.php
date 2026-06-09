@@ -10,6 +10,11 @@ use Illuminate\Support\Facades\DB;
 
 class DosenJudulController extends Controller
 {
+    /**
+     * Siklus judul (status_judul):
+     * draft -> pending_kalab -> ditawarkan / ditolak_kalab
+     * Dosen mengajukan; Ka Lab memvalidasi; mahasiswa hanya melihat 'ditawarkan'.
+     */
     public function index()
     {
         $judul = Judul::where('dosen_id', auth()->id())
@@ -23,23 +28,19 @@ class DosenJudulController extends Controller
             ->latest()
             ->get()
             ->map(function ($item) {
-                // Hitung total peminat dari semua pilihan
                 $item->total_peminat = $item->pengajuan_pilihan1_count
                     + $item->pengajuan_pilihan2_count
                     + $item->pengajuan_pilihan3_count;
-
-                // Hitung yang sudah ditetapkan
                 $item->jumlah_ditetapkan = $item->pengajuan_ditetapkan_count;
                 $item->lab_name = $item->laboratorium->nama ?? 'N/A';
-
                 return $item;
             });
 
-        // Hitung statistik untuk cards (SISTEM BARU)
         $totalJudul = $judul->count();
-        $draft = $judul->where('status', 'draft')->count();
-        $tersedia = $judul->where('status', 'available')->where('is_available', true)->count();
-        $nonaktif = $judul->where('status', 'inactive')->count();
+        $draft = $judul->where('status_judul', 'draft')->count();
+        $pending = $judul->where('status_judul', 'pending_kalab')->count();
+        $ditawarkan = $judul->where('status_judul', 'ditawarkan')->count();
+        $ditolak = $judul->where('status_judul', 'ditolak_kalab')->count();
         $totalPeminat = $judul->sum('total_peminat');
         $totalDitetapkan = $judul->sum('jumlah_ditetapkan');
 
@@ -52,8 +53,9 @@ class DosenJudulController extends Controller
             'laboratorium',
             'totalJudul',
             'draft',
-            'tersedia',
-            'nonaktif',
+            'pending',
+            'ditawarkan',
+            'ditolak',
             'totalPeminat',
             'totalDitetapkan'
         ));
@@ -66,153 +68,110 @@ class DosenJudulController extends Controller
             'deskripsi' => 'required|string',
             'laboratorium_id' => 'required|exists:laboratorium,id',
             'kuota_maksimal' => 'nullable|integer|min:1',
-            'status' => 'nullable|in:draft,available,inactive',
+            'aksi' => 'nullable|in:draft,ajukan',
         ]);
 
-        // Field form 'judul' dipetakan ke kolom asli 'nama_judul'
-        $validated['nama_judul'] = $validated['judul'];
-        unset($validated['judul']);
+        // 'ajukan' = langsung kirim ke Ka Lab untuk validasi; default draft
+        $ajukan = ($validated['aksi'] ?? 'draft') === 'ajukan';
 
-        $validated['dosen_id'] = auth()->id();
+        $judul = Judul::create([
+            'dosen_id' => auth()->id(),
+            'laboratorium_id' => $validated['laboratorium_id'],
+            'nama_judul' => $validated['judul'],
+            'deskripsi' => $validated['deskripsi'],
+            'kuota_maksimal' => $validated['kuota_maksimal'] ?? null,
+            'status_judul' => $ajukan ? 'pending_kalab' : 'draft',
+            'aktif' => DB::raw('true'),
+            'is_available' => DB::raw('false'),
+            'is_locked' => DB::raw('false'),
+        ]);
 
-        // Default values untuk kolom baru
-        $validated['status'] = $validated['status'] ?? 'draft'; // Default: draft
-        // Kolom boolean PostgreSQL — wajib DB::raw agar tidak dikirim sebagai integer
-        $validated['is_available'] = DB::raw($validated['status'] === 'available' ? 'true' : 'false');
-        $validated['aktif'] = DB::raw('true');
+        if ($ajukan) {
+            DB::table('judul')->where('id', $judul->id)->update([
+                'submitted_to_kalab_at' => now(),
+                'submitted_to_kalab_by' => auth()->id(),
+            ]);
+        }
 
-        Judul::create($validated);
-
-        $message = $validated['status'] === 'available'
-            ? 'Judul berhasil ditambahkan dan langsung tersedia untuk mahasiswa'
-            : 'Judul berhasil disimpan sebagai draft';
-
-        return back()->with('success', $message);
+        return back()->with(
+            'success',
+            $ajukan
+                ? 'Judul diajukan ke Ka Lab untuk divalidasi.'
+                : 'Judul disimpan sebagai draft.'
+        );
     }
 
     public function update(Request $request, $id)
     {
         $judul = Judul::where('dosen_id', auth()->id())->findOrFail($id);
 
+        // Hanya draft / ditolak yang boleh diedit (yang sudah ditawarkan dikunci alur)
+        if (!in_array($judul->status_judul, ['draft', 'ditolak_kalab'])) {
+            return back()->with('error', 'Judul yang sedang/selesai divalidasi tidak dapat diedit.');
+        }
+
         $validated = $request->validate([
             'judul' => 'required|string|max:500',
             'deskripsi' => 'required|string',
             'laboratorium_id' => 'required|exists:laboratorium,id',
             'kuota_maksimal' => 'nullable|integer|min:1',
-            'status' => 'nullable|in:draft,available,inactive',
         ]);
 
-        // Field form 'judul' dipetakan ke kolom asli 'nama_judul'
-        $validated['nama_judul'] = $validated['judul'];
-        unset($validated['judul']);
-
-        $judul->update($validated);
-
-        // Kolom boolean PostgreSQL ditulis via query builder + DB::raw
-        // (Eloquent update tidak mem-persist Expression pada kolom ber-cast)
-        if (isset($validated['status'])) {
-            DB::table('judul')->where('id', $judul->id)->update([
-                'is_available' => DB::raw($validated['status'] === 'available' ? 'true' : 'false'),
-            ]);
-        }
+        $judul->update([
+            'nama_judul' => $validated['judul'],
+            'deskripsi' => $validated['deskripsi'],
+            'laboratorium_id' => $validated['laboratorium_id'],
+            'kuota_maksimal' => $validated['kuota_maksimal'] ?? null,
+        ]);
 
         return back()->with('success', 'Judul berhasil diperbarui');
     }
 
     /**
-     * Toggle status judul (draft <-> available)
-     * Menggantikan toggleStatus lama yang pakai is_active
+     * Ajukan judul ke Ka Lab untuk validasi (draft / ditolak -> pending_kalab).
      */
-    public function toggleStatus($id)
+    public function ajukan($id)
     {
         $judul = Judul::where('dosen_id', auth()->id())->findOrFail($id);
 
-        // Toggle antara available dan inactive
-        $newStatus = $judul->status === 'available' ? 'inactive' : 'available';
-
-        DB::table('judul')->where('id', $judul->id)->update([
-            'status' => $newStatus,
-            'is_available' => DB::raw($newStatus === 'available' ? 'true' : 'false'),
-            'updated_at' => now(),
-        ]);
-
-        $statusText = $newStatus === 'available' ? 'diaktifkan' : 'dinonaktifkan';
-        return back()->with('success', "Judul berhasil {$statusText}");
-    }
-
-    /**
-     * Publish judul dari draft ke available
-     */
-    public function publish($id)
-    {
-        $judul = Judul::where('dosen_id', auth()->id())->findOrFail($id);
-
-        if ($judul->status !== 'draft') {
-            return back()->with('error', 'Hanya judul draft yang bisa dipublikasikan');
+        if (!in_array($judul->status_judul, ['draft', 'ditolak_kalab'])) {
+            return back()->with('error', 'Judul ini tidak dapat diajukan.');
         }
 
         DB::table('judul')->where('id', $judul->id)->update([
-            'status' => 'available',
-            'is_available' => DB::raw('true'),
+            'status_judul' => 'pending_kalab',
+            'catatan_kalab' => null,
+            'submitted_to_kalab_at' => now(),
+            'submitted_to_kalab_by' => auth()->id(),
             'updated_at' => now(),
         ]);
 
-        return back()->with('success', 'Judul berhasil dipublikasikan dan tersedia untuk mahasiswa');
+        return back()->with('success', 'Judul diajukan ke Ka Lab untuk divalidasi.');
     }
 
     /**
-     * Kembalikan judul ke draft
+     * Tarik kembali pengajuan validasi (pending_kalab -> draft).
      */
-    public function unpublish($id)
+    public function tarik($id)
     {
         $judul = Judul::where('dosen_id', auth()->id())->findOrFail($id);
 
-        // Cek apakah ada mahasiswa yang sudah memilih
-        $totalPeminat = $judul->pengajuanPilihan1()->count()
-            + $judul->pengajuanPilihan2()->count()
-            + $judul->pengajuanPilihan3()->count();
-
-        if ($totalPeminat > 0) {
-            return back()->with('error', 'Judul tidak dapat dikembalikan ke draft karena sudah dipilih oleh mahasiswa');
+        if ($judul->status_judul !== 'pending_kalab') {
+            return back()->with('error', 'Hanya judul yang sedang menunggu validasi yang bisa ditarik.');
         }
 
         DB::table('judul')->where('id', $judul->id)->update([
-            'status' => 'draft',
-            'is_available' => DB::raw('false'),
+            'status_judul' => 'draft',
             'updated_at' => now(),
         ]);
 
-        return back()->with('success', 'Judul dikembalikan ke draft');
-    }
-
-    /**
-     * Toggle ketersediaan judul (is_available)
-     * Untuk sementara menutup/membuka judul tanpa mengubah status
-     */
-    public function toggleAvailability($id)
-    {
-        $judul = Judul::where('dosen_id', auth()->id())->findOrFail($id);
-
-        if ($judul->status !== 'available') {
-            return back()->with('error', 'Hanya judul dengan status "available" yang bisa di-toggle ketersediaannya');
-        }
-
-        $newAvailable = !$judul->is_available;
-
-        DB::table('judul')->where('id', $judul->id)->update([
-            'is_available' => DB::raw($newAvailable ? 'true' : 'false'),
-            'updated_at' => now(),
-        ]);
-
-        $statusText = $newAvailable ? 'dibuka' : 'ditutup sementara';
-        return back()->with('success', "Ketersediaan judul berhasil {$statusText}");
+        return back()->with('success', 'Pengajuan validasi ditarik. Judul kembali ke draft.');
     }
 
     public function destroy($id)
     {
         $judul = Judul::where('dosen_id', auth()->id())->findOrFail($id);
 
-        // Cek apakah judul sudah dipilih mahasiswa
         $totalPeminat = $judul->pengajuanPilihan1()->count()
             + $judul->pengajuanPilihan2()->count()
             + $judul->pengajuanPilihan3()->count();
@@ -221,9 +180,7 @@ class DosenJudulController extends Controller
             return back()->with('error', 'Judul tidak dapat dihapus karena sudah dipilih oleh mahasiswa');
         }
 
-        // Cek apakah ada yang sudah ditetapkan
-        $totalDitetapkan = $judul->pengajuanDitetapkan()->count();
-        if ($totalDitetapkan > 0) {
+        if ($judul->pengajuanDitetapkan()->count() > 0) {
             return back()->with('error', 'Judul tidak dapat dihapus karena sudah ditetapkan ke mahasiswa');
         }
 

@@ -128,11 +128,8 @@ Route::middleware(['auth', 'role:dosen'])
         Route::prefix('judul')->name('judul.')->group(function () {
             Route::get('/', [DosenJudulController::class, 'index'])->name('index');
             Route::post('/', [DosenJudulController::class, 'store'])->name('store');
-            Route::post('/{id}/toggle-status', [DosenJudulController::class, 'toggleStatus'])->name('toggle-status');
-            Route::post('/{id}/publish', [DosenJudulController::class, 'publish'])->name('publish');
-            Route::post('/{id}/unpublish', [DosenJudulController::class, 'unpublish'])->name('unpublish');
-            Route::post('/{id}/toggle-availability', [DosenJudulController::class, 'toggleAvailability'])->name('toggle-availability');
-            Route::patch('/{id}/toggle', [DosenJudulController::class, 'toggleStatus'])->name('toggle');
+            Route::post('/{id}/ajukan', [DosenJudulController::class, 'ajukan'])->name('ajukan');
+            Route::post('/{id}/tarik', [DosenJudulController::class, 'tarik'])->name('tarik');
             Route::put('/{id}', [DosenJudulController::class, 'update'])->name('update');
             Route::delete('/{id}', [DosenJudulController::class, 'destroy'])->name('destroy');
         });

@@ -88,25 +88,25 @@
                         </div>
                     </div>
 
-                    {{-- Tersedia --}}
+                    {{-- Menunggu Validasi --}}
+                    <div
+                        class="relative overflow-hidden rounded-2xl border-2 border-amber-300 bg-gradient-to-br from-amber-500 to-orange-600 p-4 shadow-lg transition hover:-translate-y-0.5">
+                        <div class="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-white/10"></div>
+                        <div class="relative">
+                            <x-heroicon-o-clock class="h-6 w-6 text-amber-100 mb-2" />
+                            <p class="text-xs font-bold uppercase tracking-widest text-amber-100">Menunggu Validasi</p>
+                            <p class="mt-1 text-3xl font-black text-white">{{ $pending }}</p>
+                        </div>
+                    </div>
+
+                    {{-- Ditawarkan --}}
                     <div
                         class="relative overflow-hidden rounded-2xl border-2 border-emerald-300 bg-gradient-to-br from-emerald-500 to-green-600 p-4 shadow-lg transition hover:-translate-y-0.5">
                         <div class="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-white/10"></div>
                         <div class="relative">
                             <x-heroicon-o-check-circle class="h-6 w-6 text-emerald-100 mb-2" />
-                            <p class="text-xs font-bold uppercase tracking-widest text-emerald-100">Tersedia</p>
-                            <p class="mt-1 text-3xl font-black text-white">{{ $tersedia }}</p>
-                        </div>
-                    </div>
-
-                    {{-- Non-Aktif --}}
-                    <div
-                        class="relative overflow-hidden rounded-2xl border-2 border-orange-300 bg-gradient-to-br from-orange-500 to-red-600 p-4 shadow-lg transition hover:-translate-y-0.5">
-                        <div class="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-white/10"></div>
-                        <div class="relative">
-                            <x-heroicon-o-pause-circle class="h-6 w-6 text-orange-100 mb-2" />
-                            <p class="text-xs font-bold uppercase tracking-widest text-orange-100">Non-Aktif</p>
-                            <p class="mt-1 text-3xl font-black text-white">{{ $nonaktif }}</p>
+                            <p class="text-xs font-bold uppercase tracking-widest text-emerald-100">Ditawarkan</p>
+                            <p class="mt-1 text-3xl font-black text-white">{{ $ditawarkan }}</p>
                         </div>
                     </div>
 
@@ -140,14 +140,15 @@
                     <div class="flex items-center gap-1 rounded-2xl border-2 border-gray-200 bg-white p-1.5 shadow-sm">
                         @foreach ([
         'all' => 'Semua',
-        'available' => 'Tersedia',
         'draft' => 'Draft',
-        'inactive' => 'Non-Aktif',
+        'pending_kalab' => 'Menunggu',
+        'ditawarkan' => 'Ditawarkan',
+        'ditolak_kalab' => 'Ditolak',
     ] as $val => $label)
                             <button type="button" @click="filterStatus = '{{ $val }}'; applyFilter()"
                                 x-bind:class="filterStatus === '{{ $val }}'
                                     ?
-                                    '{{ $val === 'draft' ? 'bg-gray-600' : ($val === 'inactive' ? 'bg-orange-500' : ($val === 'available' ? 'bg-emerald-600' : 'bg-indigo-600')) }} text-white shadow-sm' :
+                                    '{{ $val === 'draft' ? 'bg-gray-600' : ($val === 'pending_kalab' ? 'bg-amber-500' : ($val === 'ditawarkan' ? 'bg-emerald-600' : ($val === 'ditolak_kalab' ? 'bg-red-600' : 'bg-indigo-600'))) }} text-white shadow-sm' :
                                     'text-gray-500 hover:bg-gray-100 hover:text-gray-700'"
                                 class="rounded-xl px-3 py-1.5 text-xs font-bold transition-all">
                                 {{ $label }}
@@ -197,25 +198,19 @@
                     <template x-for="item in filteredData" :key="item.id">
                         <div class="group relative overflow-hidden rounded-2xl border-2 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
                             x-bind:class="{
-                                'border-emerald-200 hover:border-emerald-300': item.status === 'available' && item
-                                    .is_available,
-                                'border-yellow-200 hover:border-yellow-300': item.status === 'available' && !item
-                                    .is_available,
-                                'border-gray-200 hover:border-gray-300': item.status === 'draft',
-                                'border-orange-200 hover:border-orange-300': item.status === 'inactive',
-                                'border-red-200 hover:border-red-300': item.status === 'ditolak_kalab'
+                                'border-gray-200 hover:border-gray-300': item.status_judul === 'draft',
+                                'border-amber-200 hover:border-amber-300': item.status_judul === 'pending_kalab',
+                                'border-emerald-200 hover:border-emerald-300': item.status_judul === 'ditawarkan',
+                                'border-red-200 hover:border-red-300': item.status_judul === 'ditolak_kalab'
                             }">
 
                             {{-- Color bar top --}}
                             <div class="h-1.5 w-full"
                                 x-bind:class="{
-                                    'bg-gradient-to-r from-emerald-500 to-green-500': item.status === 'available' &&
-                                        item.is_available,
-                                    'bg-gradient-to-r from-yellow-400 to-orange-400': item.status === 'available' && !
-                                        item.is_available,
-                                    'bg-gradient-to-r from-gray-300 to-gray-400': item.status === 'draft',
-                                    'bg-gradient-to-r from-orange-500 to-red-500': item.status === 'inactive',
-                                    'bg-gradient-to-r from-red-500 to-rose-500': item.status === 'ditolak_kalab'
+                                    'bg-gradient-to-r from-gray-300 to-gray-400': item.status_judul === 'draft',
+                                    'bg-gradient-to-r from-amber-400 to-orange-400': item.status_judul === 'pending_kalab',
+                                    'bg-gradient-to-r from-emerald-500 to-green-500': item.status_judul === 'ditawarkan',
+                                    'bg-gradient-to-r from-red-500 to-rose-500': item.status_judul === 'ditolak_kalab'
                                 }">
                             </div>
 
@@ -228,25 +223,25 @@
                                         x-text="item.kode">
                                     </span>
                                     <div class="flex items-center gap-1.5">
-                                        <span x-show="item.status === 'available' && item.is_available"
-                                            class="inline-flex items-center gap-1 rounded-full border-2 border-emerald-200 bg-emerald-100 px-2 py-0.5 text-[10px] font-black text-emerald-700">
-                                            <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500"></span>
-                                            Tersedia
-                                        </span>
-                                        <span x-show="item.status === 'available' && !item.is_available"
-                                            class="inline-flex items-center gap-1 rounded-full border-2 border-yellow-200 bg-yellow-100 px-2 py-0.5 text-[10px] font-black text-yellow-700">
-                                            <span class="h-1.5 w-1.5 rounded-full bg-yellow-500"></span>
-                                            Ditutup
-                                        </span>
-                                        <span x-show="item.status === 'draft'"
+                                        <span x-show="item.status_judul === 'draft'"
                                             class="inline-flex items-center gap-1 rounded-full border-2 border-gray-200 bg-gray-100 px-2 py-0.5 text-[10px] font-black text-gray-600">
                                             <span class="h-1.5 w-1.5 rounded-full bg-gray-400"></span>
                                             Draft
                                         </span>
-                                        <span x-show="item.status === 'inactive'"
-                                            class="inline-flex items-center gap-1 rounded-full border-2 border-orange-200 bg-orange-100 px-2 py-0.5 text-[10px] font-black text-orange-700">
-                                            <span class="h-1.5 w-1.5 rounded-full bg-orange-500"></span>
-                                            Non-Aktif
+                                        <span x-show="item.status_judul === 'pending_kalab'"
+                                            class="inline-flex items-center gap-1 rounded-full border-2 border-amber-200 bg-amber-100 px-2 py-0.5 text-[10px] font-black text-amber-700">
+                                            <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-500"></span>
+                                            Menunggu Validasi
+                                        </span>
+                                        <span x-show="item.status_judul === 'ditawarkan'"
+                                            class="inline-flex items-center gap-1 rounded-full border-2 border-emerald-200 bg-emerald-100 px-2 py-0.5 text-[10px] font-black text-emerald-700">
+                                            <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500"></span>
+                                            Ditawarkan
+                                        </span>
+                                        <span x-show="item.status_judul === 'ditolak_kalab'"
+                                            class="inline-flex items-center gap-1 rounded-full border-2 border-red-200 bg-red-100 px-2 py-0.5 text-[10px] font-black text-red-700">
+                                            <span class="h-1.5 w-1.5 rounded-full bg-red-500"></span>
+                                            Ditolak Ka Lab
                                         </span>
                                         <span x-show="item.is_locked"
                                             class="inline-flex items-center gap-1 rounded-full border-2 border-red-200 bg-red-100 px-2 py-0.5 text-[10px] font-black text-red-700">
@@ -291,40 +286,40 @@
                                 {{-- Actions --}}
                                 <div class="flex items-center justify-end gap-1.5 border-t-2 border-gray-100 pt-3">
 
-                                    {{-- Edit --}}
-                                    <button x-show="item.can_edit" @click="openEditModal(item)"
+                                    {{-- Ajukan ke Ka Lab (draft / ditolak) --}}
+                                    <form x-show="item.status_judul === 'draft' || item.status_judul === 'ditolak_kalab'"
+                                        method="POST" x-bind:action="'/dosen/judul/' + item.id + '/ajukan'">
+                                        @csrf
+                                        <button type="submit"
+                                            class="inline-flex items-center gap-1 rounded-xl border-2 border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-black text-emerald-700 transition hover:bg-emerald-100">
+                                            <x-heroicon-o-paper-airplane class="h-3.5 w-3.5" />
+                                            <span x-text="item.status_judul === 'ditolak_kalab' ? 'Ajukan Ulang' : 'Ajukan'"></span>
+                                        </button>
+                                    </form>
+
+                                    {{-- Tarik kembali (menunggu validasi) --}}
+                                    <form x-show="item.status_judul === 'pending_kalab'"
+                                        method="POST" x-bind:action="'/dosen/judul/' + item.id + '/tarik'">
+                                        @csrf
+                                        <button type="submit"
+                                            class="inline-flex items-center gap-1 rounded-xl border-2 border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-black text-amber-700 transition hover:bg-amber-100">
+                                            <x-heroicon-o-arrow-uturn-left class="h-3.5 w-3.5" />
+                                            Tarik
+                                        </button>
+                                    </form>
+
+                                    {{-- Edit (draft / ditolak) --}}
+                                    <button x-show="item.status_judul === 'draft' || item.status_judul === 'ditolak_kalab'"
+                                        @click="openEditModal(item)"
                                         class="inline-flex items-center gap-1 rounded-xl border-2 border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-black text-blue-700 transition hover:bg-blue-100">
                                         <x-heroicon-o-pencil-square class="h-3.5 w-3.5" />
                                         Edit
                                     </button>
-                                    <button x-show="!item.can_edit" disabled
-                                        class="inline-flex items-center gap-1 rounded-xl border-2 border-gray-100 bg-gray-50 px-3 py-1.5 text-xs font-black text-gray-300 cursor-not-allowed">
-                                        <x-heroicon-o-pencil-square class="h-3.5 w-3.5" />
-                                        Edit
-                                    </button>
 
-                                    {{-- Toggle --}}
-                                    <button x-show="item.can_toggle" @click="toggleStatus(item.id)"
-                                        x-bind:class="item.status === 'available' ?
-                                            'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100' :
-                                            'border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100'"
-                                        class="inline-flex items-center gap-1 rounded-xl border-2 px-3 py-1.5 text-xs font-black transition"
-                                        x-bind:title="item.status === 'available' ? 'Nonaktifkan' : 'Aktifkan'">
-                                        <x-heroicon-o-arrow-path class="h-3.5 w-3.5" />
-                                        <span x-text="item.status === 'available' ? 'Aktif' : 'Nonaktif'"></span>
-                                    </button>
-                                    <button x-show="!item.can_toggle" disabled
-                                        class="inline-flex items-center gap-1 rounded-xl border-2 border-gray-100 bg-gray-50 px-3 py-1.5 text-xs font-black text-gray-300 cursor-not-allowed">
-                                        <x-heroicon-o-lock-closed class="h-3.5 w-3.5" />
-                                    </button>
-
-                                    {{-- Delete --}}
-                                    <button x-show="item.can_delete" @click="confirmDelete(item.id)"
+                                    {{-- Hapus (selama belum ditawarkan & belum dikunci) --}}
+                                    <button x-show="item.status_judul !== 'ditawarkan' && !item.is_locked"
+                                        @click="confirmDelete(item.id)"
                                         class="inline-flex items-center gap-1 rounded-xl border-2 border-red-200 bg-red-50 px-3 py-1.5 text-xs font-black text-red-700 transition hover:bg-red-100">
-                                        <x-heroicon-o-trash class="h-3.5 w-3.5" />
-                                    </button>
-                                    <button x-show="!item.can_delete" disabled
-                                        class="inline-flex items-center gap-1 rounded-xl border-2 border-gray-100 bg-gray-50 px-3 py-1.5 text-xs font-black text-gray-300 cursor-not-allowed">
                                         <x-heroicon-o-trash class="h-3.5 w-3.5" />
                                     </button>
 
@@ -445,30 +440,30 @@
                         <p class="mt-1 text-xs text-gray-400">Maksimal 1000 karakter</p>
                     </div>
 
-                    {{-- Status (hanya saat create) --}}
+                    {{-- Aksi awal (hanya saat create) --}}
                     <div x-show="!editMode">
                         <label class="mb-1.5 block text-sm font-bold text-gray-700">
-                            Status Awal
+                            Simpan sebagai
                         </label>
                         <div class="grid grid-cols-2 gap-3">
                             <label
                                 class="flex items-center gap-3 rounded-xl border-2 border-gray-200 p-3 cursor-pointer transition hover:border-gray-300"
-                                x-bind:class="formData.status === 'draft' ? 'border-gray-400 bg-gray-50' : ''">
-                                <input type="radio" name="status" value="draft" x-model="formData.status"
+                                x-bind:class="formData.aksi === 'draft' ? 'border-gray-400 bg-gray-50' : ''">
+                                <input type="radio" name="aksi" value="draft" x-model="formData.aksi"
                                     class="h-4 w-4 text-gray-600 border-gray-300 focus:ring-gray-500" />
                                 <div>
                                     <p class="text-sm font-bold text-gray-700">Draft</p>
-                                    <p class="text-xs text-gray-400">Simpan dulu, belum ditawarkan</p>
+                                    <p class="text-xs text-gray-400">Simpan dulu, belum diajukan</p>
                                 </div>
                             </label>
                             <label
                                 class="flex items-center gap-3 rounded-xl border-2 border-gray-200 p-3 cursor-pointer transition hover:border-emerald-300"
-                                x-bind:class="formData.status === 'available' ? 'border-emerald-400 bg-emerald-50' : ''">
-                                <input type="radio" name="status" value="available" x-model="formData.status"
+                                x-bind:class="formData.aksi === 'ajukan' ? 'border-emerald-400 bg-emerald-50' : ''">
+                                <input type="radio" name="aksi" value="ajukan" x-model="formData.aksi"
                                     class="h-4 w-4 text-emerald-600 border-gray-300 focus:ring-emerald-500" />
                                 <div>
-                                    <p class="text-sm font-bold text-emerald-700">Langsung Tersedia</p>
-                                    <p class="text-xs text-gray-400">Langsung ditawarkan ke mahasiswa</p>
+                                    <p class="text-sm font-bold text-emerald-700">Ajukan ke Ka Lab</p>
+                                    <p class="text-xs text-gray-400">Dikirim untuk divalidasi</p>
                                 </div>
                             </label>
                         </div>
@@ -559,7 +554,7 @@
                     laboratorium_id: '',
                     judul: '',
                     deskripsi: '',
-                    status: 'draft',
+                    aksi: 'draft',
                 },
 
                 init() {
@@ -568,16 +563,12 @@
                         kode: item.kode ?? '-',
                         nama_judul: item.nama_judul ?? item.judul ?? '-',
                         deskripsi: item.deskripsi ?? '',
-                        status: item.status ?? 'draft',
-                        is_available: item.is_available ?? false,
+                        status_judul: item.status_judul ?? 'draft',
                         is_locked: item.is_locked ?? false,
                         lab_id: item.laboratorium_id,
                         lab_name: item.lab_name ?? 'N/A',
                         total_peminat: item.total_peminat ?? 0,
                         jumlah_ditetapkan: item.jumlah_ditetapkan ?? 0,
-                        can_edit: item.can_edit !== false,
-                        can_toggle: item.can_toggle !== false,
-                        can_delete: item.can_delete !== false,
                     }));
                     this.applyFilter();
                 },
@@ -599,7 +590,7 @@
                     }
 
                     if (this.filterStatus !== 'all') {
-                        result = result.filter(item => item.status === this.filterStatus);
+                        result = result.filter(item => item.status_judul === this.filterStatus);
                     }
 
                     this.filteredData = result;
@@ -612,7 +603,7 @@
                         laboratorium_id: '',
                         judul: '',
                         deskripsi: '',
-                        status: 'draft',
+                        aksi: 'draft',
                     };
                     this.showModal = true;
                 },
@@ -624,7 +615,7 @@
                         laboratorium_id: item.lab_id,
                         judul: item.nama_judul,
                         deskripsi: item.deskripsi,
-                        status: item.status,
+                        aksi: 'draft',
                     };
                     this.showModal = true;
                 },
@@ -632,26 +623,6 @@
                 confirmDelete(id) {
                     this.deleteId = id;
                     this.showDeleteModal = true;
-                },
-
-                toggleStatus(id) {
-                    if (confirm('Ubah status judul ini?')) {
-                        const form = document.createElement('form');
-                        form.method = 'POST';
-                        form.action = `/dosen/judul/${id}/toggle`;
-                        const csrf = document.createElement('input');
-                        csrf.type = 'hidden';
-                        csrf.name = '_token';
-                        csrf.value = '{{ csrf_token() }}';
-                        const method = document.createElement('input');
-                        method.type = 'hidden';
-                        method.name = '_method';
-                        method.value = 'PATCH';
-                        form.appendChild(csrf);
-                        form.appendChild(method);
-                        document.body.appendChild(form);
-                        form.submit();
-                    }
                 }
             }
         }
