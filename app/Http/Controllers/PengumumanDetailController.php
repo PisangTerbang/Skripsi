@@ -23,6 +23,9 @@ class PengumumanDetailController extends Controller
                 'users.name as nama_pembuat'
             )
             ->where('pengumuman.id', $id)
+            // Anti-bocor: pengumuman draft (belum dikirim) tidak boleh dibuka —
+            // hasil hanya tampil setelah Koordinator TA broadcast (dikirim_at terisi).
+            ->whereNotNull('pengumuman.dikirim_at')
             ->firstOrFail();
 
         // Hasil per-periode: pengajuan yang sudah diputuskan (diterima/ditolak)
