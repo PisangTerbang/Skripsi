@@ -12,16 +12,18 @@ class DosenDashboardController extends Controller
     public function index()
     {
         $periodeAktif = Periode::periodeAktif();
+        // Null-safe: tanpa periode aktif semua hitungan jadi 0 (bukan error 500).
+        $pid = $periodeAktif?->id;
 
         // ================= STATS =================
-        $total = Pengajuan::where('periode_id', $periodeAktif->id)->count();
-        $disetujui = Pengajuan::where('periode_id', $periodeAktif->id)
+        $total = Pengajuan::where('periode_id', $pid)->count();
+        $disetujui = Pengajuan::where('periode_id', $pid)
             ->where('status', 'disetujui')
             ->count();
-        $ditolak = Pengajuan::where('periode_id', $periodeAktif->id)
+        $ditolak = Pengajuan::where('periode_id', $pid)
             ->where('status', 'ditolak')
             ->count();
-        $pending = Pengajuan::where('periode_id', $periodeAktif->id)
+        $pending = Pengajuan::where('periode_id', $pid)
             ->where('status', 'pending')
             ->count();
 
@@ -62,7 +64,7 @@ class DosenDashboardController extends Controller
             ->join('judul', 'laboratorium.id', '=', 'judul.laboratorium_id')
             ->join('pengajuan', 'judul.id', '=', 'pengajuan.judul_ditetapkan_id')
             ->where('pengajuan.status', 'disetujui')
-            ->where('pengajuan.periode_id', $periodeAktif->id)
+            ->where('pengajuan.periode_id', $pid)
             ->groupBy('laboratorium.nama')
             ->orderByDesc('total')
             ->take(5)
@@ -75,7 +77,7 @@ class DosenDashboardController extends Controller
             ->join('judul', 'laboratorium.id', '=', 'judul.laboratorium_id')
             ->join('pengajuan', 'judul.id', '=', 'pengajuan.judul_ditetapkan_id')
             ->where('pengajuan.status', 'ditolak')
-            ->where('pengajuan.periode_id', $periodeAktif->id)
+            ->where('pengajuan.periode_id', $pid)
             ->groupBy('laboratorium.nama')
             ->orderByDesc('total')
             ->take(5)
@@ -88,13 +90,13 @@ class DosenDashboardController extends Controller
         )
             ->join('judul', 'laboratorium.id', '=', 'judul.laboratorium_id')
             ->join('pengajuan', 'judul.id', '=', 'pengajuan.judul_ditetapkan_id')
-            ->where('pengajuan.periode_id', $periodeAktif->id)
+            ->where('pengajuan.periode_id', $pid)
             ->groupBy('laboratorium.nama')
             ->get();
 
         // ================= RECENT SUBMISSIONS (NEW) =================
         $recentSubmissions = Pengajuan::with(['mahasiswa', 'judul'])
-            ->where('periode_id', $periodeAktif->id)
+            ->where('periode_id', $pid)
             ->where('status', 'pending')
             ->latest()
             ->take(5)

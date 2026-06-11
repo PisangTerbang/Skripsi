@@ -46,24 +46,23 @@ class DashboardController extends Controller
         ];
 
         // ========== STATISTIK PENGAJUAN MAHASISWA ==========
+        // Statistik pengajuan di-scope ke PERIODE AKTIF (ikut reset tiap ganti periode).
+        $pid = \App\Models\Periode::periodeAktif()?->id;
         $pengajuanStats = [
-            // Total pengajuan mahasiswa
-            'total_pengajuan' => Pengajuan::count(),
+            // Total pengajuan mahasiswa periode aktif
+            'total_pengajuan' => Pengajuan::where('periode_id', $pid)->count(),
 
-            // Pengajuan yang perlu direview Ka Lab
-            'pending_review' => Pengajuan::where(function ($q) {
-                $q->where('status_kalab', 'pending')
-                    ->orWhereNull('status_kalab');
-            })->count(),
+            // Pengajuan yang perlu direview Ka Lab (status_kalab masih null)
+            'pending_review' => Pengajuan::where('periode_id', $pid)->whereNull('status_kalab')->count(),
 
             // Pengajuan yang sudah disetujui Ka Lab
-            'disetujui' => Pengajuan::where('status_kalab', 'disetujui')->count(),
+            'disetujui' => Pengajuan::where('periode_id', $pid)->where('status_kalab', 'disetujui')->count(),
 
             // Pengajuan yang ditolak Ka Lab
-            'ditolak' => Pengajuan::where('status_kalab', 'ditolak')->count(),
+            'ditolak' => Pengajuan::where('periode_id', $pid)->where('status_kalab', 'ditolak')->count(),
 
-            // Pengajuan yang sudah ditetapkan
-            'ditetapkan' => Pengajuan::where('status', 'ditetapkan')->count(),
+            // Pengajuan yang judulnya sudah ditetapkan ke mahasiswa
+            'ditetapkan' => Pengajuan::where('periode_id', $pid)->whereNotNull('judul_ditetapkan_id')->count(),
         ];
 
         // ========== AKTIVITAS TERBARU (5 terakhir) ==========

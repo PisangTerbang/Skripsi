@@ -77,8 +77,9 @@ class ValidasiController extends Controller
             })
             ->count();
 
+        // "Ditetapkan" = pengajuan yang judulnya sudah ditetapkan Ka Lab (bukan status 'ditetapkan' yang tak ada).
         $totalDitetapkan = DB::table('pengajuan')
-            ->where('status', 'ditetapkan')
+            ->whereNotNull('judul_ditetapkan_id')
             ->count();
 
         // ========== JSON DATA UNTUK ALPINE.JS ==========

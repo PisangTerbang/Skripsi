@@ -17,10 +17,17 @@ class DashboardController extends Controller
             abort(403, 'Anda tidak memiliki akses sebagai Program Studi');
         }
 
+        // Pengajuan yang menunggu keputusan Prodi pada PERIODE AKTIF (sudah disetujui Ka Lab, belum diputus Prodi).
+        // status_kaprodi bernilai null saat menunggu (bukan 'pending'), jadi pakai whereNull.
+        $pid = \App\Models\Periode::periodeAktif()?->id;
+
         $totalJudul = Judul::count();
         $judulDitawarkan = Judul::where('status_judul', 'ditawarkan')->count();
-        $pendingFinal = Pengajuan::where('status_kaprodi', 'pending')->count();
-        $totalPengajuan = Pengajuan::count();
+        $pendingFinal = Pengajuan::where('periode_id', $pid)
+            ->where('status_kalab', 'disetujui')
+            ->whereNull('status_kaprodi')
+            ->count();
+        $totalPengajuan = Pengajuan::where('periode_id', $pid)->count();
 
         return view('prodi.dashboard', [
             'title' => 'Dashboard Program Studi',

@@ -43,7 +43,7 @@
                                     <span
                                         class="flex items-center gap-1.5 rounded-full border border-emerald-300/40 bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-200">
                                         <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400"></span>
-                                        {{ $periodeAktif->nama ?? $periodeAktif->semester . ' ' . $periodeAktif->tahun_ajaran }}
+                                        {{ $periodeAktif?->nama ?? ($periodeAktif ? $periodeAktif->semester . ' ' . $periodeAktif->tahun_ajaran : 'Belum ada periode aktif') }}
                                     </span>
                                 @endif
                             </div>

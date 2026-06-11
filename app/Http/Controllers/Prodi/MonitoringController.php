@@ -28,7 +28,7 @@ class MonitoringController extends Controller
         })->count();
         $disetujuiDosen = Pengajuan::where('status_kalab', 'disetujui')->count();
         $ditolakDosen = Pengajuan::where('status_kalab', 'ditolak')->count();
-        $ditetapkan = Pengajuan::where('status', 'ditetapkan')->count();
+        $ditetapkan = Pengajuan::whereNotNull('judul_ditetapkan_id')->count();
 
         // ========== STATISTIK JUDUL ==========
         $totalJudul = Judul::count();

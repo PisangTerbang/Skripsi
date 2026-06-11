@@ -82,16 +82,6 @@ class Judul extends Model
     // ========== SCOPE ==========
 
     /**
-     * Scope untuk judul aktif (menggunakan kolom baru)
-     */
-    public function scopeActive($query)
-    {
-        return $query->whereRaw("aktif = true")
-            ->whereRaw("is_available = true")
-            ->where('status', 'available');
-    }
-
-    /**
      * Scope untuk judul berdasarkan laboratorium
      */
     public function scopeByLaboratorium($query, $labId)
