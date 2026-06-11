@@ -23,7 +23,7 @@
                     <div class="flex items-center gap-2">
                         <button @click="fetchNotifications()" :disabled="loading"
                             class="inline-flex items-center gap-2 rounded-xl border-2 border-gray-200 bg-white px-4 py-2 text-xs font-bold text-gray-600 shadow-sm transition hover:bg-gray-50 disabled:opacity-50">
-                            <x-heroicon-o-arrow-path class="h-3.5 w-3.5" :class="loading ? 'animate-spin' : ''" />
+                            <x-heroicon-o-arrow-path class="h-3.5 w-3.5" ::class="loading ? 'animate-spin' : ''" />
                             <span x-text="loading ? 'Memuat...' : 'Refresh'"></span>
                         </button>
                         <button @click="markAllAsRead()" :disabled="loading || unreadCount === 0"
@@ -107,7 +107,7 @@
                         <template x-if="filteredNotifications.length > 0">
                             <div class="divide-y-2 divide-gray-100">
                                 <template x-for="notif in filteredNotifications" :key="notif.id">
-                                    <div @click="markAsRead(notif.id)"
+                                    <div @click="markAsRead(notif.id); if (notif.link) window.location.href = notif.link"
                                         :class="!notif.is_read ? 'bg-indigo-50/50 hover:bg-indigo-50' : 'hover:bg-gray-50'"
                                         class="group flex items-start gap-4 p-5 transition-all cursor-pointer">
 
@@ -201,7 +201,7 @@
                     },
 
                     init() {
-                        setInterval(() => this.fetchNotifications(true), 10000);
+                        setInterval(() => this.fetchNotifications(true), 20000);
                     },
 
                     async fetchNotifications(silent = false) {

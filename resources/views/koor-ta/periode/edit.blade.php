@@ -66,7 +66,7 @@
                                 Tanggal Mulai <span class="text-red-500">*</span>
                             </label>
                             <input type="date" name="tanggal_mulai"
-                                value="{{ old('tanggal_mulai', \Carbon\Carbon::parse($periode->tanggal_mulai)->format('Y-m-d')) }}"
+                                value="{{ old('tanggal_mulai', \Carbon\Carbon::parse($periode->tanggal_buka)->format('Y-m-d')) }}"
                                 class="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-sm text-gray-800 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition
                                     {{ $errors->has('tanggal_mulai') ? 'border-red-400 bg-red-50' : '' }}" />
                             @error('tanggal_mulai')
@@ -80,7 +80,7 @@
                                 Tanggal Selesai <span class="text-red-500">*</span>
                             </label>
                             <input type="date" name="tanggal_selesai"
-                                value="{{ old('tanggal_selesai', \Carbon\Carbon::parse($periode->tanggal_selesai)->format('Y-m-d')) }}"
+                                value="{{ old('tanggal_selesai', \Carbon\Carbon::parse($periode->tanggal_tutup)->format('Y-m-d')) }}"
                                 class="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-sm text-gray-800 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition
                                     {{ $errors->has('tanggal_selesai') ? 'border-red-400 bg-red-50' : '' }}" />
                             @error('tanggal_selesai')

@@ -6,6 +6,8 @@
 
 
 
+            <x-periode-banner />
+
             {{-- ===== WELCOME BANNER ===== --}}
             <div
                 class="relative overflow-hidden rounded-2xl border-2 border-indigo-300 bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 p-7 shadow-xl">
@@ -98,8 +100,8 @@
                     </div>
                 </div>
 
-                {{-- ===== HERO: MENUNGGU PENGUMUMAN (Kaprodi sudah approve tapi belum diumumkan) ===== --}}
-            @elseif ($disetujui && !$sudahDiumumkan)
+                {{-- ===== HERO: SEDANG DIPROSES (hasil dirahasiakan sampai pengumuman resmi) ===== --}}
+            @elseif ($adaProsesBerjalan)
                 <div
                     class="relative overflow-hidden rounded-2xl border-2 border-blue-300 bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 p-7 shadow-xl">
                     <div class="absolute -right-10 -top-10 h-48 w-48 rounded-full bg-white/10"></div>
@@ -110,31 +112,19 @@
                             <div class="flex items-center gap-2 mb-3">
                                 <span
                                     class="inline-flex items-center gap-1.5 rounded-full border-2 border-white/30 bg-white/20 px-3 py-1 text-xs font-black text-white">
-                                    ✅ Disetujui Kaprodi
-                                </span>
-                                <span
-                                    class="inline-flex items-center gap-1.5 rounded-full border-2 border-yellow-300/50 bg-yellow-400/20 px-3 py-1 text-xs font-black text-yellow-200">
-                                    <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-yellow-300"></span>
-                                    Menunggu Pengumuman
+                                    <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-white"></span>
+                                    Sedang Diproses
                                 </span>
                             </div>
-                            <h2 class="text-xl font-black text-white mb-2">Pengajuan Disetujui — Menunggu Pengumuman
-                                Resmi</h2>
-                            <p class="text-base font-bold text-blue-100 leading-relaxed mb-2">
-                                "{{ $disetujui->judulDitetapkan->nama_judul ?? ($disetujui->judulDitetapkan->judul ?? ($disetujui->judul_mandiri ?? '-')) }}"
-                            </p>
-                            <p class="text-xs text-blue-200 leading-relaxed mb-4">
-                                Pengajuan Anda telah disetujui oleh Kaprodi. Hasil resmi akan diumumkan oleh Koordinator
-                                TA. Harap menunggu pengumuman.
+                            <h2 class="text-xl font-black text-white mb-2">Pengajuan Anda Sedang Diproses</h2>
+                            <p class="text-base font-bold text-blue-100 leading-relaxed mb-4">
+                                Pengajuan judul TA Anda sedang ditinjau. Hasil resmi akan diumumkan oleh Koordinator TA —
+                                mohon menunggu pengumuman.
                             </p>
                             <div class="flex items-center gap-3 text-xs text-blue-200">
                                 <span class="flex items-center gap-1">
-                                    <x-heroicon-o-check-circle class="h-4 w-4" />
-                                    Disetujui {{ $disetujui->updated_at->diffForHumans() }}
-                                </span>
-                                <span class="flex items-center gap-1">
                                     <x-heroicon-o-clock class="h-4 w-4" />
-                                    Menunggu pengumuman KoorTA
+                                    Menunggu pengumuman resmi Koordinator TA
                                 </span>
                             </div>
                         </div>
@@ -585,6 +575,8 @@
                     // ✅ 4 step sekarang
                     mapStatus(status) {
                         switch (status) {
+                            case 'diproses':
+                                return 2; // sedang diproses — hasil dirahasiakan s/d pengumuman
                             case 'pending':
                                 return 2;
                             case 'review':
@@ -605,6 +597,8 @@
                         switch (status) {
                             case 'none':
                                 return 'Belum ada pengajuan';
+                            case 'diproses':
+                                return 'Sedang diproses — menunggu pengumuman resmi';
                             case 'pending':
                                 return 'Menunggu review Ka Lab';
                             case 'review':
@@ -677,7 +671,7 @@
                         this.updateProgress(this.status);
                         this.fetch();
                         if (this.interval) clearInterval(this.interval);
-                        this.interval = setInterval(() => this.fetch(), 5000);
+                        this.interval = setInterval(() => this.fetch(), 30000);
                     }
                 }
             }

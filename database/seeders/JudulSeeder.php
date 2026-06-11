@@ -23,7 +23,6 @@ class JudulSeeder extends Seeder
             'is_locked' => DB::raw('false'),
             'status' => 'available',
             'status_judul' => 'ditawarkan',
-            'kuota_maksimal' => null,
             'catatan_kalab' => null,
             'catatan_penting' => null,
             'relevant_skills' => null,

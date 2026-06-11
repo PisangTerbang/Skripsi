@@ -364,7 +364,7 @@
                                                 @if ($p['judul']->dosen)
                                                     <span class="flex items-center gap-1">
                                                         <x-heroicon-o-users class="h-3.5 w-3.5" />
-                                                        Kuota: {{ $p['judul']->dosen->jumlahBimbingan() }}/{{ $p['judul']->dosen->kuota_bimbingan ?? '∞' }}
+                                                        Membimbing: {{ $p['judul']->dosen->jumlahBimbingan() }} mhs
                                                     </span>
                                                 @endif
                                             </div>

@@ -76,6 +76,10 @@ class PengajuanController extends Controller
             return back()->with('error', 'Pengajuan ini tidak dapat direview saat ini.');
         }
 
+        if (!$pengajuan->isPeriodeAktif()) {
+            return back()->with('error', 'Pengajuan ini berada di periode yang sudah ditutup (arsip) dan tidak dapat diproses.');
+        }
+
         $success = $pengajuan->approveByKaprodi(
             Auth::id(),
             $validated['catatan_kaprodi'] ?? null
@@ -103,6 +107,10 @@ class PengajuanController extends Controller
 
         if (!$pengajuan->canBeReviewedByKaprodi()) {
             return back()->with('error', 'Pengajuan ini tidak dapat direview saat ini.');
+        }
+
+        if (!$pengajuan->isPeriodeAktif()) {
+            return back()->with('error', 'Pengajuan ini berada di periode yang sudah ditutup (arsip) dan tidak dapat diproses.');
         }
 
         $success = $pengajuan->rejectByKaprodi(

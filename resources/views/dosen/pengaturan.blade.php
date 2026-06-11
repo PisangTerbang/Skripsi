@@ -221,24 +221,26 @@
                                 class="w-full rounded-xl border-2 border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-500 cursor-not-allowed" />
                         </div>
 
-                        {{-- Kuota Mahasiswa Bimbingan --}}
+                        {{-- Mahasiswa Bimbingan (read-only, dihitung otomatis) --}}
                         <div>
                             <label class="mb-1.5 block text-sm font-bold text-gray-700">
-                                Kuota Mahasiswa Bimbingan
+                                Mahasiswa Bimbingan
                             </label>
-                            <input type="number" name="kuota_bimbingan" min="1" max="100"
-                                value="{{ old('kuota_bimbingan', $user->kuota_bimbingan) }}"
-                                placeholder="Kosongkan jika tanpa batas"
-                                class="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-sm text-gray-800 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 transition
-                                    {{ $errors->has('kuota_bimbingan') ? 'border-red-400 bg-red-50' : '' }}" />
-                            <p class="mt-1.5 text-xs font-semibold text-gray-500">
-                                Batas maksimal mahasiswa yang Anda bimbing. Saat ini membimbing
-                                <span class="font-black text-emerald-600">{{ $jumlahBimbingan }}</span> mahasiswa.
-                                Ka Lab &amp; Prodi dapat melihat kuota ini.
-                            </p>
-                            @error('kuota_bimbingan')
-                                <p class="mt-1.5 text-xs font-semibold text-red-500">{{ $message }}</p>
-                            @enderror
+                            <div
+                                class="flex items-center gap-3 rounded-xl border-2 border-emerald-100 bg-emerald-50 px-4 py-3">
+                                <span
+                                    class="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-600 text-lg font-black text-white">
+                                    {{ $jumlahBimbingan }}
+                                </span>
+                                <div>
+                                    <p class="text-sm font-black text-emerald-800">
+                                        Sedang membimbing {{ $jumlahBimbingan }} mahasiswa
+                                    </p>
+                                    <p class="text-xs text-emerald-600">
+                                        Dihitung otomatis dari judul yang ditetapkan ke mahasiswa.
+                                    </p>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="border-t-2 border-gray-100 pt-4">

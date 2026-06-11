@@ -27,7 +27,6 @@ class User extends Authenticatable
         'nim',
         'avatar',
         'laboratorium_id',
-        'kuota_bimbingan',
     ];
 
     /**
@@ -50,7 +49,6 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'kuota_bimbingan' => 'integer',
         ];
     }
 
@@ -65,18 +63,6 @@ class User extends Authenticatable
                 $q->where('dosen_id', $this->id);
             })
             ->count();
-    }
-
-    /**
-     * Sisa kuota bimbingan. Null jika kuota belum diatur (tanpa batas).
-     */
-    public function sisaKuotaBimbingan(): ?int
-    {
-        if (is_null($this->kuota_bimbingan)) {
-            return null;
-        }
-
-        return max(0, $this->kuota_bimbingan - $this->jumlahBimbingan());
     }
 
     public function pengajuanMahasiswa()

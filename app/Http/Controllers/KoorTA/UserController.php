@@ -44,38 +44,6 @@ class UserController extends Controller
         return view('koor-ta.users.index', compact('users', 'stats', 'role', 'search'));
     }
 
-    public function create()
-    {
-        return view('koor-ta.users.create');
-    }
-
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8|confirmed',
-            'role' => 'required|in:mahasiswa,dosen,ka_lab,prodi,koordinator_ta',
-            'nim' => 'nullable|string|max:20|unique:users,nim',
-        ], [
-            'email.unique' => 'Email sudah digunakan',
-            'nim.unique' => 'NIM sudah digunakan',
-            'password.min' => 'Password minimal 8 karakter',
-            'password.confirmed' => 'Konfirmasi password tidak cocok',
-        ]);
-
-        User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            'role' => $validated['role'],
-            'nim' => $validated['nim'] ?? null,
-        ]);
-
-        return redirect()->route('koor-ta.users.index')
-            ->with('success', 'User berhasil ditambahkan');
-    }
-
     public function edit(User $user)
     {
         return view('koor-ta.users.edit', compact('user'));

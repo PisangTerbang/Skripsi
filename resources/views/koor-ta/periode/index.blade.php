@@ -150,7 +150,7 @@
                                             <div
                                                 class="rounded-xl border-2 border-gray-100 bg-gray-50 px-3 py-2 text-center">
                                                 <p class="text-sm font-black text-gray-700">
-                                                    {{ \Carbon\Carbon::parse($item->tanggal_mulai)->format('d M Y') }}
+                                                    {{ \Carbon\Carbon::parse($item->tanggal_buka)->format('d M Y') }}
                                                 </p>
                                             </div>
                                         </td>
@@ -160,7 +160,7 @@
                                             <div
                                                 class="rounded-xl border-2 border-gray-100 bg-gray-50 px-3 py-2 text-center">
                                                 <p class="text-sm font-black text-gray-700">
-                                                    {{ \Carbon\Carbon::parse($item->tanggal_selesai)->format('d M Y') }}
+                                                    {{ \Carbon\Carbon::parse($item->tanggal_tutup)->format('d M Y') }}
                                                 </p>
                                             </div>
                                         </td>
@@ -194,6 +194,13 @@
                                         {{-- Aksi --}}
                                         <td class="px-6 py-4">
                                             <div class="flex items-center justify-center gap-2">
+
+                                                {{-- Lihat Data Periode (riwayat/arsip — tetap bisa dilihat untuk keperluan data) --}}
+                                                <a href="{{ route('koor-ta.monitoring.pengajuan', ['periode_id' => $item->id]) }}"
+                                                    class="inline-flex items-center gap-1 rounded-xl border-2 border-slate-300 bg-slate-700 px-3 py-1.5 text-xs font-black text-white shadow-sm transition hover:bg-slate-800 hover:shadow-md">
+                                                    <x-heroicon-o-table-cells class="h-3.5 w-3.5" />
+                                                    Lihat Data
+                                                </a>
 
                                                 {{-- Toggle Active --}}
                                                 <form method="POST"

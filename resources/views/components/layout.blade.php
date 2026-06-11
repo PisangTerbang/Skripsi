@@ -95,7 +95,7 @@
 
                 this.interval = setInterval(() => {
                     this.fetch();
-                }, 5000);
+                }, 30000);
             },
 
             destroy() {
@@ -253,6 +253,8 @@
     </div>
 
     @stack('scripts')
+
+    <x-prefetch-links />
 
 </body>
 

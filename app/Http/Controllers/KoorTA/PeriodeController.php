@@ -41,8 +41,8 @@ class PeriodeController extends Controller
 
         Periode::create([
             'nama' => $validated['nama'],
-            'tanggal_mulai' => $validated['tanggal_mulai'],
-            'tanggal_selesai' => $validated['tanggal_selesai'],
+            'tanggal_buka' => $validated['tanggal_mulai'],
+            'tanggal_tutup' => $validated['tanggal_selesai'],
             'is_active' => DB::raw($request->boolean('is_active') ? 'true' : 'false'),
         ]);
 
@@ -68,7 +68,11 @@ class PeriodeController extends Controller
             'tanggal_selesai.after' => 'Tanggal selesai harus setelah tanggal mulai',
         ]);
 
-        $periode->update($validated);
+        $periode->update([
+            'nama' => $validated['nama'],
+            'tanggal_buka' => $validated['tanggal_mulai'],
+            'tanggal_tutup' => $validated['tanggal_selesai'],
+        ]);
 
         return redirect()->route('koor-ta.periode.index')
             ->with('success', 'Periode berhasil diperbarui');

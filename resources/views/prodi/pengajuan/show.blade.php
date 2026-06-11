@@ -214,8 +214,8 @@
                                             <p class="text-sm font-bold text-gray-800">{{ $pengajuan->judulDitetapkan->dosen->name ?? '-' }}</p>
                                             @if ($pengajuan->judulDitetapkan->dosen)
                                                 <p class="text-xs font-semibold text-gray-500">
-                                                    Kuota bimbingan:
-                                                    <span class="font-black text-emerald-600">{{ $pengajuan->judulDitetapkan->dosen->jumlahBimbingan() }}</span>/{{ $pengajuan->judulDitetapkan->dosen->kuota_bimbingan ?? '∞' }}
+                                                    Mahasiswa dibimbing:
+                                                    <span class="font-black text-emerald-600">{{ $pengajuan->judulDitetapkan->dosen->jumlahBimbingan() }}</span> mahasiswa
                                                 </p>
                                             @endif
                                         </div>

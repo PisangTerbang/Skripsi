@@ -97,7 +97,6 @@ class ValidasiController extends Controller
                 'status_label' => 'Menunggu Validasi',
                 'total_peminat' => $j->total_peminat ?? 0,
                 'jumlah_ditetapkan' => $j->jumlah_ditetapkan ?? 0,
-                'kuota_maksimal' => $j->kuota_maksimal,
                 'mahasiswa_ditetapkan' => null,
             ];
         })->values();
@@ -123,7 +122,6 @@ class ValidasiController extends Controller
                 'status_label' => $j->status_judul === 'ditawarkan' ? 'Divalidasi' : 'Ditolak',
                 'total_peminat' => $j->total_peminat ?? 0,
                 'jumlah_ditetapkan' => $j->jumlah_ditetapkan ?? 0,
-                'kuota_maksimal' => $j->kuota_maksimal,
                 // ✅ Data mahasiswa yang ditetapkan
                 'mahasiswa_ditetapkan' => $pengajuanDitetapkan ? [
                     'nama' => $pengajuanDitetapkan->mahasiswa->name ?? '-',
@@ -189,7 +187,8 @@ class ValidasiController extends Controller
                 DB::table('aktivitas')->insert([
                     'user_id' => $judul->dosen_id,
                     'tipe' => 'judul_divalidasi_kalab',
-                    'pesan' => "Judul '{$judul->nama_judul}' telah divalidasi oleh Kepala Lab dan siap ditawarkan ke mahasiswa.",
+                    'pesan' => "Judul '{$judul->nama_judul}' telah divalidasi Ka Lab dan siap ditawarkan ke mahasiswa.",
+                    'link' => route('dosen.judul.index', [], false),
                     'is_read' => DB::raw('false'),
                     'created_at' => now(),
                     'updated_at' => now(),
@@ -248,7 +247,8 @@ class ValidasiController extends Controller
                 DB::table('aktivitas')->insert([
                     'user_id' => $judul->dosen_id,
                     'tipe' => 'judul_ditolak_kalab',
-                    'pesan' => "Judul '{$judul->nama_judul}' ditolak oleh Kepala Lab. Catatan: {$request->catatan_kalab}",
+                    'pesan' => "Judul '{$judul->nama_judul}' ditolak Ka Lab. Catatan: {$request->catatan_kalab}",
+                    'link' => route('dosen.judul.index', [], false),
                     'is_read' => DB::raw('false'),
                     'created_at' => now(),
                     'updated_at' => now(),

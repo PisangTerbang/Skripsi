@@ -177,6 +177,10 @@ class Pengajuan extends Model
 
     public function approveByKalab($userId, $judulId, $sumberJudul, $catatan = null)
     {
+        if (!$this->isPeriodeAktif()) {
+            return false;
+        }
+
         DB::beginTransaction();
         try {
             $this->update([
@@ -188,7 +192,14 @@ class Pengajuan extends Model
                 'sumber_judul' => $sumberJudul,
             ]);
 
-            $this->logActivity($userId, 'disetujui_kalab', 'Ka Lab menyetujui pengajuan', $catatan);
+            // Notifikasi ke semua Prodi: pengajuan diteruskan untuk keputusan final.
+            // (Mahasiswa TIDAK dinotif di sini — menunggu pengumuman Koordinator TA.)
+            Aktivitas::buatBanyak(
+                Aktivitas::userIdsByRole('prodi'),
+                'pengajuan_review',
+                'Pengajuan ' . ($this->mahasiswa->name ?? 'mahasiswa') . ' telah disetujui Ka Lab — menunggu keputusan Prodi.',
+                route('prodi.pengajuan.index', [], false)
+            );
 
             DB::commit();
             return true;
@@ -206,6 +217,10 @@ class Pengajuan extends Model
 
     public function rejectByKalab($userId, $catatan)
     {
+        if (!$this->isPeriodeAktif()) {
+            return false;
+        }
+
         DB::beginTransaction();
         try {
             $this->update([
@@ -216,7 +231,7 @@ class Pengajuan extends Model
                 'status' => 'ditolak',
             ]);
 
-            $this->logActivity($userId, 'ditolak_kalab', 'Ka Lab menolak pengajuan', $catatan);
+            // Mahasiswa tidak dinotif di sini — menunggu pengumuman Koordinator TA.
 
             DB::commit();
             return true;
@@ -228,6 +243,10 @@ class Pengajuan extends Model
 
     public function approveByKaprodi($userId, $catatan = null)
     {
+        if (!$this->isPeriodeAktif()) {
+            return false;
+        }
+
         DB::beginTransaction();
         try {
             $this->update([
@@ -245,7 +264,8 @@ class Pengajuan extends Model
                 ]);
             }
 
-            $this->logActivity($userId, 'disetujui_kaprodi', 'Kaprodi menyetujui pengajuan (Final Approval)', $catatan);
+            // Final approval Prodi. Mahasiswa tidak dinotif di sini —
+            // semua mahasiswa dinotif serempak saat Koordinator TA membuat pengumuman.
 
             DB::commit();
             return true;
@@ -261,6 +281,10 @@ class Pengajuan extends Model
 
     public function rejectByKaprodi($userId, $catatan)
     {
+        if (!$this->isPeriodeAktif()) {
+            return false;
+        }
+
         DB::beginTransaction();
         try {
             $this->update([
@@ -271,7 +295,7 @@ class Pengajuan extends Model
                 'status' => 'ditolak',
             ]);
 
-            $this->logActivity($userId, 'ditolak_kaprodi', 'Kaprodi menolak pengajuan', $catatan);
+            // Mahasiswa tidak dinotif di sini — menunggu pengumuman Koordinator TA.
 
             DB::commit();
             return true;
@@ -283,29 +307,29 @@ class Pengajuan extends Model
 
     // ==================== HELPER METHODS ====================
 
-    private function logActivity($userId, $tipe, $pesan, $catatan = null)
+    /**
+     * Apakah pengajuan ini berada di periode yang sedang aktif?
+     * Jika periode-nya sudah ditutup (arsip), pengajuan jadi read-only —
+     * tidak bisa lagi divalidasi/diputuskan oleh Ka Lab maupun Prodi.
+     */
+    public function isPeriodeAktif(): bool
     {
-        $fullPesan = $pesan;
-        if ($catatan) {
-            $fullPesan .= ' - Catatan: ' . $catatan;
+        if (is_null($this->periode_id)) {
+            return false;
         }
 
-        DB::table('aktivitas')->insert([
-            'user_id' => $this->mahasiswa_id,
-            'tipe' => $tipe,
-            'pesan' => $fullPesan,
-            'is_read' => DB::raw('false'),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        return DB::table('periode')
+            ->where('id', $this->periode_id)
+            ->where('is_active', DB::raw('true'))
+            ->exists();
     }
 
-    // ✅ Helper: cek apakah sudah diumumkan KoorTA
+    // ✅ Helper: cek apakah periode pengajuan ini sudah diumumkan KoorTA
     private function sudahDiumumkan(): bool
     {
-        return DB::table('aktivitas')
-            ->where('user_id', $this->mahasiswa_id)
-            ->whereIn('tipe', ['pengumuman_disetujui', 'pengumuman_ditolak'])
+        return DB::table('pengumuman')
+            ->where('periode_id', $this->periode_id)
+            ->whereNotNull('dikirim_at')
             ->exists();
     }
 

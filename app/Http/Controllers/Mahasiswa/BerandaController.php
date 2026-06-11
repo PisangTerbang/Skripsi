@@ -13,60 +13,74 @@ class BerandaController extends Controller
     {
         $mahasiswaId = Auth::id();
 
+        // Periode yang pengumumannya sudah dikirim — hasil resmi baru boleh dibuka ke mahasiswa.
+        $announcedPeriodes = DB::table('pengumuman')
+            ->whereNotNull('dikirim_at')
+            ->pluck('periode_id')
+            ->all();
+
         $total = Pengajuan::where('mahasiswa_id', $mahasiswaId)->count();
 
+        // "Diproses" = sudah diajukan tapi periodenya belum diumumkan (hasil dirahasiakan s/d pengumuman).
         $pending = Pengajuan::where('mahasiswa_id', $mahasiswaId)
-            ->where('status', 'pending')
+            ->whereNotIn('periode_id', $announcedPeriodes)
             ->count();
 
+        // Penolakan hanya boleh tampil setelah pengumuman resmi.
         $ditolak = Pengajuan::where('mahasiswa_id', $mahasiswaId)
+            ->whereIn('periode_id', $announcedPeriodes)
             ->where('status', 'ditolak')
             ->count();
 
         $totalSemua = Pengajuan::count();
         $disetujuiSemua = Pengajuan::where('status', 'disetujui')->count();
 
-        $disetujui = Pengajuan::with('judulDitetapkan')
-            ->where('mahasiswa_id', $mahasiswaId)
-            ->where('status', 'disetujui')
+        $latestPengajuan = Pengajuan::where('mahasiswa_id', $mahasiswaId)
             ->latest()
             ->first();
 
-        // ✅ Pakai pilihan1 sebagai judul header, bukan judul_mandiri
+        $sudahDiumumkan = $latestPengajuan
+            && in_array($latestPengajuan->periode_id, $announcedPeriodes);
+
+        // Judul yang ditetapkan hanya dibuka SETELAH pengumuman resmi.
+        $disetujui = $sudahDiumumkan
+            ? Pengajuan::with('judulDitetapkan')
+                ->where('mahasiswa_id', $mahasiswaId)
+                ->where('status', 'disetujui')
+                ->latest()
+                ->first()
+            : null;
+
+        // Hero netral "sedang diproses" untuk pengajuan aktif yang belum diumumkan.
+        $adaProsesBerjalan = $latestPengajuan && !$sudahDiumumkan;
+
         $riwayat = Pengajuan::with(['judulDitetapkan', 'pilihan1'])
             ->where('mahasiswa_id', $mahasiswaId)
             ->latest()
             ->take(5)
             ->get()
-            ->map(function ($r) {
+            ->map(function ($r) use ($announcedPeriodes) {
+                $announced = in_array($r->periode_id, $announcedPeriodes);
                 return [
-                    'judul' => $r->judulDitetapkan->nama_judul  // sudah ditetapkan
-                        ?? $r->judulDitetapkan->judul
-                        ?? $r->pilihan1->nama_judul               // ✅ belum ditetapkan → pilihan 1
-                        ?? '-',
-                    'status' => $r->status,
+                    // Sebelum diumumkan, jangan bocorkan judul yang ditetapkan Ka Lab — tampilkan pilihan mahasiswa.
+                    'judul' => $announced
+                        ? ($r->judulDitetapkan->nama_judul
+                            ?? $r->judulDitetapkan->judul
+                            ?? $r->pilihan1->nama_judul
+                            ?? '-')
+                        : ($r->pilihan1->nama_judul ?? $r->judul_mandiri ?? '-'),
+                    // Hasil (disetujui/ditolak) dirahasiakan sampai pengumuman resmi.
+                    'status' => $announced ? $r->status : 'pending',
                     'waktu' => $r->created_at->diffForHumans(),
                     'isNew' => false,
                 ];
             });
 
-        $sudahDiumumkan = DB::table('aktivitas')
-            ->where('user_id', $mahasiswaId)
-            ->whereIn('tipe', ['pengumuman_disetujui', 'pengumuman_ditolak'])
-            ->exists();
-
-        $latestPengajuan = Pengajuan::where('mahasiswa_id', $mahasiswaId)
-            ->latest()
-            ->first();
-
+        // Progress mahasiswa: none -> diproses -> diumumkan (hasil dirahasiakan s/d pengumuman).
         if ($sudahDiumumkan) {
             $statusProgress = 'diumumkan';
-        } elseif ($latestPengajuan?->status_kaprodi === 'disetujui') {
-            $statusProgress = 'disetujui';
-        } elseif ($latestPengajuan?->status_kalab === 'disetujui') {
-            $statusProgress = 'review';
         } elseif ($latestPengajuan) {
-            $statusProgress = 'pending';
+            $statusProgress = 'diproses';
         } else {
             $statusProgress = 'none';
         }
@@ -81,6 +95,7 @@ class BerandaController extends Controller
             'riwayat',
             'statusProgress',
             'sudahDiumumkan',
+            'adaProsesBerjalan',
         ))->with('title', 'Beranda');
     }
 
@@ -88,49 +103,50 @@ class BerandaController extends Controller
     {
         $mahasiswaId = Auth::id();
 
-        $latestPengajuan = Pengajuan::with(['judulDitetapkan', 'pilihan1'])
-            ->where('mahasiswa_id', $mahasiswaId)
+        $announcedPeriodes = DB::table('pengumuman')
+            ->whereNotNull('dikirim_at')
+            ->pluck('periode_id')
+            ->all();
+
+        $latestPengajuan = Pengajuan::where('mahasiswa_id', $mahasiswaId)
             ->latest()
             ->first();
 
-        $sudahDiumumkan = DB::table('aktivitas')
-            ->where('user_id', $mahasiswaId)
-            ->whereIn('tipe', ['pengumuman_disetujui', 'pengumuman_ditolak'])
-            ->exists();
+        $sudahDiumumkan = $latestPengajuan
+            && in_array($latestPengajuan->periode_id, $announcedPeriodes);
 
+        // Hasil dirahasiakan sampai pengumuman resmi: none -> diproses -> diumumkan.
         if ($sudahDiumumkan) {
             $status = 'diumumkan';
-        } elseif ($latestPengajuan?->status_kaprodi === 'disetujui') {
-            $status = 'disetujui';
-        } elseif ($latestPengajuan?->status_kalab === 'disetujui') {
-            $status = 'review';
         } elseif ($latestPengajuan) {
-            $status = 'pending';
+            $status = 'diproses';
         } else {
             $status = 'none';
         }
 
         $jumlah = Pengajuan::where('mahasiswa_id', $mahasiswaId)->count();
 
-        // ✅ Pakai pilihan1 sebagai judul header, bukan judul_mandiri
         $riwayat = Pengajuan::with(['judulDitetapkan', 'pilihan1'])
             ->where('mahasiswa_id', $mahasiswaId)
             ->latest()
             ->take(5)
             ->get()
-            ->map(function ($r) {
+            ->map(function ($r) use ($announcedPeriodes) {
+                $announced = in_array($r->periode_id, $announcedPeriodes);
                 return [
-                    'judul' => $r->judulDitetapkan->nama_judul  // sudah ditetapkan
-                        ?? $r->judulDitetapkan->judul
-                        ?? $r->pilihan1->nama_judul               // ✅ belum ditetapkan → pilihan 1
-                        ?? '-',
-                    'status' => $r->status,
+                    'judul' => $announced
+                        ? ($r->judulDitetapkan->nama_judul
+                            ?? $r->judulDitetapkan->judul
+                            ?? $r->pilihan1->nama_judul
+                            ?? '-')
+                        : ($r->pilihan1->nama_judul ?? $r->judul_mandiri ?? '-'),
+                    'status' => $announced ? $r->status : 'pending',
                     'waktu' => $r->created_at->diffForHumans(),
                 ];
             });
 
         $notif = Pengajuan::where('mahasiswa_id', $mahasiswaId)
-            ->whereIn('status', ['pending', 'review'])
+            ->whereNotIn('periode_id', $announcedPeriodes)
             ->count();
 
         return response()->json([

@@ -517,26 +517,6 @@
                     </div>
 
 
-                    {{-- Kuota --}}
-                    <div x-show="selectedItem.kuota_maksimal"
-                        class="rounded-xl border-2 border-blue-200 bg-blue-50 p-4">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-xs font-bold uppercase tracking-widests text-blue-500 mb-1">Kuota
-                                    Maksimal
-                                </p>
-                                <p class="text-3xl font-black text-blue-700" x-text="selectedItem.kuota_maksimal"></p>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-xs font-bold uppercase tracking-widest text-blue-500 mb-1">Sisa Kuota
-                                </p>
-                                <p class="text-3xl font-black text-blue-700"
-                                    x-text="Math.max(0, selectedItem.kuota_maksimal - selectedItem.jumlah_ditetapkan)">
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
                     {{-- Form Validasi (hanya pending) --}}
                     <div x-show="selectedItem.status === 'pending_kalab'">
                         <div class="flex items-center gap-3 mb-4">

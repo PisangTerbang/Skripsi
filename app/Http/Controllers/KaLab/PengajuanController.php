@@ -150,6 +150,10 @@ class PengajuanController extends Controller
             return back()->with('error', 'Pengajuan ini tidak dapat direview saat ini.');
         }
 
+        if (!$pengajuan->isPeriodeAktif()) {
+            return back()->with('error', 'Pengajuan ini berada di periode yang sudah ditutup (arsip) dan tidak dapat diproses.');
+        }
+
         if ($sumberJudul === 'pilihan_1') {
             $judulId = $pengajuan->pilihan_1_id;
         } elseif ($sumberJudul === 'pilihan_2') {
@@ -215,6 +219,10 @@ class PengajuanController extends Controller
             return back()->with('error', 'Pengajuan ini tidak dapat direview saat ini.');
         }
 
+        if (!$pengajuan->isPeriodeAktif()) {
+            return back()->with('error', 'Pengajuan ini berada di periode yang sudah ditutup (arsip) dan tidak dapat diproses.');
+        }
+
         DB::beginTransaction();
         try {
             $success = $pengajuan->rejectByKalab(
@@ -247,6 +255,7 @@ class PengajuanController extends Controller
             // Dosen pembimbing yang dipilih mahasiswa untuk judul mandiri
             'dosen_id' => $pengajuan->dosen_pembimbing_id,
             'laboratorium_id' => $laboratoriumId,
+            'kode' => Judul::generateKode($laboratoriumId),
             'status_judul' => 'ditawarkan',
             'aktif' => DB::raw('true'),
             'is_locked' => DB::raw('false'),

@@ -107,7 +107,6 @@ class JudulController extends Controller
                 'catatan_penolakan_kalab' => $j->catatan_kalab ?? '',
                 'total_peminat' => $j->total_peminat ?? 0,
                 'jumlah_ditetapkan' => $j->jumlah_ditetapkan ?? 0,
-                'kuota_maksimal' => $j->kuota_maksimal,
             ];
         })->values();
 

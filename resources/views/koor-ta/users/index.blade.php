@@ -17,11 +17,6 @@
                             <p class="mt-0.5 text-xs text-gray-400">Kelola semua akun pengguna sistem</p>
                         </div>
                     </div>
-                    <a href="{{ route('koor-ta.users.create') }}"
-                        class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-indigo-700 hover:shadow-md">
-                        <x-heroicon-o-plus class="h-3.5 w-3.5" />
-                        Tambah User
-                    </a>
                 </div>
             </div>
 

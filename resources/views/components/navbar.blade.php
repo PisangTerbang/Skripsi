@@ -33,11 +33,6 @@ $watch('$store.notif.unread', (val, oldVal) => {
                 Riwayat Pengajuan
             </x-nav-link>
 
-            {{-- Konsultasi --}}
-            <x-nav-link route="mahasiswa.konsultasi.index" icon="chat-bubble-left-right">
-                Konsultasi
-            </x-nav-link>
-
         </div>
     </div>
 

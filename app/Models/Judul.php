@@ -21,7 +21,6 @@ class Judul extends Model
         'aktif',
         'is_locked',
         'status_judul',
-        'kuota_maksimal',
         'status',
         'is_available',
         'catatan_kalab',           // BARU
@@ -147,42 +146,6 @@ class Judul extends Model
     }
 
     /**
-     * Cek apakah kuota penuh
-     */
-    public function isKuotaPenuh()
-    {
-        if (!$this->kuota_maksimal) {
-            return false; // unlimited
-        }
-
-        return $this->jumlah_ditetapkan >= $this->kuota_maksimal;
-    }
-
-    /**
-     * Sisa kuota
-     */
-    public function getSisaKuotaAttribute()
-    {
-        if (!$this->kuota_maksimal) {
-            return '∞'; // unlimited
-        }
-
-        $sisa = $this->kuota_maksimal - $this->jumlah_ditetapkan;
-        return max(0, $sisa);
-    }
-
-    /**
-     * Cek apakah judul bisa dipilih mahasiswa
-     */
-    public function isTersedia()
-    {
-        return $this->status === 'available'
-            && $this->is_available
-            && $this->aktif
-            && !$this->isKuotaPenuh();
-    }
-
-    /**
      * Status label untuk display
      */
     public function getStatusLabelAttribute()
@@ -228,5 +191,26 @@ class Judul extends Model
             'reviewed_at_kalab' => now(),
             'updated_at' => now(),
         ]);
+    }
+
+    /**
+     * Generate kode judul untuk sebuah lab, mengikuti pola kode yang sudah ada
+     * (mis. SIRKEL-71). Prefix diambil dari kode judul lab tsb; fallback ke nama lab.
+     */
+    public static function generateKode($laboratoriumId): string
+    {
+        $existing = self::where('laboratorium_id', $laboratoriumId)
+            ->whereNotNull('kode')
+            ->pluck('kode');
+
+        $prefix = $existing->isNotEmpty() && str_contains($existing->first(), '-')
+            ? explode('-', $existing->first())[0]
+            : strtoupper(str_replace(' ', '', optional(Laboratorium::find($laboratoriumId))->nama ?? 'JD'));
+
+        $maxNum = $existing
+            ->map(fn($k) => preg_match('/(\d+)$/', $k, $m) ? (int) $m[1] : 0)
+            ->max() ?? 0;
+
+        return $prefix . '-' . ($maxNum + 1);
     }
 }

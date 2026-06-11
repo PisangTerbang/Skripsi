@@ -106,7 +106,7 @@
                         <template x-if="filteredNotifications.length > 0">
                             <div class="divide-y-2 divide-gray-100">
                                 <template x-for="notif in filteredNotifications" :key="notif.id">
-                                    <div @click="markAsRead(notif.id)"
+                                    <div @click="markAsRead(notif.id); if (notif.link) window.location.href = notif.link"
                                         x-bind:class="!notif.is_read ? 'bg-blue-50/50 hover:bg-blue-50' : 'hover:bg-gray-50'"
                                         class="group flex items-start gap-4 p-5 transition-all cursor-pointer">
 
@@ -179,7 +179,7 @@
                     },
 
                     init() {
-                        setInterval(() => this.fetchNotifications(true), 10000);
+                        setInterval(() => this.fetchNotifications(true), 20000);
                     },
 
                     async fetchNotifications(silent = false) {

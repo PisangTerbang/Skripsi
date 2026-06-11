@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\PengumumanDetailController;
 
 // MAHASISWA
 use App\Http\Controllers\Mahasiswa\BerandaController;
@@ -63,6 +64,16 @@ Route::get('/dashboard', function () {
 
 /*
 |--------------------------------------------------------------------------
+| DETAIL PENGUMUMAN (semua role yang login)
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/pengumuman/{id}', [PengumumanDetailController::class, 'show'])
+    ->middleware('auth')
+    ->name('pengumuman.detail');
+
+/*
+|--------------------------------------------------------------------------
 | MAHASISWA AREA
 |--------------------------------------------------------------------------
 */
@@ -94,16 +105,6 @@ Route::middleware(['auth', 'role:mahasiswa'])
         Route::put('/pengaturan/profile', [\App\Http\Controllers\Mahasiswa\PengaturanController::class, 'updateProfile'])->name('pengaturan.profile');
         Route::put('/pengaturan/password', [\App\Http\Controllers\Mahasiswa\PengaturanController::class, 'updatePassword'])->name('pengaturan.password');
         Route::delete('/pengaturan/avatar', [\App\Http\Controllers\Mahasiswa\PengaturanController::class, 'removeAvatar'])->name('pengaturan.avatar.remove');
-
-        // KONSULTASI
-        Route::prefix('konsultasi')->name('konsultasi.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\Mahasiswa\KonsultasiController::class, 'index'])->name('index');
-            Route::get('/dosen/{dosenId}', [\App\Http\Controllers\Mahasiswa\KonsultasiController::class, 'show'])->name('show');
-            Route::post('/{conversationId}/send', [\App\Http\Controllers\Mahasiswa\KonsultasiController::class, 'send'])->name('send');
-            Route::post('/{conversationId}/send-judul', [\App\Http\Controllers\Mahasiswa\KonsultasiController::class, 'sendJudulCard'])->name('send-judul');
-            Route::get('/{conversationId}/poll', [\App\Http\Controllers\Mahasiswa\KonsultasiController::class, 'poll'])->name('poll');
-        });
-
 
     });
 
@@ -145,14 +146,6 @@ Route::middleware(['auth', 'role:dosen'])
         Route::put('/pengaturan/profile', [DosenPengaturanController::class, 'updateProfile'])->name('pengaturan.profile');
         Route::put('/pengaturan/password', [DosenPengaturanController::class, 'updatePassword'])->name('pengaturan.password');
         Route::delete('/pengaturan/avatar', [DosenPengaturanController::class, 'removeAvatar'])->name('pengaturan.avatar.remove');
-
-        // KONSULTASI
-        Route::prefix('konsultasi')->name('konsultasi.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\Dosen\KonsultasiController::class, 'index'])->name('index');
-            Route::get('/{conversationId}', [\App\Http\Controllers\Dosen\KonsultasiController::class, 'show'])->name('show');
-            Route::post('/{conversationId}/send', [\App\Http\Controllers\Dosen\KonsultasiController::class, 'send'])->name('send');
-            Route::get('/{conversationId}/poll', [\App\Http\Controllers\Dosen\KonsultasiController::class, 'poll'])->name('poll');
-        });
 
     });
 
@@ -265,8 +258,6 @@ Route::middleware(['auth', 'role:koordinator_ta'])
         // USER MANAGEMENT
         Route::prefix('users')->name('users.')->group(function () {
             Route::get('/', [KoorTAUserController::class, 'index'])->name('index');
-            Route::get('/create', [KoorTAUserController::class, 'create'])->name('create');
-            Route::post('/', [KoorTAUserController::class, 'store'])->name('store');
             Route::post('/{user}/reset-password', [KoorTAUserController::class, 'resetPassword'])->name('reset-password');
             Route::get('/{user}/edit', [KoorTAUserController::class, 'edit'])->name('edit');
             Route::put('/{user}', [KoorTAUserController::class, 'update'])->name('update');

@@ -39,9 +39,15 @@ class PengajuanController extends Controller
                 return $item;
             });
 
-        $jumlahPengajuan = Pengajuan::where('mahasiswa_id', $mahasiswaId)
-            ->whereIn('status', ['pending', 'disetujui'])
-            ->count();
+        $periodeAktif = \App\Models\Periode::periodeAktif();
+
+        // Gate UI di-scope ke periode aktif: pengajuan periode lama (arsip) tidak menghalangi pengajuan baru.
+        $jumlahPengajuan = $periodeAktif
+            ? Pengajuan::where('mahasiswa_id', $mahasiswaId)
+                ->where('periode_id', $periodeAktif->id)
+                ->whereIn('status', ['pending', 'disetujui'])
+                ->count()
+            : 0;
 
         $pengajuanSaya = Pengajuan::where('mahasiswa_id', $mahasiswaId)
             ->pluck('judul_id')
@@ -86,7 +92,8 @@ class PengajuanController extends Controller
             'laboratorium',
             'mySubmissions',
             'judulJson',
-            'dosenList' // ✅ tambah ini
+            'dosenList', // ✅ tambah ini
+            'periodeAktif'
         ))->with('title', 'Pengajuan Judul');
     }
 
@@ -95,12 +102,22 @@ class PengajuanController extends Controller
         $mahasiswaId = Auth::id();
         $mahasiswaName = Auth::user()->name;
 
+        // Gate periode: semua aktivitas pengajuan hanya berjalan saat ada periode aktif (dikontrol Koordinator TA).
+        $periodeAktif = \App\Models\Periode::periodeAktif();
+
+        if (!$periodeAktif) {
+            return back()->with('error', 'Belum ada periode aktif. Pengajuan TA dibuka oleh Koordinator TA.');
+        }
+
+        // Gate per-periode: 1 pengajuan aktif PER periode. Saat periode baru dibuka,
+        // pengajuan periode lama menjadi arsip sehingga mahasiswa dapat mengajukan kembali.
         $jumlahAktif = Pengajuan::where('mahasiswa_id', $mahasiswaId)
+            ->where('periode_id', $periodeAktif->id)
             ->whereIn('status', ['pending', 'disetujui'])
             ->count();
 
         if ($jumlahAktif > 0) {
-            return back()->with('error', 'Anda sudah mengajukan judul sebelumnya.');
+            return back()->with('error', 'Anda sudah mengajukan judul pada periode ini.');
         }
 
         $validated = $request->validate([
@@ -122,12 +139,6 @@ class PengajuanController extends Controller
             'pilihan_3_id.required' => 'Pilihan 3 wajib diisi',
             'pilihan_3_id.different' => 'Pilihan 3 harus berbeda dengan Pilihan 1 dan 2',
         ]);
-
-        $periodeAktif = \App\Models\Periode::periodeAktif();
-
-        if (!$periodeAktif) {
-            return back()->with('error', 'Tidak ada periode aktif saat ini. Silakan hubungi koordinator.');
-        }
 
         Pengajuan::create([
             'mahasiswa_id' => $mahasiswaId,
@@ -166,33 +177,31 @@ class PengajuanController extends Controller
         $rows = [];
 
         // Dosen pemilik judul yang dipilih (termasuk pembimbing judul mandiri)
+        $dosenLink = route('dosen.pengajuan', [], false);
         foreach ($dosenIds as $dosenId) {
             $rows[] = [
                 'user_id' => $dosenId,
                 'tipe' => 'pengajuan_baru',
-                'pesan' => $mahasiswaName . ' mengajukan judul TA dengan salah satu judul Anda sebagai pilihan',
+                'pesan' => $mahasiswaName . ' memilih salah satu judul Anda pada pengajuan TA-nya.',
+                'link' => $dosenLink,
                 'is_read' => DB::raw('false'),
                 'created_at' => $now,
                 'updated_at' => $now,
             ];
         }
 
-        // Judul mandiri: beri tahu sisa dosen lainnya
-        if (!empty($validated['judul_mandiri'])) {
-            $otherDosenIds = User::where('role', 'dosen')
-                ->whereNotIn('id', $dosenIds)
-                ->pluck('id');
-
-            foreach ($otherDosenIds as $dosenId) {
-                $rows[] = [
-                    'user_id' => $dosenId,
-                    'tipe' => 'pengajuan_baru',
-                    'pesan' => $mahasiswaName . ' mengajukan usulan judul mandiri: ' . $validated['judul_mandiri'],
-                    'is_read' => DB::raw('false'),
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ];
-            }
+        // ✅ Notifikasi ke semua Ka Lab: pengajuan baru masuk untuk direview
+        $kalabLink = route('ka-lab.pengajuan.index', [], false);
+        foreach (User::where('role', 'ka_lab')->pluck('id') as $kalabId) {
+            $rows[] = [
+                'user_id' => $kalabId,
+                'tipe' => 'pengajuan_masuk',
+                'pesan' => $mahasiswaName . ' mengirim pengajuan judul TA baru untuk direview.',
+                'link' => $kalabLink,
+                'is_read' => DB::raw('false'),
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
         }
 
         // ✅ Satu kali batch insert, bukan N query
@@ -223,19 +232,22 @@ class PengajuanController extends Controller
             ->latest()
             ->get();
 
-        $sudahDiumumkan = DB::table('aktivitas')
-            ->where('user_id', $mahasiswaId)
-            ->whereIn('tipe', ['pengumuman_disetujui', 'pengumuman_ditolak'])
-            ->exists();
+        // Periode yang pengumumannya sudah dikirim (hasil baru boleh ditampilkan)
+        $announcedPeriodes = DB::table('pengumuman')
+            ->whereNotNull('dikirim_at')
+            ->pluck('periode_id')
+            ->all();
 
-        $pengajuanJson = $pengajuan->map(function ($p) use ($sudahDiumumkan) {
+        $pengajuanJson = $pengajuan->map(function ($p) use ($announcedPeriodes) {
+            // Hasil (keputusan Ka Lab/Prodi & judul ditetapkan) dirahasiakan sampai pengumuman resmi.
+            $announced = in_array($p->periode_id, $announcedPeriodes);
             return [
                 'id' => $p->id,
                 'judul' => $p->jenis === 'pilih'
                     ? ($p->pilihan1->nama_judul ?? '-')
                     : ($p->judul_mandiri ?? '-'),
                 'jenis' => $p->jenis,
-                'status' => $p->status,
+                'status' => $announced ? $p->status : 'pending',
                 'prioritas' => $p->prioritas ?? 1,
                 'kode' => $p->jenis === 'pilih' ? ($p->pilihan1->kode ?? '') : '',
                 'deskripsi' => $p->jenis === 'mandiri' ? ($p->deskripsi_mandiri ?? '') : '',
@@ -269,22 +281,23 @@ class PengajuanController extends Controller
                 'waktu' => $p->created_at->diffForHumans(),
                 'tanggal' => $p->created_at->format('d M Y H:i'),
                 'timestamp' => $p->created_at->timestamp,
-                'status_kalab' => $p->status_kalab,
-                'status_kaprodi' => $p->status_kaprodi,
-                'catatan_kalab' => $p->catatan_kalab_pengajuan ?? '',
-                'catatan_kaprodi' => $p->catatan_kaprodi ?? '',
-                'judul_ditetapkan' => $p->judulDitetapkan
+                'status_kalab' => $announced ? $p->status_kalab : null,
+                'status_kaprodi' => $announced ? $p->status_kaprodi : null,
+                'catatan_kalab' => $announced ? ($p->catatan_kalab_pengajuan ?? '') : '',
+                'catatan_kaprodi' => $announced ? ($p->catatan_kaprodi ?? '') : '',
+                'judul_ditetapkan' => $announced && $p->judulDitetapkan
                     ? ($p->judulDitetapkan->nama_judul ?? $p->judulDitetapkan->judul ?? '-')
                     : null,
-                'reviewer_kalab' => $p->reviewerKalab->name ?? null,
-                'reviewer_kaprodi' => $p->reviewerKaprodi->name ?? null,
-                'sudah_diumumkan' => $sudahDiumumkan,
+                'reviewer_kalab' => $announced ? ($p->reviewerKalab->name ?? null) : null,
+                'reviewer_kaprodi' => $announced ? ($p->reviewerKaprodi->name ?? null) : null,
+                'sudah_diumumkan' => $announced,
             ];
         })->values();
 
         return view('mahasiswa.riwayat', [
             'pengajuan' => $pengajuan,
             'pengajuanJson' => $pengajuanJson,
+            'announcedPeriodes' => $announcedPeriodes,
             'title' => 'Riwayat Pengajuan',
         ]);
     }

@@ -3,6 +3,8 @@
 
     <div x-data="pengajuanPage()" x-init="init()" class="space-y-6">
 
+        <x-periode-banner />
+
         {{-- Alert --}}
         @if (session('success'))
             <div x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 4000)"
@@ -239,7 +241,7 @@
                             @endforeach
                         </select>
                         <p class="mt-1 text-xs text-gray-400">
-                            Pilih dosen yang ingin Anda ajak konsultasi terkait judul ini
+                            Pilih dosen pembimbing untuk judul mandiri ini
                         </p>
                     </div>
 

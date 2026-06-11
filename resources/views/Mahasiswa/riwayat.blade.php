@@ -36,10 +36,15 @@
         </div>
 
         @php
+            // Hasil (disetujui/ditolak) hanya dihitung setelah pengumuman resmi; selebihnya = sedang diproses.
             $totalPengajuan = $pengajuan->count();
-            $totalPending = $pengajuan->where('status', 'pending')->count();
-            $totalDisetujui = $pengajuan->where('status', 'disetujui')->count();
-            $totalDitolak = $pengajuan->where('status', 'ditolak')->count();
+            $totalDisetujui = $pengajuan
+                ->filter(fn($p) => in_array($p->periode_id, $announcedPeriodes) && $p->status === 'disetujui')
+                ->count();
+            $totalDitolak = $pengajuan
+                ->filter(fn($p) => in_array($p->periode_id, $announcedPeriodes) && $p->status === 'ditolak')
+                ->count();
+            $totalPending = $totalPengajuan - $totalDisetujui - $totalDitolak;
         @endphp
 
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">

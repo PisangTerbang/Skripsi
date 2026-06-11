@@ -118,6 +118,8 @@
 
     </div>
     @stack('scripts')
+
+    <x-prefetch-links />
 </body>
 
 </html>

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Dosen;
 
 use App\Http\Controllers\Controller;
+use App\Models\Aktivitas;
 use App\Models\Judul;
 use App\Models\Laboratorium;
 use Illuminate\Http\Request;
@@ -41,6 +42,9 @@ class DosenJudulController extends Controller
         $pending = $judul->where('status_judul', 'pending_kalab')->count();
         $ditawarkan = $judul->where('status_judul', 'ditawarkan')->count();
         $ditolak = $judul->where('status_judul', 'ditolak_kalab')->count();
+        // Ketersediaan: tersedia = sudah divalidasi & belum diambil; terkunci = sudah diambil 1 mahasiswa
+        $tersedia = $judul->where('status_judul', 'ditawarkan')->where('is_locked', false)->count();
+        $terkunci = $judul->where('is_locked', true)->count();
         $totalPeminat = $judul->sum('total_peminat');
         $totalDitetapkan = $judul->sum('jumlah_ditetapkan');
 
@@ -56,6 +60,8 @@ class DosenJudulController extends Controller
             'pending',
             'ditawarkan',
             'ditolak',
+            'tersedia',
+            'terkunci',
             'totalPeminat',
             'totalDitetapkan'
         ));
@@ -67,19 +73,21 @@ class DosenJudulController extends Controller
             'judul' => 'required|string|max:500',
             'deskripsi' => 'required|string',
             'laboratorium_id' => 'required|exists:laboratorium,id',
-            'kuota_maksimal' => 'nullable|integer|min:1',
             'aksi' => 'nullable|in:draft,ajukan',
         ]);
 
-        // 'ajukan' = langsung kirim ke Ka Lab untuk validasi; default draft
-        $ajukan = ($validated['aksi'] ?? 'draft') === 'ajukan';
+        // 'ajukan' = langsung kirim ke Ka Lab untuk validasi; default draft.
+        // Gate periode: judul hanya bisa diajukan ke Ka Lab saat ada periode aktif (dikontrol Koordinator TA).
+        $mintaAjukan = ($validated['aksi'] ?? 'draft') === 'ajukan';
+        $adaPeriodeAktif = (bool) \App\Models\Periode::periodeAktif();
+        $ajukan = $mintaAjukan && $adaPeriodeAktif;
 
         $judul = Judul::create([
             'dosen_id' => auth()->id(),
             'laboratorium_id' => $validated['laboratorium_id'],
+            'kode' => Judul::generateKode($validated['laboratorium_id']),
             'nama_judul' => $validated['judul'],
             'deskripsi' => $validated['deskripsi'],
-            'kuota_maksimal' => $validated['kuota_maksimal'] ?? null,
             'status_judul' => $ajukan ? 'pending_kalab' : 'draft',
             'aktif' => DB::raw('true'),
             'is_available' => DB::raw('false'),
@@ -91,6 +99,11 @@ class DosenJudulController extends Controller
                 'submitted_to_kalab_at' => now(),
                 'submitted_to_kalab_by' => auth()->id(),
             ]);
+            $this->notifKaLab($judul);
+        }
+
+        if ($mintaAjukan && !$adaPeriodeAktif) {
+            return back()->with('error', 'Belum ada periode aktif — judul disimpan sebagai draft. Ajukan ke Ka Lab saat periode dibuka Koordinator TA.');
         }
 
         return back()->with(
@@ -114,14 +127,12 @@ class DosenJudulController extends Controller
             'judul' => 'required|string|max:500',
             'deskripsi' => 'required|string',
             'laboratorium_id' => 'required|exists:laboratorium,id',
-            'kuota_maksimal' => 'nullable|integer|min:1',
         ]);
 
         $judul->update([
             'nama_judul' => $validated['judul'],
             'deskripsi' => $validated['deskripsi'],
             'laboratorium_id' => $validated['laboratorium_id'],
-            'kuota_maksimal' => $validated['kuota_maksimal'] ?? null,
         ]);
 
         return back()->with('success', 'Judul berhasil diperbarui');
@@ -138,6 +149,11 @@ class DosenJudulController extends Controller
             return back()->with('error', 'Judul ini tidak dapat diajukan.');
         }
 
+        // Gate periode: judul hanya bisa diajukan ke Ka Lab saat ada periode aktif.
+        if (!\App\Models\Periode::periodeAktif()) {
+            return back()->with('error', 'Belum ada periode aktif. Judul hanya bisa diajukan ke Ka Lab saat periode dibuka Koordinator TA.');
+        }
+
         DB::table('judul')->where('id', $judul->id)->update([
             'status_judul' => 'pending_kalab',
             'catatan_kalab' => null,
@@ -146,7 +162,20 @@ class DosenJudulController extends Controller
             'updated_at' => now(),
         ]);
 
+        $this->notifKaLab($judul);
+
         return back()->with('success', 'Judul diajukan ke Ka Lab untuk divalidasi.');
+    }
+
+    /** Notifikasi ke semua Ka Lab: ada judul yang menunggu validasi. */
+    private function notifKaLab(Judul $judul): void
+    {
+        Aktivitas::buatBanyak(
+            Aktivitas::userIdsByRole('ka_lab'),
+            'judul_validasi',
+            auth()->user()->name . " mengajukan judul \"{$judul->nama_judul}\" untuk divalidasi.",
+            route('ka-lab.validasi.index', [], false)
+        );
     }
 
     /**

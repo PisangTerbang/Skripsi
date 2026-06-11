@@ -4,6 +4,8 @@
     <div class="min-h-screen bg-slate-100">
         <div class="px-6 py-6 space-y-6">
 
+            <x-periode-banner />
+
             {{-- ===== WELCOME BANNER ===== --}}
             <div
                 class="relative overflow-hidden rounded-2xl border-2 border-emerald-300 bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 p-7 shadow-xl">

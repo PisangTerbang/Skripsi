@@ -5,6 +5,8 @@
 
         <div class="px-6 py-6 space-y-6">
 
+            <x-periode-banner />
+
             {{-- ===== WELCOME BANNER ===== --}}
             <div
                 class="relative overflow-hidden rounded-2xl border-2 border-violet-300 bg-gradient-to-br from-violet-600 via-violet-700 to-purple-800 p-7 shadow-xl">

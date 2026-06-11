@@ -61,6 +61,7 @@ class DosenNotifikasiController extends Controller
                     return [
                         'id' => $item->id,
                         'pesan' => $item->pesan,
+                        'link' => $item->link,
                         'tipe' => $item->tipe,
                         'is_read' => $item->is_read,
                         'waktu' => Carbon::parse($item->created_at)->diffForHumans(),

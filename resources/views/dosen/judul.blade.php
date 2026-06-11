@@ -5,6 +5,8 @@
         <div class="min-h-screen bg-slate-100">
             <div class="px-6 py-6 space-y-6">
 
+                <x-periode-banner />
+
                 {{-- ===== TOP BAR ===== --}}
                 <div class="sticky top-0 z-10 border-b-2 border-emerald-100 bg-white px-6 py-4 shadow-sm -mx-6 -mt-6">
                     <div class="flex items-center justify-between">
@@ -77,14 +79,25 @@
                         </div>
                     </div>
 
-                    {{-- Draft --}}
+                    {{-- Tersedia --}}
                     <div
-                        class="relative overflow-hidden rounded-2xl border-2 border-gray-300 bg-gradient-to-br from-gray-500 to-gray-700 p-4 shadow-lg transition hover:-translate-y-0.5">
+                        class="relative overflow-hidden rounded-2xl border-2 border-emerald-300 bg-gradient-to-br from-emerald-500 to-green-600 p-4 shadow-lg transition hover:-translate-y-0.5">
                         <div class="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-white/10"></div>
                         <div class="relative">
-                            <x-heroicon-o-document class="h-6 w-6 text-gray-200 mb-2" />
-                            <p class="text-xs font-bold uppercase tracking-widest text-gray-200">Draft</p>
-                            <p class="mt-1 text-3xl font-black text-white">{{ $draft }}</p>
+                            <x-heroicon-o-lock-open class="h-6 w-6 text-emerald-100 mb-2" />
+                            <p class="text-xs font-bold uppercase tracking-widest text-emerald-100">Tersedia</p>
+                            <p class="mt-1 text-3xl font-black text-white">{{ $tersedia }}</p>
+                        </div>
+                    </div>
+
+                    {{-- Terkunci --}}
+                    <div
+                        class="relative overflow-hidden rounded-2xl border-2 border-rose-300 bg-gradient-to-br from-rose-500 to-pink-600 p-4 shadow-lg transition hover:-translate-y-0.5">
+                        <div class="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-white/10"></div>
+                        <div class="relative">
+                            <x-heroicon-o-lock-closed class="h-6 w-6 text-rose-100 mb-2" />
+                            <p class="text-xs font-bold uppercase tracking-widest text-rose-100">Terkunci</p>
+                            <p class="mt-1 text-3xl font-black text-white">{{ $terkunci }}</p>
                         </div>
                     </div>
 
@@ -96,17 +109,6 @@
                             <x-heroicon-o-clock class="h-6 w-6 text-amber-100 mb-2" />
                             <p class="text-xs font-bold uppercase tracking-widest text-amber-100">Menunggu Validasi</p>
                             <p class="mt-1 text-3xl font-black text-white">{{ $pending }}</p>
-                        </div>
-                    </div>
-
-                    {{-- Ditawarkan --}}
-                    <div
-                        class="relative overflow-hidden rounded-2xl border-2 border-emerald-300 bg-gradient-to-br from-emerald-500 to-green-600 p-4 shadow-lg transition hover:-translate-y-0.5">
-                        <div class="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-white/10"></div>
-                        <div class="relative">
-                            <x-heroicon-o-check-circle class="h-6 w-6 text-emerald-100 mb-2" />
-                            <p class="text-xs font-bold uppercase tracking-widest text-emerald-100">Ditawarkan</p>
-                            <p class="mt-1 text-3xl font-black text-white">{{ $ditawarkan }}</p>
                         </div>
                     </div>
 
@@ -140,15 +142,16 @@
                     <div class="flex items-center gap-1 rounded-2xl border-2 border-gray-200 bg-white p-1.5 shadow-sm">
                         @foreach ([
         'all' => 'Semua',
+        'tersedia' => 'Tersedia',
+        'terkunci' => 'Terkunci',
         'draft' => 'Draft',
-        'pending_kalab' => 'Menunggu',
-        'ditawarkan' => 'Ditawarkan',
-        'ditolak_kalab' => 'Ditolak',
+        'menunggu' => 'Menunggu',
+        'ditolak' => 'Ditolak',
     ] as $val => $label)
                             <button type="button" @click="filterStatus = '{{ $val }}'; applyFilter()"
                                 x-bind:class="filterStatus === '{{ $val }}'
                                     ?
-                                    '{{ $val === 'draft' ? 'bg-gray-600' : ($val === 'pending_kalab' ? 'bg-amber-500' : ($val === 'ditawarkan' ? 'bg-emerald-600' : ($val === 'ditolak_kalab' ? 'bg-red-600' : 'bg-indigo-600'))) }} text-white shadow-sm' :
+                                    '{{ $val === 'tersedia' ? 'bg-emerald-600' : ($val === 'terkunci' ? 'bg-rose-600' : ($val === 'draft' ? 'bg-gray-600' : ($val === 'menunggu' ? 'bg-amber-500' : ($val === 'ditolak' ? 'bg-red-600' : 'bg-indigo-600')))) }} text-white shadow-sm' :
                                     'text-gray-500 hover:bg-gray-100 hover:text-gray-700'"
                                 class="rounded-xl px-3 py-1.5 text-xs font-bold transition-all">
                                 {{ $label }}
@@ -198,19 +201,21 @@
                     <template x-for="item in filteredData" :key="item.id">
                         <div class="group relative overflow-hidden rounded-2xl border-2 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
                             x-bind:class="{
-                                'border-gray-200 hover:border-gray-300': item.status_judul === 'draft',
-                                'border-amber-200 hover:border-amber-300': item.status_judul === 'pending_kalab',
-                                'border-emerald-200 hover:border-emerald-300': item.status_judul === 'ditawarkan',
-                                'border-red-200 hover:border-red-300': item.status_judul === 'ditolak_kalab'
+                                'border-emerald-200 hover:border-emerald-300': item.ketersediaan === 'tersedia',
+                                'border-rose-200 hover:border-rose-300': item.ketersediaan === 'terkunci',
+                                'border-gray-200 hover:border-gray-300': item.ketersediaan === 'draft',
+                                'border-amber-200 hover:border-amber-300': item.ketersediaan === 'menunggu',
+                                'border-red-200 hover:border-red-300': item.ketersediaan === 'ditolak'
                             }">
 
                             {{-- Color bar top --}}
                             <div class="h-1.5 w-full"
                                 x-bind:class="{
-                                    'bg-gradient-to-r from-gray-300 to-gray-400': item.status_judul === 'draft',
-                                    'bg-gradient-to-r from-amber-400 to-orange-400': item.status_judul === 'pending_kalab',
-                                    'bg-gradient-to-r from-emerald-500 to-green-500': item.status_judul === 'ditawarkan',
-                                    'bg-gradient-to-r from-red-500 to-rose-500': item.status_judul === 'ditolak_kalab'
+                                    'bg-gradient-to-r from-emerald-500 to-green-500': item.ketersediaan === 'tersedia',
+                                    'bg-gradient-to-r from-rose-500 to-pink-500': item.ketersediaan === 'terkunci',
+                                    'bg-gradient-to-r from-gray-300 to-gray-400': item.ketersediaan === 'draft',
+                                    'bg-gradient-to-r from-amber-400 to-orange-400': item.ketersediaan === 'menunggu',
+                                    'bg-gradient-to-r from-red-500 to-rose-500': item.ketersediaan === 'ditolak'
                                 }">
                             </div>
 
@@ -223,30 +228,31 @@
                                         x-text="item.kode">
                                     </span>
                                     <div class="flex items-center gap-1.5">
-                                        <span x-show="item.status_judul === 'draft'"
+                                        {{-- Penanda ketersediaan (satu badge utama) --}}
+                                        <span x-show="item.ketersediaan === 'tersedia'"
+                                            class="inline-flex items-center gap-1 rounded-full border-2 border-emerald-200 bg-emerald-100 px-2 py-0.5 text-[10px] font-black text-emerald-700">
+                                            <x-heroicon-o-lock-open class="h-3 w-3" />
+                                            Tersedia
+                                        </span>
+                                        <span x-show="item.ketersediaan === 'terkunci'"
+                                            class="inline-flex items-center gap-1 rounded-full border-2 border-rose-200 bg-rose-100 px-2 py-0.5 text-[10px] font-black text-rose-700">
+                                            <x-heroicon-o-lock-closed class="h-3 w-3" />
+                                            Terkunci
+                                        </span>
+                                        <span x-show="item.ketersediaan === 'draft'"
                                             class="inline-flex items-center gap-1 rounded-full border-2 border-gray-200 bg-gray-100 px-2 py-0.5 text-[10px] font-black text-gray-600">
                                             <span class="h-1.5 w-1.5 rounded-full bg-gray-400"></span>
                                             Draft
                                         </span>
-                                        <span x-show="item.status_judul === 'pending_kalab'"
+                                        <span x-show="item.ketersediaan === 'menunggu'"
                                             class="inline-flex items-center gap-1 rounded-full border-2 border-amber-200 bg-amber-100 px-2 py-0.5 text-[10px] font-black text-amber-700">
                                             <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-500"></span>
                                             Menunggu Validasi
                                         </span>
-                                        <span x-show="item.status_judul === 'ditawarkan'"
-                                            class="inline-flex items-center gap-1 rounded-full border-2 border-emerald-200 bg-emerald-100 px-2 py-0.5 text-[10px] font-black text-emerald-700">
-                                            <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500"></span>
-                                            Ditawarkan
-                                        </span>
-                                        <span x-show="item.status_judul === 'ditolak_kalab'"
+                                        <span x-show="item.ketersediaan === 'ditolak'"
                                             class="inline-flex items-center gap-1 rounded-full border-2 border-red-200 bg-red-100 px-2 py-0.5 text-[10px] font-black text-red-700">
                                             <span class="h-1.5 w-1.5 rounded-full bg-red-500"></span>
                                             Ditolak Ka Lab
-                                        </span>
-                                        <span x-show="item.is_locked"
-                                            class="inline-flex items-center gap-1 rounded-full border-2 border-red-200 bg-red-100 px-2 py-0.5 text-[10px] font-black text-red-700">
-                                            <x-heroicon-o-lock-closed class="h-3 w-3" />
-                                            Terkunci
                                         </span>
                                     </div>
                                 </div>
@@ -558,18 +564,30 @@
                 },
 
                 init() {
-                    this.allData = this.allData.map(item => ({
-                        id: item.id,
-                        kode: item.kode ?? '-',
-                        nama_judul: item.nama_judul ?? item.judul ?? '-',
-                        deskripsi: item.deskripsi ?? '',
-                        status_judul: item.status_judul ?? 'draft',
-                        is_locked: item.is_locked ?? false,
-                        lab_id: item.laboratorium_id,
-                        lab_name: item.lab_name ?? 'N/A',
-                        total_peminat: item.total_peminat ?? 0,
-                        jumlah_ditetapkan: item.jumlah_ditetapkan ?? 0,
-                    }));
+                    this.allData = this.allData.map(item => {
+                        const status = item.status_judul ?? 'draft';
+                        const locked = item.is_locked ?? false;
+                        // Ketersediaan = lensa utama: terkunci (sudah diambil) > tersedia (divalidasi & bebas) > proses validasi
+                        let ketersediaan = 'draft';
+                        if (locked) ketersediaan = 'terkunci';
+                        else if (status === 'ditawarkan') ketersediaan = 'tersedia';
+                        else if (status === 'pending_kalab') ketersediaan = 'menunggu';
+                        else if (status === 'ditolak_kalab') ketersediaan = 'ditolak';
+
+                        return {
+                            id: item.id,
+                            kode: item.kode ?? '-',
+                            nama_judul: item.nama_judul ?? item.judul ?? '-',
+                            deskripsi: item.deskripsi ?? '',
+                            status_judul: status,
+                            is_locked: locked,
+                            ketersediaan: ketersediaan,
+                            lab_id: item.laboratorium_id,
+                            lab_name: item.lab_name ?? 'N/A',
+                            total_peminat: item.total_peminat ?? 0,
+                            jumlah_ditetapkan: item.jumlah_ditetapkan ?? 0,
+                        };
+                    });
                     this.applyFilter();
                 },
 
@@ -590,8 +608,13 @@
                     }
 
                     if (this.filterStatus !== 'all') {
-                        result = result.filter(item => item.status_judul === this.filterStatus);
+                        result = result.filter(item => item.ketersediaan === this.filterStatus);
                     }
+
+                    // Judul terkunci selalu diletakkan paling bawah (mis. saat filter "Semua").
+                    result = [...result].sort((a, b) =>
+                        (a.ketersediaan === 'terkunci' ? 1 : 0) - (b.ketersediaan === 'terkunci' ? 1 : 0)
+                    );
 
                     this.filteredData = result;
                 },
