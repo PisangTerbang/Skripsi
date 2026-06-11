@@ -263,6 +263,13 @@
                                                             <span
                                                                 x-text="item.status === 'pending' ? 'Menunggu Review' : item.status === 'disetujui' ? 'Disetujui' : 'Ditolak'"></span>
                                                         </span>
+
+                                                        {{-- Periode --}}
+                                                        <span
+                                                            class="inline-flex items-center gap-1.5 rounded-full border-2 border-indigo-200 bg-indigo-50 px-2.5 py-1 text-xs font-black text-indigo-700">
+                                                            <x-heroicon-o-calendar-days class="h-3 w-3" />
+                                                            <span x-text="item.periode"></span>
+                                                        </span>
                                                     </div>
                                                     <p class="mt-1 text-xs text-gray-400" x-text="item.waktu"></p>
                                                 </div>

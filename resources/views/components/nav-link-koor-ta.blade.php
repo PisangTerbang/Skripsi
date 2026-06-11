@@ -1,6 +1,7 @@
-@props(['route', 'icon', 'badge' => null])
+@props(['route', 'icon', 'badge' => null, 'match' => null])
 @php
-    $isActive = request()->routeIs($route . '*');
+    // $match memungkinkan menu induk tetap aktif saat berada di halaman anak (create/edit/show).
+    $isActive = request()->routeIs($match ?? $route . '*');
     $href = Route::has($route) ? route($route) : '#';
 @endphp
 

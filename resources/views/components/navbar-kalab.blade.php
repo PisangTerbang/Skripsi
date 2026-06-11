@@ -6,13 +6,13 @@
         <x-nav-link-kalab route="ka-lab.dashboard" icon="home">
             Dashboard
         </x-nav-link-kalab>
-        <x-nav-link-kalab route="ka-lab.judul.index" icon="document-text">
+        <x-nav-link-kalab route="ka-lab.judul.index" match="ka-lab.judul.*" icon="document-text">
             Monitoring Judul
         </x-nav-link-kalab>
         <x-nav-link-kalab route="ka-lab.validasi.index" icon="clipboard-document-check">
             Validasi Judul
         </x-nav-link-kalab>
-        <x-nav-link-kalab route="ka-lab.pengajuan.index" icon="clipboard-document-list">
+        <x-nav-link-kalab route="ka-lab.pengajuan.index" match="ka-lab.pengajuan.*" icon="clipboard-document-list">
             Pengajuan Mahasiswa
         </x-nav-link-kalab>
     </div>

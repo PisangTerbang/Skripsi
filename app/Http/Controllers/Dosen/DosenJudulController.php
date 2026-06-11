@@ -18,13 +18,18 @@ class DosenJudulController extends Controller
      */
     public function index()
     {
+        // Peminat & jumlah ditetapkan dihitung hanya untuk periode aktif,
+        // sehingga ikut "reset" saat ganti periode (riwayat lama tetap tersimpan di DB).
+        $activePeriodeId = \App\Models\Periode::periodeAktif()?->id;
+        $diPeriodeAktif = fn($q) => $q->where('periode_id', $activePeriodeId);
+
         $judul = Judul::where('dosen_id', auth()->id())
             ->with('laboratorium')
             ->withCount([
-                'pengajuanPilihan1',
-                'pengajuanPilihan2',
-                'pengajuanPilihan3',
-                'pengajuanDitetapkan'
+                'pengajuanPilihan1' => $diPeriodeAktif,
+                'pengajuanPilihan2' => $diPeriodeAktif,
+                'pengajuanPilihan3' => $diPeriodeAktif,
+                'pengajuanDitetapkan' => $diPeriodeAktif,
             ])
             ->latest()
             ->get()

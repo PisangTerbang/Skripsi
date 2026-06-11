@@ -53,12 +53,20 @@ class User extends Authenticatable
     }
 
     /**
-     * Jumlah mahasiswa bimbingan saat ini (judul final yang ditetapkan & disetujui
-     * untuk salah satu judul milik dosen ini).
+     * Jumlah mahasiswa bimbingan pada PERIODE AKTIF (judul final yang ditetapkan & disetujui
+     * untuk salah satu judul milik dosen ini). Ikut reset tiap ganti periode/semester;
+     * data periode lama tetap tersimpan sebagai riwayat.
      */
     public function jumlahBimbingan(): int
     {
+        $periodeAktifId = Periode::periodeAktif()?->id;
+
+        if (!$periodeAktifId) {
+            return 0;
+        }
+
         return Pengajuan::where('status', 'disetujui')
+            ->where('periode_id', $periodeAktifId)
             ->whereHas('judulDitetapkan', function ($q) {
                 $q->where('dosen_id', $this->id);
             })

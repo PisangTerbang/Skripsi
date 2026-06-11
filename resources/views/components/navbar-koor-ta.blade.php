@@ -11,13 +11,13 @@
     <p class="px-4 pt-4 pb-2 text-[11px] font-semibold uppercase tracking-wider text-indigo-300/70">Manajemen</p>
 
     <div class="space-y-1">
-        <x-nav-link-koor-ta route="koor-ta.users.index" icon="users">
+        <x-nav-link-koor-ta route="koor-ta.users.index" match="koor-ta.users.*" icon="users">
             User Management
         </x-nav-link-koor-ta>
-        <x-nav-link-koor-ta route="koor-ta.periode.index" icon="calendar-days">
+        <x-nav-link-koor-ta route="koor-ta.periode.index" match="koor-ta.periode.*" icon="calendar-days">
             Periode Pengajuan
         </x-nav-link-koor-ta>
-        <x-nav-link-koor-ta route="koor-ta.pengumuman.index" icon="megaphone">
+        <x-nav-link-koor-ta route="koor-ta.pengumuman.index" match="koor-ta.pengumuman.*" icon="megaphone">
             Pengumuman
         </x-nav-link-koor-ta>
     </div>

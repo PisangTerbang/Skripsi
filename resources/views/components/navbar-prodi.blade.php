@@ -6,7 +6,7 @@
         <x-nav-link-prodi route="prodi.dashboard" icon="home">
             Dashboard
         </x-nav-link-prodi>
-        <x-nav-link-prodi route="prodi.pengajuan.index" icon="document-text">
+        <x-nav-link-prodi route="prodi.pengajuan.index" match="prodi.pengajuan.*" icon="document-text">
             Review Pengajuan
         </x-nav-link-prodi>
         <x-nav-link-prodi route="prodi.monitoring" icon="eye">

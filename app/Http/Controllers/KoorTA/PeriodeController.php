@@ -34,8 +34,10 @@ class PeriodeController extends Controller
             'tanggal_selesai.after' => 'Tanggal selesai harus setelah tanggal mulai',
         ]);
 
+        $aktif = $request->boolean('is_active');
+
         // Jika set aktif, nonaktifkan periode lain dulu
-        if ($request->boolean('is_active')) {
+        if ($aktif) {
             DB::table('periode')->update(['is_active' => DB::raw('false')]);
         }
 
@@ -43,8 +45,13 @@ class PeriodeController extends Controller
             'nama' => $validated['nama'],
             'tanggal_buka' => $validated['tanggal_mulai'],
             'tanggal_tutup' => $validated['tanggal_selesai'],
-            'is_active' => DB::raw($request->boolean('is_active') ? 'true' : 'false'),
+            'is_active' => DB::raw($aktif ? 'true' : 'false'),
         ]);
+
+        // Mengaktifkan periode baru = mulai bersih: reset aktivitas (buka kembali semua judul).
+        if ($aktif) {
+            $this->resetAktivitasJudul();
+        }
 
         return redirect()->route('koor-ta.periode.index')
             ->with('success', 'Periode berhasil ditambahkan');
@@ -106,6 +113,12 @@ class PeriodeController extends Controller
                 'is_active' => DB::raw($wasActive ? 'false' : 'true'),
             ]);
 
+            // Mengaktifkan periode = ganti periode aktif → reset aktivitas (judul dibuka kembali).
+            // Data pengajuan periode lama tetap utuh sebagai riwayat.
+            if (!$wasActive) {
+                $this->resetAktivitasJudul();
+            }
+
             DB::commit();
 
             // ✅ fix: pakai $wasActive bukan $periode->is_active
@@ -117,5 +130,19 @@ class PeriodeController extends Controller
             DB::rollBack();
             return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Reset aktivitas saat ganti periode aktif:
+     * buka kembali semua judul yang sempat terkunci di periode sebelumnya
+     * sehingga mahasiswa bisa memilih/mengajukan lagi di periode baru.
+     * Data pengajuan periode lama TIDAK dihapus — tetap tersimpan sebagai riwayat.
+     */
+    private function resetAktivitasJudul(): void
+    {
+        DB::table('judul')->update([
+            'is_locked' => DB::raw('false'),
+            'updated_at' => now(),
+        ]);
     }
 }

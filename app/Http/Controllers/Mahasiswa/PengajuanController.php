@@ -17,6 +17,11 @@ class PengajuanController extends Controller
     {
         $mahasiswaId = Auth::id();
 
+        $periodeAktif = \App\Models\Periode::periodeAktif();
+        // Peminat dihitung hanya untuk periode aktif → ikut reset saat ganti periode.
+        $activePeriodeId = $periodeAktif?->id;
+        $diPeriodeAktif = fn($q) => $q->where('periode_id', $activePeriodeId);
+
         $judul = Judul::where('status_judul', 'ditawarkan')
             ->whereRaw('is_locked = false')
             ->with([
@@ -27,9 +32,9 @@ class PengajuanController extends Controller
                 }
             ])
             ->withCount([
-                'pengajuanPilihan1',
-                'pengajuanPilihan2',
-                'pengajuanPilihan3'
+                'pengajuanPilihan1' => $diPeriodeAktif,
+                'pengajuanPilihan2' => $diPeriodeAktif,
+                'pengajuanPilihan3' => $diPeriodeAktif,
             ])
             ->get()
             ->map(function ($item) {
@@ -39,15 +44,19 @@ class PengajuanController extends Controller
                 return $item;
             });
 
-        $periodeAktif = \App\Models\Periode::periodeAktif();
-
-        // Gate UI di-scope ke periode aktif: pengajuan periode lama (arsip) tidak menghalangi pengajuan baru.
+        // Gate per-periode: 1 pengajuan per periode apa pun statusnya (hasil dirahasiakan s/d pengumuman).
+        // Pengajuan periode lama (arsip) tidak menghalangi pengajuan di periode baru.
         $jumlahPengajuan = $periodeAktif
             ? Pengajuan::where('mahasiswa_id', $mahasiswaId)
                 ->where('periode_id', $periodeAktif->id)
-                ->whereIn('status', ['pending', 'disetujui'])
                 ->count()
             : 0;
+
+        // Periode yang pengumumannya sudah dikirim — hasil baru boleh dibuka ke mahasiswa.
+        $announcedPeriodes = DB::table('pengumuman')
+            ->whereNotNull('dikirim_at')
+            ->pluck('periode_id')
+            ->all();
 
         $pengajuanSaya = Pengajuan::where('mahasiswa_id', $mahasiswaId)
             ->pluck('judul_id')
@@ -93,7 +102,8 @@ class PengajuanController extends Controller
             'mySubmissions',
             'judulJson',
             'dosenList', // ✅ tambah ini
-            'periodeAktif'
+            'periodeAktif',
+            'announcedPeriodes'
         ))->with('title', 'Pengajuan Judul');
     }
 
@@ -109,15 +119,14 @@ class PengajuanController extends Controller
             return back()->with('error', 'Belum ada periode aktif. Pengajuan TA dibuka oleh Koordinator TA.');
         }
 
-        // Gate per-periode: 1 pengajuan aktif PER periode. Saat periode baru dibuka,
-        // pengajuan periode lama menjadi arsip sehingga mahasiswa dapat mengajukan kembali.
+        // Gate per-periode: 1 pengajuan per periode apa pun statusnya — hasil dirahasiakan s/d pengumuman,
+        // jadi tidak ada re-submit di periode yang sama. Periode baru (arsip) = bisa mengajukan kembali.
         $jumlahAktif = Pengajuan::where('mahasiswa_id', $mahasiswaId)
             ->where('periode_id', $periodeAktif->id)
-            ->whereIn('status', ['pending', 'disetujui'])
             ->count();
 
         if ($jumlahAktif > 0) {
-            return back()->with('error', 'Anda sudah mengajukan judul pada periode ini.');
+            return back()->with('error', 'Anda sudah mengajukan judul pada periode ini. Hasil akan diumumkan oleh Koordinator TA.');
         }
 
         $validated = $request->validate([
@@ -227,6 +236,7 @@ class PengajuanController extends Controller
             'judulDitetapkan',
             'reviewerKalab',
             'reviewerKaprodi',
+            'periode',
         ])
             ->where('mahasiswa_id', $mahasiswaId)
             ->latest()
@@ -243,6 +253,9 @@ class PengajuanController extends Controller
             $announced = in_array($p->periode_id, $announcedPeriodes);
             return [
                 'id' => $p->id,
+                'periode' => $p->periode
+                    ? ($p->periode->nama ?? trim(($p->periode->semester ?? '') . ' ' . ($p->periode->tahun_ajaran ?? '')))
+                    : '-',
                 'judul' => $p->jenis === 'pilih'
                     ? ($p->pilihan1->nama_judul ?? '-')
                     : ($p->judul_mandiri ?? '-'),

@@ -92,37 +92,11 @@ class Judul extends Model
     }
 
     /**
-     * Scope untuk judul yang tersedia untuk mahasiswa
-     */
-    public function scopeAvailable($query)
-    {
-        return $query->where('status', 'available')
-            ->whereRaw("is_available = true");
-    }
-
-    /**
      * Scope untuk judul berdasarkan laboratorium
      */
     public function scopeByLaboratorium($query, $labId)
     {
         return $query->where('laboratorium_id', $labId);
-    }
-
-    /**
-     * Scope untuk judul pending validasi Kepala Lab
-     */
-    public function scopePendingKalab($query)
-    {
-        return $query->where('status', 'pending_kalab');
-    }
-
-    /**
-     * Scope untuk judul yang sudah divalidasi Kalab
-     */
-    public function scopeValidatedByKalab($query)
-    {
-        return $query->whereIn('status', ['available', 'inactive'])
-            ->whereNotNull('reviewed_by_kalab');
     }
 
     // ========== ACCESSOR ==========
@@ -132,66 +106,31 @@ class Judul extends Model
      */
     public function getTotalPeminatAttribute()
     {
-        return $this->pengajuanPilihan1()->count()
-            + $this->pengajuanPilihan2()->count()
-            + $this->pengajuanPilihan3()->count();
+        // Peminat dihitung untuk PERIODE AKTIF saja → ikut reset tiap ganti periode.
+        $pid = Periode::periodeAktif()?->id;
+        if (!$pid) {
+            return 0;
+        }
+
+        return $this->pengajuanPilihan1()->where('periode_id', $pid)->count()
+            + $this->pengajuanPilihan2()->where('periode_id', $pid)->count()
+            + $this->pengajuanPilihan3()->where('periode_id', $pid)->count();
     }
 
     /**
-     * Jumlah yang sudah ditetapkan (final)
+     * Jumlah yang sudah ditetapkan (final) pada periode aktif
      */
     public function getJumlahDitetapkanAttribute()
     {
-        return $this->pengajuanDitetapkan()->count();
-    }
+        $pid = Periode::periodeAktif()?->id;
+        if (!$pid) {
+            return 0;
+        }
 
-    /**
-     * Status label untuk display
-     */
-    public function getStatusLabelAttribute()
-    {
-        return match ($this->status) {
-            'draft' => 'Draft',
-            'pending_kalab' => 'Menunggu Validasi Kepala Lab',
-            'available' => 'Tersedia',
-            'inactive' => 'Tidak Aktif',
-            default => 'Unknown'
-        };
+        return $this->pengajuanDitetapkan()->where('periode_id', $pid)->count();
     }
 
     // ========== METHODS ==========
-
-    /**
-     * Approve judul oleh Kepala Lab
-     */
-    public function approveByKalab($userId, $catatan = null)
-    {
-        // Kolom boolean PostgreSQL (is_available) ditulis via query builder + DB::raw
-        return DB::table('judul')->where('id', $this->id)->update([
-            'status' => 'available',
-            'is_available' => DB::raw('true'),
-            'catatan_kalab' => $catatan,
-            'reviewed_by_kalab' => $userId,
-            'reviewed_at_kalab' => now(),
-            'updated_at' => now(),
-        ]);
-    }
-
-    /**
-     * Reject judul oleh Kepala Lab (kembalikan ke draft)
-     */
-    public function rejectByKalab($userId, $catatan)
-    {
-        // Kolom boolean PostgreSQL (is_available) ditulis via query builder + DB::raw
-        return DB::table('judul')->where('id', $this->id)->update([
-            'status' => 'draft',
-            'is_available' => DB::raw('false'),
-            'catatan_kalab' => $catatan,
-            'reviewed_by_kalab' => $userId,
-            'reviewed_at_kalab' => now(),
-            'updated_at' => now(),
-        ]);
-    }
 
     /**
      * Generate kode judul untuk sebuah lab, mengikuti pola kode yang sudah ada

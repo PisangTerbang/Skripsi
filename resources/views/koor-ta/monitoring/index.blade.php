@@ -252,10 +252,10 @@
                                             <p class="font-bold text-gray-800">{{ $p->nama }}</p>
                                         </td>
                                         <td class="px-6 py-3 text-sm text-gray-600">
-                                            {{ \Carbon\Carbon::parse($p->tanggal_mulai)->format('d M Y') }}
+                                            {{ \Carbon\Carbon::parse($p->tanggal_buka)->format('d M Y') }}
                                         </td>
                                         <td class="px-6 py-3 text-sm text-gray-600">
-                                            {{ \Carbon\Carbon::parse($p->tanggal_selesai)->format('d M Y') }}
+                                            {{ \Carbon\Carbon::parse($p->tanggal_tutup)->format('d M Y') }}
                                         </td>
                                         <td class="px-6 py-3 text-center">
                                             <span

@@ -78,25 +78,30 @@
 
             <div class="space-y-4">
                 @foreach ($mySubmissions as $submission)
+                    @php
+                        // Hasil (disetujui/ditolak) dirahasiakan sampai pengumuman resmi periode-nya.
+                        $announced = in_array($submission->periode_id, $announcedPeriodes ?? []);
+                        $sStatus = $announced ? $submission->status : 'pending';
+                    @endphp
                     <div
                         class="overflow-hidden rounded-2xl border-2 shadow-md
-                        {{ $submission->status === 'pending' ? 'border-yellow-200' : ($submission->status === 'disetujui' ? 'border-emerald-200' : 'border-red-200') }}
+                        {{ $sStatus === 'pending' ? 'border-yellow-200' : ($sStatus === 'disetujui' ? 'border-emerald-200' : 'border-red-200') }}
                         bg-white">
 
                         {{-- Submission Header --}}
                         <div
                             class="flex items-center justify-between border-b-4 px-6 py-4
-                            {{ $submission->status === 'pending'
+                            {{ $sStatus === 'pending'
                                 ? 'border-yellow-200 bg-gradient-to-r from-yellow-500 to-orange-500'
-                                : ($submission->status === 'disetujui'
+                                : ($sStatus === 'disetujui'
                                     ? 'border-emerald-200 bg-gradient-to-r from-emerald-600 to-green-700'
                                     : 'border-red-200 bg-gradient-to-r from-red-600 to-rose-700') }}">
                             <div class="flex items-center gap-3">
                                 <div
                                     class="flex h-9 w-9 items-center justify-center rounded-xl border-2 border-white/30 bg-white/20">
-                                    @if ($submission->status === 'pending')
+                                    @if ($sStatus === 'pending')
                                         <x-heroicon-o-clock class="h-5 w-5 text-white" />
-                                    @elseif ($submission->status === 'disetujui')
+                                    @elseif ($sStatus === 'disetujui')
                                         <x-heroicon-o-check-circle class="h-5 w-5 text-white" />
                                     @else
                                         <x-heroicon-o-x-circle class="h-5 w-5 text-white" />
@@ -104,7 +109,7 @@
                                 </div>
                                 <div>
                                     <p class="font-extrabold text-white">
-                                        {{ $submission->status === 'pending' ? 'Menunggu Review' : ($submission->status === 'disetujui' ? 'Disetujui' : 'Ditolak') }}
+                                        {{ $sStatus === 'pending' ? 'Menunggu Review' : ($sStatus === 'disetujui' ? 'Disetujui' : 'Ditolak') }}
                                     </p>
                                     <p class="text-xs text-white/70">{{ $submission->created_at->diffForHumans() }}</p>
                                 </div>
@@ -160,7 +165,7 @@
                             </div>
 
                             {{-- Catatan Penolakan --}}
-                            @if ($submission->status === 'ditolak' && $submission->catatan)
+                            @if ($sStatus === 'ditolak' && $submission->catatan)
                                 <div class="rounded-xl border-2 border-red-200 bg-red-50 p-4">
                                     <p class="text-xs font-black uppercase tracking-widest text-red-500 mb-2">Catatan
                                         Penolakan</p>

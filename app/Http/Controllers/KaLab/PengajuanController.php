@@ -162,9 +162,11 @@ class PengajuanController extends Controller
             $judulId = $pengajuan->pilihan_3_id;
         }
 
-        // Cek apakah judul sudah diambil mahasiswa lain
+        // Cek apakah judul sudah diambil mahasiswa lain — hanya dalam periode yang sama.
+        // (Judul yang dipakai di periode lalu otomatis terbuka lagi di periode baru.)
         if ($judulId && $sumberJudul !== 'mandiri') {
             $sudahDiambil = Pengajuan::where('judul_ditetapkan_id', $judulId)
+                ->where('periode_id', $pengajuan->periode_id)
                 ->where('status_kalab', 'disetujui')
                 ->where('id', '!=', $pengajuan->id)
                 ->exists();

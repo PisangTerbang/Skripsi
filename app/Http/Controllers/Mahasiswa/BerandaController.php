@@ -13,6 +13,9 @@ class BerandaController extends Controller
     {
         $mahasiswaId = Auth::id();
 
+        // Progress & hero di-scope ke PERIODE AKTIF agar ikut reset saat ganti periode.
+        $activePeriodeId = \App\Models\Periode::periodeAktif()?->id;
+
         // Periode yang pengumumannya sudah dikirim — hasil resmi baru boleh dibuka ke mahasiswa.
         $announcedPeriodes = DB::table('pengumuman')
             ->whereNotNull('dikirim_at')
@@ -35,9 +38,13 @@ class BerandaController extends Controller
         $totalSemua = Pengajuan::count();
         $disetujuiSemua = Pengajuan::where('status', 'disetujui')->count();
 
-        $latestPengajuan = Pengajuan::where('mahasiswa_id', $mahasiswaId)
-            ->latest()
-            ->first();
+        // Hanya pengajuan di periode aktif yang menentukan progress — pengajuan periode lama ada di Riwayat.
+        $latestPengajuan = $activePeriodeId
+            ? Pengajuan::where('mahasiswa_id', $mahasiswaId)
+                ->where('periode_id', $activePeriodeId)
+                ->latest()
+                ->first()
+            : null;
 
         $sudahDiumumkan = $latestPengajuan
             && in_array($latestPengajuan->periode_id, $announcedPeriodes);
@@ -46,6 +53,7 @@ class BerandaController extends Controller
         $disetujui = $sudahDiumumkan
             ? Pengajuan::with('judulDitetapkan')
                 ->where('mahasiswa_id', $mahasiswaId)
+                ->where('periode_id', $activePeriodeId)
                 ->where('status', 'disetujui')
                 ->latest()
                 ->first()
@@ -108,9 +116,15 @@ class BerandaController extends Controller
             ->pluck('periode_id')
             ->all();
 
-        $latestPengajuan = Pengajuan::where('mahasiswa_id', $mahasiswaId)
-            ->latest()
-            ->first();
+        $activePeriodeId = \App\Models\Periode::periodeAktif()?->id;
+
+        // Progress di-scope ke periode aktif → ikut reset saat ganti periode.
+        $latestPengajuan = $activePeriodeId
+            ? Pengajuan::where('mahasiswa_id', $mahasiswaId)
+                ->where('periode_id', $activePeriodeId)
+                ->latest()
+                ->first()
+            : null;
 
         $sudahDiumumkan = $latestPengajuan
             && in_array($latestPengajuan->periode_id, $announcedPeriodes);
