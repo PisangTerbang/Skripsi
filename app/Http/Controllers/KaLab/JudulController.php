@@ -94,8 +94,6 @@ class JudulController extends Controller
                 'dosen' => $j->dosen->name ?? '-',
                 'lab' => $j->laboratorium->nama ?? '-',
                 'lab_id' => $j->laboratorium_id,
-                'status' => $j->status,
-                'is_available' => $j->is_available,
                 'status_judul' => $j->status_judul ?? 'draft',
                 'status_judul_label' => match ($j->status_judul ?? 'draft') {
                     'draft' => 'Draft',

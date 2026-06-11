@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\DB;
 
 class Judul extends Model
 {
@@ -21,8 +20,6 @@ class Judul extends Model
         'aktif',
         'is_locked',
         'status_judul',
-        'status',
-        'is_available',
         'catatan_kalab',           // BARU
         'reviewed_by_kalab',       // BARU
         'reviewed_at_kalab',       // BARU
@@ -31,7 +28,6 @@ class Judul extends Model
     protected $casts = [
         'aktif' => 'boolean',
         'is_locked' => 'boolean',
-        'is_available' => 'boolean',
         'reviewed_at_kalab' => 'datetime',
     ];
 

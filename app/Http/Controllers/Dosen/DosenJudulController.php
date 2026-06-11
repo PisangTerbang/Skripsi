@@ -95,7 +95,6 @@ class DosenJudulController extends Controller
             'deskripsi' => $validated['deskripsi'],
             'status_judul' => $ajukan ? 'pending_kalab' : 'draft',
             'aktif' => DB::raw('true'),
-            'is_available' => DB::raw('false'),
             'is_locked' => DB::raw('false'),
         ]);
 

@@ -19,9 +19,7 @@ class JudulSeeder extends Seeder
 
         $template = [
             'aktif' => DB::raw('true'),   // ✅ PostgreSQL boolean
-            'is_available' => DB::raw('true'),
             'is_locked' => DB::raw('false'),
-            'status' => 'available',
             'status_judul' => 'ditawarkan',
             'catatan_kalab' => null,
             'catatan_penting' => null,
