@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Dosen;
 
 use App\Http\Controllers\Controller;
 use App\Models\Pengajuan;
+use App\Models\Periode;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class DosenPengajuanController extends Controller
@@ -11,17 +13,28 @@ class DosenPengajuanController extends Controller
     /**
      * Halaman VIEW-ONLY: dosen memantau pengajuan yang melibatkan judulnya.
      * Keputusan (setuju/tolak) ada di Ka Lab -> Prodi, BUKAN dosen.
+     *
+     * Sesuai prinsip "semua aktivitas dinaungi 1 periode aktif": default tampilan
+     * di-scope ke periode aktif, tapi dosen bisa memilih periode lain (atau "semua")
+     * lewat filter untuk menelusuri data lama (riwayat).
      */
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
         $dosenId = $user->id;
+
+        // Daftar periode untuk dropdown filter + periode aktif sebagai default.
+        $periodeList = Periode::orderBy('created_at', 'desc')->get();
+        $aktifId = Periode::periodeAktif()?->id;
+        // Default ke periode aktif; jika belum ada periode aktif, tampilkan semua (riwayat).
+        $selectedPeriode = $request->get('periode_id') ?? ($aktifId ? (string) $aktifId : 'semua');
 
         // Pengajuan yang melibatkan dosen ini:
         // - judul mandiri yang menunjuk dosen ini sebagai pembimbing, ATAU
         // - memilih salah satu judul milik dosen ini sebagai pilihan 1/2/3.
         $pengajuan = Pengajuan::with([
             'mahasiswa',
+            'periode',
             'pilihan1.laboratorium',
             'pilihan1.dosen',
             'pilihan2.laboratorium',
@@ -29,6 +42,7 @@ class DosenPengajuanController extends Controller
             'pilihan3.laboratorium',
             'pilihan3.dosen',
         ])
+            ->when($selectedPeriode !== 'semua', fn($q) => $q->where('periode_id', $selectedPeriode))
             ->where(function ($q) use ($dosenId) {
                 $q->where(function ($qm) use ($dosenId) {
                     $qm->where('jenis', 'mandiri')
@@ -100,6 +114,7 @@ class DosenPengajuanController extends Controller
                         'alasan' => $p->match_alasan,
                         'catatan_dosen' => $p->catatan_dosen ?? '',
                         'waktu' => $p->created_at->diffForHumans(),
+                        'periode' => $p->periode->nama ?? trim(($p->periode->semester ?? '') . ' ' . ($p->periode->tahun_ajaran ?? '')) ?: '-',
                         'status_kaprodi' => $p->status_kaprodi ?? '',
                     ];
                 })->values(),
@@ -112,6 +127,9 @@ class DosenPengajuanController extends Controller
             'pending' => $pending,
             'disetujui' => $disetujui,
             'ditolak' => $ditolak,
+            'periodeList' => $periodeList,
+            'selectedPeriode' => $selectedPeriode,
+            'aktifId' => $aktifId,
             'title' => 'Pengajuan Mahasiswa',
         ]);
     }

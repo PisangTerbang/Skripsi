@@ -51,6 +51,7 @@ class PeriodeController extends Controller
         // Periode baru belum punya pengajuan → sinkronisasi membuka semua judul (mulai bersih).
         if ($aktif) {
             $this->sinkronkanKunciJudul($periode->id);
+            $this->bersihkanNotifikasi();
         }
 
         return redirect()->route('koor-ta.periode.index')
@@ -118,6 +119,7 @@ class PeriodeController extends Controller
             // judul yang dulu ditetapkan di periode itu terkunci kembali (bukan terbuka).
             if (!$wasActive) {
                 $this->sinkronkanKunciJudul($periode->id);
+                $this->bersihkanNotifikasi();
             }
 
             DB::commit();
@@ -173,5 +175,19 @@ class PeriodeController extends Controller
                     'updated_at' => now(),
                 ]);
         }
+    }
+
+    /**
+     * Bersihkan notifikasi saat ganti periode aktif.
+     *
+     * Notifikasi (aktivitas) bersifat transient — milik aktivitas periode yang
+     * baru berakhir — jadi ikut "reset" agar lonceng semua pengguna mulai bersih
+     * di periode baru. Riwayat resmi tetap aman di pengajuan/pengumuman/judul_logs,
+     * dan data lama bisa ditelusuri lewat filter periode (monitoring koor_ta,
+     * riwayat dosen).
+     */
+    private function bersihkanNotifikasi(): void
+    {
+        DB::table('aktivitas')->delete();
     }
 }

@@ -170,6 +170,20 @@
                 </div>
 
                 <div class="flex flex-wrap items-center gap-3">
+                    {{-- Periode Filter (server-side / riwayat) --}}
+                    <form method="GET" class="flex items-center gap-2 rounded-2xl border-2 border-indigo-200 bg-white px-3 py-1.5 shadow-sm">
+                        <x-heroicon-o-calendar-days class="h-4 w-4 shrink-0 text-indigo-500" />
+                        <select name="periode_id" onchange="this.form.submit()"
+                            class="bg-transparent text-xs font-bold text-gray-700 focus:outline-none cursor-pointer pr-1">
+                            <option value="semua" @selected($selectedPeriode === 'semua')>Semua Periode</option>
+                            @foreach ($periodeList as $per)
+                                <option value="{{ $per->id }}" @selected((string) $selectedPeriode === (string) $per->id)>
+                                    {{ $per->nama ?? trim(($per->semester ?? '') . ' ' . ($per->tahun_ajaran ?? '')) }}{{ $per->id === $aktifId ? ' (Aktif)' : '' }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </form>
+
                     {{-- Status Filter Pills --}}
                     <div class="flex items-center gap-1 rounded-2xl border-2 border-gray-200 bg-white p-1.5 shadow-sm">
                         @foreach ([
@@ -333,6 +347,11 @@
                                                             class="font-black text-blue-600">(Utama)</span>
                                                         <span x-show="item.prioritas">•</span>
                                                         <span x-text="item.waktu"></span>
+                                                        <span x-show="item.periode"
+                                                            class="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 font-bold text-indigo-600">
+                                                            <x-heroicon-o-calendar-days class="h-3 w-3" />
+                                                            <span x-text="item.periode"></span>
+                                                        </span>
                                                     </div>
                                                 </div>
                                             </div>
