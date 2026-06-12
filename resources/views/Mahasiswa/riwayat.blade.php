@@ -277,15 +277,24 @@
 
                                             {{-- Details --}}
                                             <div class="space-y-3">
-                                                {{-- Judul Ditetapkan --}}
-                                                <div x-show="item.judul_ditetapkan">
+                                                {{-- Judul Diterima (mencakup usulan mandiri) --}}
+                                                <div x-show="item.judul_diterima">
                                                     <div
                                                         class="rounded-xl border-2 border-emerald-300 bg-gradient-to-r from-emerald-50 to-green-50 px-4 py-3">
-                                                        <p
-                                                            class="text-xs font-black uppercase tracking-widest text-emerald-500 mb-1">
-                                                            ✓ Judul Ditetapkan</p>
+                                                        <div class="flex items-center justify-between gap-2 mb-1">
+                                                            <p
+                                                                class="text-xs font-black uppercase tracking-widest text-emerald-500">
+                                                                ✓ Judul Diterima</p>
+                                                            <span x-show="item.judul_diterima_sumber_label"
+                                                                class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-black"
+                                                                x-bind:class="item.judul_diterima_sumber === 'mandiri'
+                                                                    ?
+                                                                    'border-violet-200 bg-violet-100 text-violet-700' :
+                                                                    'border-emerald-200 bg-emerald-100 text-emerald-700'"
+                                                                x-text="'dari ' + item.judul_diterima_sumber_label"></span>
+                                                        </div>
                                                         <p class="text-sm font-black text-gray-800 leading-relaxed"
-                                                            x-text="item.judul_ditetapkan"></p>
+                                                            x-text="item.judul_diterima"></p>
                                                     </div>
                                                 </div>
 
@@ -301,8 +310,13 @@
                                                             <span
                                                                 class="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-violet-600 text-[10px] font-black text-white">M</span>
                                                             <div class="flex-1 min-w-0">
-                                                                <p class="text-sm font-bold text-gray-800 leading-relaxed"
-                                                                    x-text="item.judul_mandiri"></p>
+                                                                <div class="flex flex-wrap items-center gap-2">
+                                                                    <p class="text-sm font-bold text-gray-800 leading-relaxed"
+                                                                        x-text="item.judul_mandiri"></p>
+                                                                    <span x-show="item.judul_diterima_sumber === 'mandiri'"
+                                                                        class="inline-flex shrink-0 items-center gap-1 rounded-full border border-emerald-300 bg-emerald-100 px-2 py-0.5 text-[10px] font-black text-emerald-700">✓
+                                                                        Diterima</span>
+                                                                </div>
                                                                 <div x-show="item.deskripsi_mandiri"
                                                                     class="mt-1.5 rounded-lg bg-white border border-violet-100 px-2 py-1">
                                                                     <p class="text-xs text-gray-500 italic"
@@ -326,8 +340,13 @@
                                                                 <span
                                                                     class="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-[10px] font-black text-white">1</span>
                                                                 <div class="flex-1 min-w-0">
-                                                                    <p class="text-sm font-bold text-gray-800 leading-relaxed"
-                                                                        x-text="item.pilihan1?.judul"></p>
+                                                                    <div class="flex flex-wrap items-center gap-2">
+                                                                        <p class="text-sm font-bold text-gray-800 leading-relaxed"
+                                                                            x-text="item.pilihan1?.judul"></p>
+                                                                        <span x-show="item.judul_diterima_sumber === 'pilihan_1'"
+                                                                            class="inline-flex shrink-0 items-center gap-1 rounded-full border border-emerald-300 bg-emerald-100 px-2 py-0.5 text-[10px] font-black text-emerald-700">✓
+                                                                            Diterima</span>
+                                                                    </div>
                                                                     <div
                                                                         class="mt-1 flex flex-wrap gap-2 text-xs text-gray-500">
                                                                         <span x-text="item.pilihan1?.dosen"></span>
@@ -351,8 +370,13 @@
                                                                 <span
                                                                     class="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-sky-600 text-[10px] font-black text-white">2</span>
                                                                 <div class="flex-1 min-w-0">
-                                                                    <p class="text-sm font-bold text-gray-800 leading-relaxed"
-                                                                        x-text="item.pilihan2?.judul"></p>
+                                                                    <div class="flex flex-wrap items-center gap-2">
+                                                                        <p class="text-sm font-bold text-gray-800 leading-relaxed"
+                                                                            x-text="item.pilihan2?.judul"></p>
+                                                                        <span x-show="item.judul_diterima_sumber === 'pilihan_2'"
+                                                                            class="inline-flex shrink-0 items-center gap-1 rounded-full border border-emerald-300 bg-emerald-100 px-2 py-0.5 text-[10px] font-black text-emerald-700">✓
+                                                                            Diterima</span>
+                                                                    </div>
                                                                     <div
                                                                         class="mt-1 flex flex-wrap gap-2 text-xs text-gray-500">
                                                                         <span x-text="item.pilihan2?.dosen"></span>
@@ -376,8 +400,13 @@
                                                                 <span
                                                                     class="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-violet-600 text-[10px] font-black text-white">3</span>
                                                                 <div class="flex-1 min-w-0">
-                                                                    <p class="text-sm font-bold text-gray-800 leading-relaxed"
-                                                                        x-text="item.pilihan3?.judul"></p>
+                                                                    <div class="flex flex-wrap items-center gap-2">
+                                                                        <p class="text-sm font-bold text-gray-800 leading-relaxed"
+                                                                            x-text="item.pilihan3?.judul"></p>
+                                                                        <span x-show="item.judul_diterima_sumber === 'pilihan_3'"
+                                                                            class="inline-flex shrink-0 items-center gap-1 rounded-full border border-emerald-300 bg-emerald-100 px-2 py-0.5 text-[10px] font-black text-emerald-700">✓
+                                                                            Diterima</span>
+                                                                    </div>
                                                                     <div
                                                                         class="mt-1 flex flex-wrap gap-2 text-xs text-gray-500">
                                                                         <span x-text="item.pilihan3?.dosen"></span>
@@ -650,22 +679,35 @@
                         </div>
                     </div>
 
-                    {{-- Judul Ditetapkan --}}
-                    <div x-show="selectedItem.judul_ditetapkan">
+                    {{-- Judul Diterima (mencakup usulan mandiri) --}}
+                    <div x-show="selectedItem.judul_diterima">
                         <div
                             class="rounded-xl border-2 border-emerald-300 bg-gradient-to-r from-emerald-50 to-green-50 px-4 py-3">
-                            <p class="text-xs font-black uppercase tracking-widest text-emerald-500 mb-1">✓ Judul
-                                Ditetapkan</p>
+                            <div class="flex items-center justify-between gap-2 mb-1">
+                                <p class="text-xs font-black uppercase tracking-widest text-emerald-500">✓ Judul
+                                    Diterima</p>
+                                <span x-show="selectedItem.judul_diterima_sumber_label"
+                                    class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-black"
+                                    x-bind:class="selectedItem.judul_diterima_sumber === 'mandiri'
+                                        ? 'border-violet-200 bg-violet-100 text-violet-700' :
+                                        'border-emerald-200 bg-emerald-100 text-emerald-700'"
+                                    x-text="'dari ' + selectedItem.judul_diterima_sumber_label"></span>
+                            </div>
                             <p class="text-sm font-black text-gray-800 leading-relaxed"
-                                x-text="selectedItem.judul_ditetapkan"></p>
+                                x-text="selectedItem.judul_diterima"></p>
                         </div>
                     </div>
 
                     {{-- Judul Mandiri --}}
                     <div x-show="selectedItem.judul_mandiri">
                         <div class="rounded-xl border-2 border-violet-200 bg-violet-50 px-4 py-3">
-                            <p class="text-xs font-black uppercase tracking-widest text-violet-500 mb-1">Usulan Judul
-                                Mandiri</p>
+                            <div class="flex items-center justify-between gap-2 mb-1">
+                                <p class="text-xs font-black uppercase tracking-widest text-violet-500">Usulan Judul
+                                    Mandiri</p>
+                                <span x-show="selectedItem.judul_diterima_sumber === 'mandiri'"
+                                    class="inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-emerald-100 px-2 py-0.5 text-[10px] font-black text-emerald-700">✓
+                                    Diterima</span>
+                            </div>
                             <p class="text-sm font-bold text-gray-800 leading-relaxed"
                                 x-text="selectedItem.judul_mandiri"></p>
                             <p x-show="selectedItem.deskripsi_mandiri"
@@ -685,8 +727,13 @@
                                     <span
                                         class="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-[10px] font-black text-white">1</span>
                                     <div class="flex-1 min-w-0">
-                                        <p class="text-sm font-bold text-gray-800 leading-relaxed"
-                                            x-text="selectedItem.pilihan1?.judul"></p>
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            <p class="text-sm font-bold text-gray-800 leading-relaxed"
+                                                x-text="selectedItem.pilihan1?.judul"></p>
+                                            <span x-show="selectedItem.judul_diterima_sumber === 'pilihan_1'"
+                                                class="inline-flex shrink-0 items-center gap-1 rounded-full border border-emerald-300 bg-emerald-100 px-2 py-0.5 text-[10px] font-black text-emerald-700">✓
+                                                Diterima</span>
+                                        </div>
                                         <div class="mt-1 flex flex-wrap gap-2 text-xs text-gray-500">
                                             <span x-text="selectedItem.pilihan1?.dosen"></span>
                                             <span
@@ -710,8 +757,13 @@
                                     <span
                                         class="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-sky-600 text-[10px] font-black text-white">2</span>
                                     <div class="flex-1 min-w-0">
-                                        <p class="text-sm font-bold text-gray-800 leading-relaxed"
-                                            x-text="selectedItem.pilihan2?.judul"></p>
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            <p class="text-sm font-bold text-gray-800 leading-relaxed"
+                                                x-text="selectedItem.pilihan2?.judul"></p>
+                                            <span x-show="selectedItem.judul_diterima_sumber === 'pilihan_2'"
+                                                class="inline-flex shrink-0 items-center gap-1 rounded-full border border-emerald-300 bg-emerald-100 px-2 py-0.5 text-[10px] font-black text-emerald-700">✓
+                                                Diterima</span>
+                                        </div>
                                         <div class="mt-1 flex flex-wrap gap-2 text-xs text-gray-500">
                                             <span x-text="selectedItem.pilihan2?.dosen"></span>
                                             <span
@@ -735,8 +787,13 @@
                                     <span
                                         class="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-violet-600 text-[10px] font-black text-white">3</span>
                                     <div class="flex-1 min-w-0">
-                                        <p class="text-sm font-bold text-gray-800 leading-relaxed"
-                                            x-text="selectedItem.pilihan3?.judul"></p>
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            <p class="text-sm font-bold text-gray-800 leading-relaxed"
+                                                x-text="selectedItem.pilihan3?.judul"></p>
+                                            <span x-show="selectedItem.judul_diterima_sumber === 'pilihan_3'"
+                                                class="inline-flex shrink-0 items-center gap-1 rounded-full border border-emerald-300 bg-emerald-100 px-2 py-0.5 text-[10px] font-black text-emerald-700">✓
+                                                Diterima</span>
+                                        </div>
                                         <div class="mt-1 flex flex-wrap gap-2 text-xs text-gray-500">
                                             <span x-text="selectedItem.pilihan3?.dosen"></span>
                                             <span

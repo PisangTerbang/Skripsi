@@ -251,6 +251,35 @@ class PengajuanController extends Controller
         $pengajuanJson = $pengajuan->map(function ($p) use ($announcedPeriodes) {
             // Hasil (keputusan Ka Lab/Prodi & judul ditetapkan) dirahasiakan sampai pengumuman resmi.
             $announced = in_array($p->periode_id, $announcedPeriodes);
+
+            // Judul yang DITERIMA — tangani dua sumber:
+            //  1) judul katalog (judul_ditetapkan_id terisi) → cocokkan ke pilihan ke-berapa.
+            //  2) usulan mandiri (judul_ditetapkan_id null tapi jenis mandiri & disetujui).
+            $judulDiterima = null;
+            $sumberDiterima = null;
+            if ($announced && $p->status === 'disetujui') {
+                if ($p->judul_ditetapkan_id) {
+                    $judulDiterima = $p->judulDitetapkan->nama_judul ?? $p->judulDitetapkan->judul ?? '-';
+                    $sumberDiterima = match (true) {
+                        $p->judul_ditetapkan_id == $p->pilihan_1_id => 'pilihan_1',
+                        $p->judul_ditetapkan_id == $p->pilihan_2_id => 'pilihan_2',
+                        $p->judul_ditetapkan_id == $p->pilihan_3_id => 'pilihan_3',
+                        default => 'lain',
+                    };
+                } elseif ($p->jenis === 'mandiri' && $p->judul_mandiri) {
+                    $judulDiterima = $p->judul_mandiri;
+                    $sumberDiterima = 'mandiri';
+                }
+            }
+            $sumberLabel = match ($sumberDiterima) {
+                'mandiri' => 'Usulan Mandiri',
+                'pilihan_1' => 'Pilihan ke-1',
+                'pilihan_2' => 'Pilihan ke-2',
+                'pilihan_3' => 'Pilihan ke-3',
+                'lain' => 'Judul lain',
+                default => null,
+            };
+
             return [
                 'id' => $p->id,
                 'periode' => $p->periode
@@ -301,6 +330,10 @@ class PengajuanController extends Controller
                 'judul_ditetapkan' => $announced && $p->judulDitetapkan
                     ? ($p->judulDitetapkan->nama_judul ?? $p->judulDitetapkan->judul ?? '-')
                     : null,
+                // Judul diterima (mencakup usulan mandiri) + dari sumber/pilihan mana.
+                'judul_diterima' => $judulDiterima,
+                'judul_diterima_sumber' => $sumberDiterima,
+                'judul_diterima_sumber_label' => $sumberLabel,
                 'reviewer_kalab' => $announced ? ($p->reviewerKalab->name ?? null) : null,
                 'reviewer_kaprodi' => $announced ? ($p->reviewerKaprodi->name ?? null) : null,
                 'sudah_diumumkan' => $announced,
