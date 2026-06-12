@@ -338,7 +338,15 @@
                     </div>
                     <div class="p-6">
                         <div class="relative h-[280px]">
-                            <canvas id="donutChart"></canvas>
+                            @if ($total > 0)
+                                <canvas id="donutChart"></canvas>
+                            @else
+                                <div class="flex h-full flex-col items-center justify-center text-center">
+                                    <x-heroicon-o-inbox class="h-12 w-12 text-gray-300" />
+                                    <p class="mt-3 text-sm font-semibold text-gray-400">Belum ada pengajuan pada periode
+                                        aktif</p>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -530,9 +538,10 @@
 
     {{-- ===== CHART SCRIPTS ===== --}}
     @push('scripts')
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        {{-- Chart.js sudah dimuat di layout-dosen; tak perlu load ulang. --}}
         <script>
-            // Donut Chart
+            // Donut Chart — hanya jika ada data (cegah canvas kosong & error null element)
+            @if ($total > 0)
             new Chart(document.getElementById('donutChart'), {
                 type: 'doughnut',
                 data: {
@@ -564,6 +573,7 @@
                     }
                 }
             });
+            @endif
 
             // Tren Pengajuan
             new Chart(document.getElementById('trenChart'), {
@@ -571,7 +581,7 @@
                 data: {
                     labels: [
                         @foreach ($trenPengajuan as $t)
-                            "{{ $t->semester }} {{ $t->tahun_ajaran }}",
+                            "{{ $t->nama }}",
                         @endforeach
                     ],
                     datasets: [{
@@ -633,7 +643,7 @@
                 data: {
                     labels: [
                         @foreach ($trenKeputusan as $t)
-                            "{{ $t->semester }} {{ $t->tahun_ajaran }}",
+                            "{{ $t->nama }}",
                         @endforeach
                     ],
                     datasets: [{

@@ -34,26 +34,26 @@ class DosenDashboardController extends Controller
         $persenTolak = round(($ditolak / $totalSemua) * 100);
 
         // ================= TREN PENGAJUAN =================
+        // Group per periode pakai 'nama' (kolom yang terisi); semester/tahun_ajaran
+        // legacy & NULL sehingga dulu semua periode kolaps jadi satu label kosong.
         $trenPengajuan = Periode::select(
-            'semester',
-            'tahun_ajaran',
+            'periode.nama',
             DB::raw('count(pengajuan.id) as total')
         )
             ->leftJoin('pengajuan', 'periode.id', '=', 'pengajuan.periode_id')
-            ->groupBy('semester', 'tahun_ajaran')
-            ->orderBy('tahun_ajaran')
+            ->groupBy('periode.id', 'periode.nama')
+            ->orderBy('periode.id')
             ->get();
 
         // ================= TREN KEPUTUSAN =================
         $trenKeputusan = Periode::select(
-            'semester',
-            'tahun_ajaran',
+            'periode.nama',
             DB::raw("count(case when pengajuan.status = 'disetujui' then 1 end) as disetujui"),
             DB::raw("count(case when pengajuan.status = 'ditolak' then 1 end) as ditolak")
         )
             ->leftJoin('pengajuan', 'periode.id', '=', 'pengajuan.periode_id')
-            ->groupBy('semester', 'tahun_ajaran')
-            ->orderBy('tahun_ajaran')
+            ->groupBy('periode.id', 'periode.nama')
+            ->orderBy('periode.id')
             ->get();
 
         // ================= LAB STATS =================
