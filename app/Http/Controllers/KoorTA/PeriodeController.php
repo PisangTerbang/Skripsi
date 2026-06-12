@@ -41,16 +41,16 @@ class PeriodeController extends Controller
             DB::table('periode')->update(['is_active' => DB::raw('false')]);
         }
 
-        Periode::create([
+        $periode = Periode::create([
             'nama' => $validated['nama'],
             'tanggal_buka' => $validated['tanggal_mulai'],
             'tanggal_tutup' => $validated['tanggal_selesai'],
             'is_active' => DB::raw($aktif ? 'true' : 'false'),
         ]);
 
-        // Mengaktifkan periode baru = mulai bersih: reset aktivitas (buka kembali semua judul).
+        // Periode baru belum punya pengajuan → sinkronisasi membuka semua judul (mulai bersih).
         if ($aktif) {
-            $this->resetAktivitasJudul();
+            $this->sinkronkanKunciJudul($periode->id);
         }
 
         return redirect()->route('koor-ta.periode.index')
@@ -113,10 +113,11 @@ class PeriodeController extends Controller
                 'is_active' => DB::raw($wasActive ? 'false' : 'true'),
             ]);
 
-            // Mengaktifkan periode = ganti periode aktif → reset aktivitas (judul dibuka kembali).
-            // Data pengajuan periode lama tetap utuh sebagai riwayat.
+            // Mengaktifkan periode → sinkronkan kunci judul SESUAI data periode ini.
+            // Periode baru: semua judul terbuka. Periode lama diaktifkan ulang:
+            // judul yang dulu ditetapkan di periode itu terkunci kembali (bukan terbuka).
             if (!$wasActive) {
-                $this->resetAktivitasJudul();
+                $this->sinkronkanKunciJudul($periode->id);
             }
 
             DB::commit();
@@ -133,16 +134,44 @@ class PeriodeController extends Controller
     }
 
     /**
-     * Reset aktivitas saat ganti periode aktif:
-     * buka kembali semua judul yang sempat terkunci di periode sebelumnya
-     * sehingga mahasiswa bisa memilih/mengajukan lagi di periode baru.
-     * Data pengajuan periode lama TIDAK dihapus — tetap tersimpan sebagai riwayat.
+     * Sinkronkan status kunci judul dengan SATU periode aktif.
+     *
+     * Kunci judul (is_locked) bersifat global, tetapi maknanya "judul ini sudah
+     * ditetapkan ke mahasiswa pada periode aktif". Jadi saat periode aktif berganti,
+     * kunci harus DIHITUNG ULANG dari data periode tsb — bukan asal dibuka semua:
+     *  - Periode baru (belum ada pengajuan) → semua judul terbuka (mulai bersih).
+     *  - Periode lama diaktifkan ulang → judul yang dulu ditetapkan-final di periode
+     *    itu terkunci kembali, sehingga riwayat penetapannya tidak hilang.
+     *
+     * Judul dianggap terkunci bila ada pengajuan periode tsb yang final disetujui
+     * (status='disetujui') dan menetapkan judul itu (judul_ditetapkan_id) — sama
+     * persis kondisi saat is_locked di-set true oleh approveByKaprodi().
+     * Data pengajuan periode mana pun TIDAK pernah dihapus.
      */
-    private function resetAktivitasJudul(): void
+    private function sinkronkanKunciJudul(int $periodeAktifId): void
     {
+        // Buka semua judul dulu.
         DB::table('judul')->update([
             'is_locked' => DB::raw('false'),
             'updated_at' => now(),
         ]);
+
+        // Kunci kembali judul yang sudah ditetapkan-final pada periode aktif ini.
+        $judulTerkunci = DB::table('pengajuan')
+            ->where('periode_id', $periodeAktifId)
+            ->where('status', 'disetujui')
+            ->whereNotNull('judul_ditetapkan_id')
+            ->pluck('judul_ditetapkan_id')
+            ->unique()
+            ->all();
+
+        if (!empty($judulTerkunci)) {
+            DB::table('judul')
+                ->whereIn('id', $judulTerkunci)
+                ->update([
+                    'is_locked' => DB::raw('true'),
+                    'updated_at' => now(),
+                ]);
+        }
     }
 }
