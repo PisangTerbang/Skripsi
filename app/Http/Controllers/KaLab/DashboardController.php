@@ -65,6 +65,28 @@ class DashboardController extends Controller
             'ditetapkan' => Pengajuan::where('periode_id', $pid)->whereNotNull('judul_ditetapkan_id')->count(),
         ];
 
+        // ========== DATA GRAFIK (lintas periode) ==========
+        // Tren pengajuan masuk per periode.
+        $trenPengajuan = \App\Models\Periode::select(
+            'periode.nama',
+            DB::raw('count(pengajuan.id) as total')
+        )
+            ->leftJoin('pengajuan', 'periode.id', '=', 'pengajuan.periode_id')
+            ->groupBy('periode.id', 'periode.nama')
+            ->orderBy('periode.id')
+            ->get();
+
+        // Tren keputusan validasi Ka Lab per periode (berdasarkan status_kalab).
+        $trenKeputusan = \App\Models\Periode::select(
+            'periode.nama',
+            DB::raw("count(case when pengajuan.status_kalab = 'disetujui' then 1 end) as disetujui"),
+            DB::raw("count(case when pengajuan.status_kalab = 'ditolak' then 1 end) as ditolak")
+        )
+            ->leftJoin('pengajuan', 'periode.id', '=', 'pengajuan.periode_id')
+            ->groupBy('periode.id', 'periode.nama')
+            ->orderBy('periode.id')
+            ->get();
+
         // ========== AKTIVITAS TERBARU (5 terakhir) ==========
         $recentActivities = DB::table('judul_logs')
             ->join('judul', 'judul_logs.judul_id', '=', 'judul.id')
@@ -113,6 +135,8 @@ class DashboardController extends Controller
             'recentActivities',
             'judulPerluValidasi',
             'pengajuanPerluReview',
+            'trenPengajuan',
+            'trenKeputusan',
             'title'
         ));
     }

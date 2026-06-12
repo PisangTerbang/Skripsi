@@ -241,6 +241,75 @@
                 </div>
 
             </div>
+
+            {{-- ===== SECTION: VISUALISASI DATA ===== --}}
+            @php
+                $totalJudulChart = $stats['draft'] + $stats['pending_kalab'] + $stats['ditawarkan'] + $stats['ditolak_kalab'];
+            @endphp
+            <div class="flex items-center gap-3">
+                <div class="h-px flex-1 bg-gradient-to-r from-transparent to-gray-200"></div>
+                <span
+                    class="flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-bold uppercase tracking-widest text-gray-400 shadow-sm">
+                    <x-heroicon-o-chart-bar class="h-3 w-3" />
+                    Visualisasi Data
+                </span>
+                <div class="h-px flex-1 bg-gradient-to-l from-transparent to-gray-200"></div>
+            </div>
+
+            <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                {{-- Donut: Distribusi Status Judul --}}
+                <div class="overflow-hidden rounded-2xl border-2 border-gray-200 bg-white shadow-md">
+                    <div class="flex items-center gap-3 border-b-4 border-sky-200 bg-gradient-to-r from-sky-600 to-blue-700 px-6 py-4">
+                        <div class="flex h-9 w-9 items-center justify-center rounded-xl border-2 border-white/30 bg-white/20">
+                            <x-heroicon-o-chart-pie class="h-5 w-5 text-white" />
+                        </div>
+                        <h3 class="font-extrabold text-white">Distribusi Status Judul</h3>
+                    </div>
+                    <div class="p-6">
+                        <div class="relative h-[280px]">
+                            @if ($totalJudulChart > 0)
+                                <canvas id="judulDonut"></canvas>
+                            @else
+                                <div class="flex h-full flex-col items-center justify-center text-center">
+                                    <x-heroicon-o-inbox class="h-12 w-12 text-gray-300" />
+                                    <p class="mt-3 text-sm font-semibold text-gray-400">Belum ada judul</p>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Line: Tren Pengajuan Masuk --}}
+                <div class="overflow-hidden rounded-2xl border-2 border-gray-200 bg-white shadow-md">
+                    <div class="flex items-center gap-3 border-b-4 border-indigo-200 bg-gradient-to-r from-indigo-600 to-blue-700 px-6 py-4">
+                        <div class="flex h-9 w-9 items-center justify-center rounded-xl border-2 border-white/30 bg-white/20">
+                            <x-heroicon-o-arrow-trending-up class="h-5 w-5 text-white" />
+                        </div>
+                        <h3 class="font-extrabold text-white">Tren Pengajuan Masuk</h3>
+                    </div>
+                    <div class="p-6">
+                        <div class="relative h-[280px]">
+                            <canvas id="trenPengajuanChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Bar: Tren Keputusan Validasi --}}
+            <div class="overflow-hidden rounded-2xl border-2 border-gray-200 bg-white shadow-md">
+                <div class="flex items-center gap-3 border-b-4 border-emerald-200 bg-gradient-to-r from-emerald-600 to-teal-700 px-6 py-4">
+                    <div class="flex h-9 w-9 items-center justify-center rounded-xl border-2 border-white/30 bg-white/20">
+                        <x-heroicon-o-chart-bar class="h-5 w-5 text-white" />
+                    </div>
+                    <h3 class="font-extrabold text-white">Tren Keputusan Validasi (per Periode)</h3>
+                </div>
+                <div class="p-6">
+                    <div class="relative h-[300px]">
+                        <canvas id="trenKeputusanChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
             {{-- ===== SECTION: QUICK ACCESS ===== --}}
             <div class="flex items-center gap-3">
                 <div class="h-px flex-1 bg-gradient-to-r from-transparent to-gray-200"></div>
@@ -596,6 +665,181 @@
             }
             setInterval(updateClock, 1000);
             updateClock();
+        </script>
+
+        {{-- ===== CHARTS ===== --}}
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+            const chartFont = {
+                size: 11
+            };
+
+            // Donut: Distribusi Status Judul
+            @if ($totalJudulChart > 0)
+                new Chart(document.getElementById('judulDonut'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Draft', 'Pending Validasi', 'Ditawarkan', 'Ditolak'],
+                        datasets: [{
+                            data: [{{ $stats['draft'] }}, {{ $stats['pending_kalab'] }}, {{ $stats['ditawarkan'] }}, {{ $stats['ditolak_kalab'] }}],
+                            backgroundColor: ['#94a3b8', '#fbbf24', '#10b981', '#ef4444'],
+                            borderWidth: 0,
+                            hoverOffset: 8,
+                        }]
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        responsive: true,
+                        cutout: '70%',
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 16,
+                                    font: {
+                                        size: 12,
+                                        weight: 'bold'
+                                    },
+                                    usePointStyle: true,
+                                    pointStyleWidth: 10
+                                }
+                            }
+                        }
+                    }
+                });
+            @endif
+
+            // Line: Tren Pengajuan Masuk
+            new Chart(document.getElementById('trenPengajuanChart'), {
+                type: 'line',
+                data: {
+                    labels: [
+                        @foreach ($trenPengajuan as $t)
+                            "{{ $t->nama }}",
+                        @endforeach
+                    ],
+                    datasets: [{
+                        label: 'Pengajuan',
+                        data: [
+                            @foreach ($trenPengajuan as $t)
+                                {{ $t->total }},
+                            @endforeach
+                        ],
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.08)',
+                        tension: 0.4,
+                        fill: true,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#6366f1',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0,0,0,0.04)'
+                            },
+                            ticks: {
+                                font: chartFont,
+                                precision: 0
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: chartFont
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Bar: Tren Keputusan Validasi
+            new Chart(document.getElementById('trenKeputusanChart'), {
+                type: 'bar',
+                data: {
+                    labels: [
+                        @foreach ($trenKeputusan as $t)
+                            "{{ $t->nama }}",
+                        @endforeach
+                    ],
+                    datasets: [{
+                            label: 'Disetujui',
+                            data: [
+                                @foreach ($trenKeputusan as $t)
+                                    {{ $t->disetujui }},
+                                @endforeach
+                            ],
+                            backgroundColor: '#10b981',
+                            borderRadius: 8,
+                            borderSkipped: false,
+                        },
+                        {
+                            label: 'Ditolak',
+                            data: [
+                                @foreach ($trenKeputusan as $t)
+                                    {{ $t->ditolak }},
+                                @endforeach
+                            ],
+                            backgroundColor: '#ef4444',
+                            borderRadius: 8,
+                            borderSkipped: false,
+                        }
+                    ]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                padding: 16,
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                },
+                                usePointStyle: true,
+                                pointStyleWidth: 10
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0,0,0,0.04)'
+                            },
+                            ticks: {
+                                font: chartFont,
+                                precision: 0
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: chartFont
+                            }
+                        }
+                    }
+                }
+            });
         </script>
     @endpush
 
