@@ -35,7 +35,13 @@ class AppServiceProvider extends ServiceProvider
             $jumlahPengajuan = 0;
 
             if (Auth::check()) {
-                $jumlahPengajuan = Pengajuan::where('mahasiswa_id', Auth::id())->count();
+                // Badge pengajuan = periode aktif saja (konsisten dgn halaman Pengajuan).
+                $activePeriodeId = \App\Models\Periode::periodeAktif()?->id;
+                $jumlahPengajuan = $activePeriodeId
+                    ? Pengajuan::where('mahasiswa_id', Auth::id())
+                        ->where('periode_id', $activePeriodeId)
+                        ->count()
+                    : 0;
             }
 
             $view->with('jumlahPengajuan', $jumlahPengajuan);
