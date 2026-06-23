@@ -64,17 +64,22 @@ class PengajuanController extends Controller
 
         $laboratorium = Laboratorium::all();
 
-        $mySubmissions = Pengajuan::where('mahasiswa_id', $mahasiswaId)
-            ->with([
-                'pilihan1.dosen',
-                'pilihan1.laboratorium',
-                'pilihan2.dosen',
-                'pilihan2.laboratorium',
-                'pilihan3.dosen',
-                'pilihan3.laboratorium'
-            ])
-            ->latest()
-            ->get();
+        // Halaman pengajuan hanya menampilkan pengajuan PERIODE AKTIF.
+        // Riwayat periode lama ada di halaman Riwayat Pengajuan, bukan di sini.
+        $mySubmissions = $periodeAktif
+            ? Pengajuan::where('mahasiswa_id', $mahasiswaId)
+                ->where('periode_id', $periodeAktif->id)
+                ->with([
+                    'pilihan1.dosen',
+                    'pilihan1.laboratorium',
+                    'pilihan2.dosen',
+                    'pilihan2.laboratorium',
+                    'pilihan3.dosen',
+                    'pilihan3.laboratorium'
+                ])
+                ->latest()
+                ->get()
+            : collect();
 
         $judulJson = $judul->map(function ($j) {
             return [
@@ -260,14 +265,22 @@ class PengajuanController extends Controller
             if ($announced && $p->status === 'disetujui') {
                 if ($p->judul_ditetapkan_id) {
                     $judulDiterima = $p->judulDitetapkan->nama_judul ?? $p->judulDitetapkan->judul ?? '-';
-                    $sumberDiterima = match (true) {
-                        $p->judul_ditetapkan_id == $p->pilihan_1_id => 'pilihan_1',
-                        $p->judul_ditetapkan_id == $p->pilihan_2_id => 'pilihan_2',
-                        $p->judul_ditetapkan_id == $p->pilihan_3_id => 'pilihan_3',
-                        default => 'lain',
-                    };
                 } elseif ($p->jenis === 'mandiri' && $p->judul_mandiri) {
+                    // Fallback: mandiri tanpa judul katalog (data lama).
                     $judulDiterima = $p->judul_mandiri;
+                }
+
+                // Sumber yang dipilih Ka Lab = kolom sumber_judul (otoritatif). Fallback:
+                // cocokkan id ke pilihan, atau tandai mandiri bila jenis mandiri.
+                $sumberDiterima = $p->sumber_judul ?: match (true) {
+                    $p->judul_ditetapkan_id && $p->judul_ditetapkan_id == $p->pilihan_1_id => 'pilihan_1',
+                    $p->judul_ditetapkan_id && $p->judul_ditetapkan_id == $p->pilihan_2_id => 'pilihan_2',
+                    $p->judul_ditetapkan_id && $p->judul_ditetapkan_id == $p->pilihan_3_id => 'pilihan_3',
+                    $p->jenis === 'mandiri' => 'mandiri',
+                    default => null,
+                };
+                // 'usulan' (legacy) dianggap sama dengan 'mandiri'.
+                if ($sumberDiterima === 'usulan') {
                     $sumberDiterima = 'mandiri';
                 }
             }
@@ -276,7 +289,6 @@ class PengajuanController extends Controller
                 'pilihan_1' => 'Pilihan ke-1',
                 'pilihan_2' => 'Pilihan ke-2',
                 'pilihan_3' => 'Pilihan ke-3',
-                'lain' => 'Judul lain',
                 default => null,
             };
 

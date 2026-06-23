@@ -30,6 +30,7 @@ class DemoStatistikSeeder extends Seeder
         $prodi = User::where('role', 'prodi')->value('id');
         $koor = User::where('role', 'koor_ta')->value('id') ?? $kalab;
         $dosenIds = User::where('role', 'dosen')->pluck('id')->all();
+        $labId = DB::table('laboratorium')->value('id');
 
         $this->pool = Judul::where('status_judul', 'ditawarkan')->orderBy('id')->pluck('id')->all();
         if (count($this->pool) < 3) {
@@ -87,7 +88,7 @@ class DemoStatistikSeeder extends Seeder
             $buka = Carbon::parse($p['buka']);
             $tutup = Carbon::parse($p['tutup']);
 
-            DB::transaction(function () use ($p, $buka, $tutup, $kalab, $prodi, $koor, $dosenIds) {
+            DB::transaction(function () use ($p, $buka, $tutup, $kalab, $prodi, $koor, $dosenIds, $labId) {
                 $periodeId = DB::table('periode')->insertGetId([
                     'nama' => $p['nama'],
                     'tanggal_buka' => $buka,
@@ -101,7 +102,7 @@ class DemoStatistikSeeder extends Seeder
 
                 foreach ($p['rows'] as $i => $r) {
                     DB::table('pengajuan')->insert(
-                        $this->buildPengajuan($r, $periodeId, $buka, $kalab, $prodi, $dosenIds[$i % count($dosenIds)])
+                        $this->buildPengajuan($r, $periodeId, $buka, $kalab, $prodi, $dosenIds[$i % count($dosenIds)], $labId)
                     );
                 }
 
@@ -139,10 +140,12 @@ class DemoStatistikSeeder extends Seeder
         ];
     }
 
-    private function buildPengajuan(array $r, int $periodeId, Carbon $buka, $kalab, $prodi, int $dosenPembimbing): array
+    private function buildPengajuan(array $r, int $periodeId, Carbon $buka, $kalab, $prodi, int $dosenPembimbing, $labId): array
     {
         [$p1, $p2, $p3] = $this->nextPilihan();
         $mandiri = $r['mandiri'] ?? false;
+        $judulMandiri = 'Usulan Mandiri: Sistem Cerdas Pendukung Keputusan';
+        $deskMandiri = 'Rancang bangun sistem berbasis data untuk membantu pengambilan keputusan.';
 
         $base = [
             'mahasiswa_id' => $r['m'],
@@ -155,7 +158,8 @@ class DemoStatistikSeeder extends Seeder
             'alasan_1' => 'Paling sesuai minat dan rencana penelitian.',
             'alasan_2' => 'Topik menarik sebagai alternatif.',
             'alasan_3' => 'Cadangan bila pilihan lain penuh.',
-            'sumber_judul' => $mandiri ? 'usulan' : 'pilihan_1',
+            // sumber_judul & judul_ditetapkan_id baru terisi SETELAH Ka Lab meng-acc.
+            'sumber_judul' => null,
             'status' => 'pending',
             'status_kalab' => null,
             'status_kaprodi' => null,
@@ -165,15 +169,28 @@ class DemoStatistikSeeder extends Seeder
         ];
 
         if ($mandiri) {
-            $base['judul_mandiri'] = 'Usulan Mandiri: Sistem Cerdas Pendukung Keputusan';
-            $base['deskripsi_mandiri'] = 'Rancang bangun sistem berbasis data untuk membantu pengambilan keputusan.';
+            $base['judul_mandiri'] = $judulMandiri;
+            $base['deskripsi_mandiri'] = $deskMandiri;
             $base['dosen_pembimbing_id'] = $dosenPembimbing;
         }
 
         $reviewKalab = $buka->copy()->addDays(10);
         $reviewKaprodi = $buka->copy()->addDays(20);
-        // Judul yang ditetapkan: untuk 'pilih' = pilihan_1; untuk mandiri = null (judul kustom).
-        $ditetapkan = $mandiri ? null : $p1;
+
+        // Tahap yang berarti Ka Lab SUDAH meng-acc → wajib menetapkan judul + sumbernya
+        // (persis approveByKalab): mandiri → judul katalog baru dibuat; pilih → pilihan_1.
+        $kalabAcc = in_array($r['stage'], ['setuju', 'tolak_kaprodi', 'proses'], true);
+        $ditetapkanId = null;
+        $sumber = null;
+        if ($kalabAcc) {
+            if ($mandiri) {
+                $ditetapkanId = $this->createJudulMandiri($judulMandiri, $deskMandiri, $dosenPembimbing, $labId, $reviewKalab);
+                $sumber = 'mandiri';
+            } else {
+                $ditetapkanId = $p1;
+                $sumber = 'pilihan_1';
+            }
+        }
 
         switch ($r['stage']) {
             case 'setuju':
@@ -181,7 +198,8 @@ class DemoStatistikSeeder extends Seeder
                     'status' => 'disetujui',
                     'status_kalab' => 'disetujui',
                     'status_kaprodi' => 'disetujui',
-                    'judul_ditetapkan_id' => $ditetapkan,
+                    'judul_ditetapkan_id' => $ditetapkanId,
+                    'sumber_judul' => $sumber,
                     'reviewed_by_kalab' => $kalab,
                     'tanggal_review_kalab' => $reviewKalab,
                     'reviewed_by_kaprodi' => $prodi,
@@ -202,7 +220,8 @@ class DemoStatistikSeeder extends Seeder
                     'status' => 'ditolak',
                     'status_kalab' => 'disetujui',
                     'status_kaprodi' => 'ditolak',
-                    'judul_ditetapkan_id' => $ditetapkan,
+                    'judul_ditetapkan_id' => $ditetapkanId,
+                    'sumber_judul' => $sumber,
                     'catatan_kaprodi' => 'Kuota bimbingan dosen sudah penuh.',
                     'reviewed_by_kalab' => $kalab,
                     'tanggal_review_kalab' => $reviewKalab,
@@ -211,10 +230,12 @@ class DemoStatistikSeeder extends Seeder
                 ]);
 
             case 'proses':
-                // Sudah disetujui Ka Lab, menunggu keputusan Prodi.
+                // Sudah disetujui Ka Lab (judul ditetapkan), menunggu keputusan Prodi.
                 return array_merge($base, [
                     'status' => 'pending',
                     'status_kalab' => 'disetujui',
+                    'judul_ditetapkan_id' => $ditetapkanId,
+                    'sumber_judul' => $sumber,
                     'reviewed_by_kalab' => $kalab,
                     'tanggal_review_kalab' => $reviewKalab,
                 ]);
@@ -224,5 +245,25 @@ class DemoStatistikSeeder extends Seeder
                 // Baru masuk, menunggu review Ka Lab.
                 return $base;
         }
+    }
+
+    /**
+     * Buat judul katalog dari usulan mandiri (meniru KaLab\PengajuanController::createJudulMandiri).
+     * Mengembalikan id judul untuk dipakai sebagai judul_ditetapkan_id.
+     */
+    private function createJudulMandiri(string $nama, string $deskripsi, int $dosenId, $labId, Carbon $waktu): int
+    {
+        return DB::table('judul')->insertGetId([
+            'nama_judul' => $nama,
+            'deskripsi' => $deskripsi,
+            'dosen_id' => $dosenId,
+            'laboratorium_id' => $labId,
+            'kode' => 'MND-' . strtoupper(substr(uniqid(), -6)),
+            'status_judul' => 'ditawarkan',
+            'aktif' => DB::raw('true'),
+            'is_locked' => DB::raw('false'),
+            'created_at' => $waktu,
+            'updated_at' => $waktu,
+        ]);
     }
 }
