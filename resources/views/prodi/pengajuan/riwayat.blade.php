@@ -279,49 +279,43 @@
                                 <thead>
                                     <tr
                                         class="border-b-2 border-gray-200 bg-gray-50 text-left text-xs font-black uppercase tracking-wider text-gray-500">
-                                        <th class="px-6 py-4">No</th>
-                                        <th class="px-6 py-4">Mahasiswa</th>
-                                        <th class="px-6 py-4">Judul Ditetapkan</th>
-                                        <th class="px-6 py-4">Dosen / Lab</th>
-                                        <th class="px-6 py-4">Periode</th>
-                                        <th class="px-6 py-4">Status</th>
-                                        <th class="px-6 py-4">Tanggal Review</th>
-                                        <th class="px-6 py-4">Catatan</th>
-                                        <th class="px-6 py-4 text-center">Aksi</th>
+                                        <th class="px-5 py-3.5 w-12">No</th>
+                                        <th class="px-5 py-3.5">Mahasiswa</th>
+                                        <th class="px-5 py-3.5">Judul Ditetapkan</th>
+                                        <th class="px-5 py-3.5">Periode</th>
+                                        <th class="px-5 py-3.5">Status</th>
+                                        <th class="px-5 py-3.5 whitespace-nowrap">Tgl Review</th>
+                                        <th class="px-5 py-3.5 text-center">Aksi</th>
                                     </tr>
                                 </thead>
-                                <tbody class="divide-y-2 divide-gray-100">
+                                <tbody class="divide-y divide-gray-100">
                                     @foreach ($pengajuan as $index => $item)
                                         <tr x-show="filter === 'semua' || filter === '{{ $item->status_kaprodi }}'"
                                             x-transition:enter="transition ease-out duration-200"
                                             x-transition:enter-start="opacity-0 translate-y-1"
                                             x-transition:enter-end="opacity-100 translate-y-0"
-                                            class="group transition-colors
-                                                {{ $item->status_kaprodi === 'disetujui' ? 'hover:bg-emerald-50/60' : 'hover:bg-red-50/60' }}">
+                                            class="group align-top transition-colors
+                                                {{ $item->status_kaprodi === 'disetujui' ? 'hover:bg-emerald-50/50' : 'hover:bg-red-50/50' }}">
 
-                                            {{-- No + Indikator --}}
-                                            <td class="px-6 py-4">
+                                            {{-- No + indikator status --}}
+                                            <td class="px-5 py-4">
                                                 <div class="flex items-center gap-2">
                                                     <div
-                                                        class="h-9 w-1.5 rounded-full
-                                                        {{ $item->status_kaprodi === 'disetujui' ? 'bg-gradient-to-b from-emerald-400 to-green-500' : 'bg-gradient-to-b from-red-400 to-rose-500' }}">
+                                                        class="h-8 w-1 rounded-full {{ $item->status_kaprodi === 'disetujui' ? 'bg-emerald-500' : 'bg-red-500' }}">
                                                     </div>
-                                                    <span
-                                                        class="flex h-8 w-8 items-center justify-center rounded-xl border-2 border-gray-200 bg-gray-50 text-xs font-black text-gray-500 group-hover:border-violet-300 group-hover:bg-violet-50 group-hover:text-violet-700 transition-all">
-                                                        {{ $index + 1 }}
-                                                    </span>
+                                                    <span class="text-xs font-black text-gray-400">{{ $index + 1 }}</span>
                                                 </div>
                                             </td>
 
                                             {{-- Mahasiswa --}}
-                                            <td class="px-6 py-4">
+                                            <td class="px-5 py-4">
                                                 <div class="flex items-center gap-3">
                                                     <div
-                                                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-600 text-sm font-black text-white shadow-md ring-2 ring-violet-200">
+                                                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-100 text-sm font-black text-violet-700">
                                                         {{ strtoupper(substr($item->mahasiswa->name, 0, 1)) }}
                                                     </div>
-                                                    <div>
-                                                        <p class="font-bold text-gray-800">
+                                                    <div class="min-w-0">
+                                                        <p class="font-bold text-gray-800 leading-tight">
                                                             {{ $item->mahasiswa->name }}</p>
                                                         <p class="text-xs text-gray-400">
                                                             {{ $item->mahasiswa->nim ?? $item->mahasiswa->email }}</p>
@@ -329,113 +323,78 @@
                                                 </div>
                                             </td>
 
-                                            {{-- Judul --}}
-                                            <td class="max-w-[220px] px-6 py-4">
+                                            {{-- Judul ditetapkan + dosen · lab --}}
+                                            <td class="max-w-[300px] px-5 py-4">
                                                 @if ($item->judulDitetapkan)
-                                                    <p
-                                                        class="line-clamp-2 text-sm font-semibold leading-relaxed text-gray-800">
-                                                        {{ $item->judulDitetapkan->judul }}
+                                                    <p class="line-clamp-2 font-bold text-gray-800 leading-snug">
+                                                        {{ $item->judulDitetapkan->nama_judul ?? '-' }}
+                                                    </p>
+                                                    <p class="mt-1 text-xs text-gray-400">
+                                                        {{ $item->judulDitetapkan->dosen->name ?? '-' }}
+                                                        <span class="text-gray-300">·</span>
+                                                        {{ $item->judulDitetapkan->laboratorium->nama ?? '-' }}
                                                     </p>
                                                 @else
                                                     <span class="text-gray-300">—</span>
                                                 @endif
                                             </td>
 
-                                            {{-- Dosen / Lab --}}
-                                            <td class="px-6 py-4">
-                                                @if ($item->judulDitetapkan)
-                                                    <div class="flex items-center gap-2">
-                                                        <div
-                                                            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-blue-100 bg-blue-100 text-xs font-black text-blue-600">
-                                                            {{ strtoupper(substr($item->judulDitetapkan->dosen->name ?? 'D', 0, 1)) }}
-                                                        </div>
-                                                        <div>
-                                                            <p class="text-sm font-bold text-gray-700">
-                                                                {{ $item->judulDitetapkan->dosen->name ?? '-' }}
-                                                            </p>
-                                                            <p class="text-xs text-gray-400">
-                                                                {{ $item->judulDitetapkan->laboratorium->nama ?? '-' }}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                @else
-                                                    <span class="text-gray-300">—</span>
-                                                @endif
-                                            </td>
-
                                             {{-- Periode --}}
-                                            <td class="px-6 py-4">
+                                            <td class="px-5 py-4 whitespace-nowrap">
                                                 <span
-                                                    class="rounded-lg border-2 border-violet-200 bg-violet-50 px-2.5 py-1 text-xs font-black text-violet-700">
+                                                    class="rounded-lg bg-violet-50 px-2.5 py-1 text-xs font-bold text-violet-700">
                                                     {{ $item->periode->nama ?? '-' }}
                                                 </span>
                                             </td>
 
-                                            {{-- Status --}}
-                                            <td class="px-6 py-4">
+                                            {{-- Status + catatan --}}
+                                            <td class="max-w-[240px] px-5 py-4">
                                                 @if ($item->status_kaprodi === 'disetujui')
                                                     <span
-                                                        class="inline-flex items-center gap-1.5 rounded-full border-2 border-emerald-200 bg-emerald-100 px-3 py-1.5 text-xs font-black text-emerald-700 shadow-sm">
-                                                        <span
-                                                            class="h-2 w-2 rounded-full bg-emerald-500 shadow-sm shadow-emerald-300"></span>
+                                                        class="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-black text-emerald-700">
+                                                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
                                                         Disetujui
                                                     </span>
                                                 @elseif ($item->status_kaprodi === 'ditolak')
                                                     <span
-                                                        class="inline-flex items-center gap-1.5 rounded-full border-2 border-red-200 bg-red-100 px-3 py-1.5 text-xs font-black text-red-700 shadow-sm">
-                                                        <span
-                                                            class="h-2 w-2 rounded-full bg-red-500 shadow-sm shadow-red-300"></span>
+                                                        class="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-2.5 py-1 text-xs font-black text-red-700">
+                                                        <span class="h-1.5 w-1.5 rounded-full bg-red-500"></span>
                                                         Ditolak
                                                     </span>
                                                 @else
                                                     <span
-                                                        class="inline-flex items-center gap-1.5 rounded-full border-2 border-yellow-200 bg-yellow-100 px-3 py-1.5 text-xs font-black text-yellow-700 shadow-sm">
-                                                        <span class="h-2 w-2 rounded-full bg-yellow-500"></span>
+                                                        class="inline-flex items-center gap-1.5 rounded-full bg-yellow-100 px-2.5 py-1 text-xs font-black text-yellow-700">
+                                                        <span class="h-1.5 w-1.5 rounded-full bg-yellow-500"></span>
                                                         Menunggu
                                                     </span>
                                                 @endif
-                                                @if ($item->reviewerKaprodi)
-                                                    <p class="mt-1.5 text-xs text-gray-400">
-                                                        {{ $item->reviewerKaprodi->name }}</p>
-                                                @endif
-                                            </td>
-
-                                            {{-- Tanggal Review --}}
-                                            <td class="px-6 py-4">
-                                                @if ($item->tanggal_review_kaprodi)
-                                                    <div
-                                                        class="rounded-xl border-2 border-gray-100 bg-gray-50 px-3 py-2 text-center">
-                                                        <p class="text-sm font-black text-gray-700">
-                                                            {{ $item->tanggal_review_kaprodi->format('d M Y') }}
-                                                        </p>
-                                                        <p class="mt-0.5 text-xs font-semibold text-gray-400">
-                                                            {{ $item->tanggal_review_kaprodi->format('H:i') }} WIB
-                                                        </p>
-                                                    </div>
-                                                @else
-                                                    <span class="text-gray-300">—</span>
-                                                @endif
-                                            </td>
-
-                                            {{-- Catatan --}}
-                                            <td class="max-w-[160px] px-6 py-4">
                                                 @if ($item->catatan_kaprodi)
-                                                    <div
-                                                        class="rounded-xl border-2 border-gray-100 bg-gray-50 px-3 py-2">
-                                                        <p
-                                                            class="line-clamp-2 text-xs italic leading-relaxed text-gray-500">
-                                                            "{{ $item->catatan_kaprodi }}"
-                                                        </p>
-                                                    </div>
+                                                    <p class="mt-1.5 line-clamp-2 text-xs italic text-gray-400">
+                                                        "{{ $item->catatan_kaprodi }}"</p>
+                                                @endif
+                                            </td>
+
+                                            {{-- Tanggal review + reviewer --}}
+                                            <td class="px-5 py-4 whitespace-nowrap">
+                                                @if ($item->tanggal_review_kaprodi)
+                                                    <p class="text-sm font-semibold text-gray-700">
+                                                        {{ $item->tanggal_review_kaprodi->format('d M Y') }}
+                                                    </p>
+                                                    <p class="text-xs text-gray-400">
+                                                        {{ $item->tanggal_review_kaprodi->format('H:i') }} WIB
+                                                        @if ($item->reviewerKaprodi)
+                                                            · {{ $item->reviewerKaprodi->name }}
+                                                        @endif
+                                                    </p>
                                                 @else
                                                     <span class="text-gray-300">—</span>
                                                 @endif
                                             </td>
 
                                             {{-- Aksi --}}
-                                            <td class="px-6 py-4 text-center">
+                                            <td class="px-5 py-4 text-center">
                                                 <a href="{{ route('prodi.pengajuan.show', $item->id) }}"
-                                                    class="inline-flex items-center gap-1.5 rounded-xl border-2 border-violet-300 bg-violet-600 px-4 py-2 text-xs font-black text-white shadow-sm transition hover:bg-violet-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-1">
+                                                    class="inline-flex items-center gap-1.5 rounded-lg border-2 border-violet-200 bg-white px-3 py-1.5 text-xs font-bold text-violet-700 transition hover:bg-violet-600 hover:text-white hover:border-violet-600">
                                                     <x-heroicon-o-eye class="h-3.5 w-3.5" />
                                                     Detail
                                                 </a>
