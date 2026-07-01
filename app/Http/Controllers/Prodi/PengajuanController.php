@@ -132,8 +132,14 @@ class PengajuanController extends Controller
         return back()->with('error', 'Terjadi kesalahan saat menolak pengajuan.');
     }
 
-    public function riwayat()
+    public function riwayat(Request $request)
     {
+        // Filter periode agar riwayat terstruktur. Default "semua" (seluruh riwayat),
+        // bisa dipilih per periode.
+        $periodeList = \App\Models\Periode::urutKronologis()->get();
+        $aktifId = \App\Models\Periode::periodeAktif()?->id;
+        $selectedPeriode = $request->get('periode_id') ?? 'semua';
+
         $pengajuan = Pengajuan::with([
             'mahasiswa',
             'periode',
@@ -142,10 +148,11 @@ class PengajuanController extends Controller
             'reviewerKaprodi',
         ])
             ->whereNotNull('status_kaprodi')
+            ->when($selectedPeriode !== 'semua', fn($q) => $q->where('periode_id', $selectedPeriode))
             ->latest('tanggal_review_kaprodi')
             ->get();
 
-        return view('prodi.pengajuan.riwayat', compact('pengajuan'))
+        return view('prodi.pengajuan.riwayat', compact('pengajuan', 'periodeList', 'selectedPeriode', 'aktifId'))
             ->with('title', 'Riwayat Review Pengajuan');
     }
 }

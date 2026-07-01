@@ -222,9 +222,20 @@
                         </button>
                     </div>
 
-                    <p class="text-xs text-gray-400">
-                        Data per <span class="font-bold text-gray-600">{{ now()->translatedFormat('d F Y') }}</span>
-                    </p>
+                    {{-- Filter Periode --}}
+                    <form method="GET"
+                        class="flex items-center gap-2 rounded-2xl border-2 border-violet-200 bg-white px-3 py-2 shadow-sm">
+                        <x-heroicon-o-calendar-days class="h-4 w-4 shrink-0 text-violet-500" />
+                        <select name="periode_id" onchange="this.form.submit()"
+                            class="cursor-pointer bg-transparent pr-1 text-xs font-bold text-gray-700 focus:outline-none">
+                            <option value="semua" @selected($selectedPeriode === 'semua')>Semua Periode</option>
+                            @foreach ($periodeList as $per)
+                                <option value="{{ $per->id }}" @selected((string) $selectedPeriode === (string) $per->id)>
+                                    {{ $per->nama }}{{ $per->id === $aktifId ? ' (Aktif)' : '' }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </form>
                 </div>
                 {{-- Table Card --}}
                 <div class="overflow-hidden rounded-2xl border-2 border-gray-200 bg-white shadow-md">

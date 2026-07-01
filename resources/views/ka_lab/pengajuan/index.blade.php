@@ -174,6 +174,21 @@
             <form method="GET" action="{{ route('ka-lab.pengajuan.index') }}"
                 class="flex flex-wrap items-center gap-3">
 
+                {{-- Filter Periode (navigasi langsung, pertahankan status & pencarian) --}}
+                <div class="flex items-center gap-2 rounded-2xl border-2 border-sky-200 bg-white px-3 py-2 shadow-sm">
+                    <x-heroicon-o-calendar-days class="h-4 w-4 shrink-0 text-sky-500" />
+                    <select
+                        onchange="window.location.href='{{ route('ka-lab.pengajuan.index') }}?status={{ $status }}&search={{ urlencode($search) }}&periode_id=' + this.value"
+                        class="cursor-pointer bg-transparent pr-1 text-xs font-bold text-gray-700 focus:outline-none">
+                        <option value="semua" @selected($selectedPeriode === 'semua')>Semua Periode</option>
+                        @foreach ($periodeList as $per)
+                            <option value="{{ $per->id }}" @selected((string) $selectedPeriode === (string) $per->id)>
+                                {{ $per->nama }}{{ $per->id === $aktifId ? ' (Aktif)' : '' }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
                 {{-- Status Filter Pills --}}
                 <div class="flex items-center gap-1 rounded-2xl border-2 border-gray-200 bg-white p-1.5 shadow-sm">
                     @foreach ([

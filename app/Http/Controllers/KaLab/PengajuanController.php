@@ -23,11 +23,14 @@ class PengajuanController extends Controller
         $status = $request->get('status', 'all');
         $search = $request->get('search', '');
 
-        // Review hanya untuk PERIODE AKTIF — pengajuan periode lama sudah selesai/arsip
-        // (bisa dilihat di monitoring Koordinator TA). Null-safe: tanpa periode aktif → kosong.
-        $activePeriodeId = \App\Models\Periode::periodeAktif()?->id;
+        // Filter periode: default PERIODE AKTIF (tak campur), tapi bisa memilih periode
+        // lain / "semua" untuk menelusuri riwayat — lebih terstruktur.
+        $periodeList = \App\Models\Periode::urutKronologis()->get();
+        $aktifId = \App\Models\Periode::periodeAktif()?->id;
+        $selectedPeriode = $request->get('periode_id') ?? ($aktifId ? (string) $aktifId : 'semua');
+        $scopePeriode = fn($q) => $q->when($selectedPeriode !== 'semua', fn($qq) => $qq->where('periode_id', $selectedPeriode));
 
-        $query = Pengajuan::with([
+        $query = $scopePeriode(Pengajuan::with([
             'mahasiswa',
             'periode',
             'pilihan1.laboratorium',
@@ -38,7 +41,7 @@ class PengajuanController extends Controller
             'pilihan3.dosen',
             'judulDitetapkan.dosen',
             'reviewerKalab',
-        ])->where('periode_id', $activePeriodeId);
+        ]));
 
         if ($status === 'pending') {
             $query->where(function ($q) {
@@ -60,7 +63,7 @@ class PengajuanController extends Controller
         // Urutan konsisten: terbaru di atas (deterministik via id).
         $pengajuan = $query->orderByDesc('id')->paginate(10)->withQueryString();
 
-        $statScope = fn() => Pengajuan::where('periode_id', $activePeriodeId);
+        $statScope = fn() => $scopePeriode(Pengajuan::query());
         $stats = [
             'total' => $statScope()->count(),
             'pending' => $statScope()->where(function ($q) {
@@ -70,7 +73,7 @@ class PengajuanController extends Controller
             'ditolak' => $statScope()->where('status_kalab', 'ditolak')->count(),
         ];
 
-        return view('ka_lab.pengajuan.index', compact('pengajuan', 'stats', 'status', 'search'));
+        return view('ka_lab.pengajuan.index', compact('pengajuan', 'stats', 'status', 'search', 'periodeList', 'selectedPeriode', 'aktifId'));
     }
 
     public function show($id)
