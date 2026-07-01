@@ -52,6 +52,16 @@ class Periode extends Model
     }
 
     /**
+     * Urutan kronologis periode: berdasarkan tanggal buka (fallback created_at
+     * untuk data lama tanpa tanggal_buka), terbaru di atas. Mencegah urutan acak
+     * akibat created_at yang tak selaras dengan tahun periode.
+     */
+    public function scopeUrutKronologis($query)
+    {
+        return $query->orderByRaw('COALESCE(tanggal_buka, created_at::date) DESC');
+    }
+
+    /**
      * Scope untuk periode yang sedang buka
      */
     public function scopeBuka($query)

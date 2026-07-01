@@ -11,6 +11,9 @@ class PengajuanController extends Controller
 {
     public function index()
     {
+        // Keputusan final hanya untuk PERIODE AKTIF. Null-safe: tanpa periode aktif → kosong.
+        $activePeriodeId = \App\Models\Periode::periodeAktif()?->id;
+
         $pengajuan = Pengajuan::with([
             'mahasiswa',
             'periode',
@@ -24,9 +27,10 @@ class PengajuanController extends Controller
             'judulDitetapkan.laboratorium',
             'reviewerKalab',
         ])
+            ->where('periode_id', $activePeriodeId)
             ->where('status_kalab', 'disetujui')
             ->whereNull('status_kaprodi')
-            ->latest()
+            ->orderByDesc('id')
             ->get();
 
         return view('prodi.pengajuan.index', compact('pengajuan'))

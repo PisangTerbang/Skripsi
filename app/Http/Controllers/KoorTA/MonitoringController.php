@@ -62,8 +62,8 @@ class MonitoringController extends Controller
             });
         }
 
-        $pengajuan = $query->latest()->paginate(20)->withQueryString();
-        $periode = Periode::orderBy('created_at', 'desc')->get();
+        $pengajuan = $query->orderByDesc('id')->paginate(20)->withQueryString();
+        $periode = Periode::urutKronologis()->get();
 
         return view('koor-ta.monitoring.pengajuan', compact('pengajuan', 'periode', 'periodeId', 'status'));
     }

@@ -11,8 +11,9 @@ class PeriodeController extends Controller
 {
     public function index()
     {
+        // Urutan kronologis (tanggal buka, fallback created_at) — terbaru di atas.
         $periode = Periode::withCount('pengajuan')
-            ->orderBy('created_at', 'desc')
+            ->urutKronologis()
             ->get();
 
         return view('koor-ta.periode.index', compact('periode'));

@@ -23,6 +23,10 @@ class PengajuanController extends Controller
         $status = $request->get('status', 'all');
         $search = $request->get('search', '');
 
+        // Review hanya untuk PERIODE AKTIF — pengajuan periode lama sudah selesai/arsip
+        // (bisa dilihat di monitoring Koordinator TA). Null-safe: tanpa periode aktif → kosong.
+        $activePeriodeId = \App\Models\Periode::periodeAktif()?->id;
+
         $query = Pengajuan::with([
             'mahasiswa',
             'periode',
@@ -34,7 +38,7 @@ class PengajuanController extends Controller
             'pilihan3.dosen',
             'judulDitetapkan.dosen',
             'reviewerKalab',
-        ]);
+        ])->where('periode_id', $activePeriodeId);
 
         if ($status === 'pending') {
             $query->where(function ($q) {
@@ -53,15 +57,17 @@ class PengajuanController extends Controller
             });
         }
 
-        $pengajuan = $query->latest()->paginate(10);
+        // Urutan konsisten: terbaru di atas (deterministik via id).
+        $pengajuan = $query->orderByDesc('id')->paginate(10)->withQueryString();
 
+        $statScope = fn() => Pengajuan::where('periode_id', $activePeriodeId);
         $stats = [
-            'total' => Pengajuan::count(),
-            'pending' => Pengajuan::where(function ($q) {
+            'total' => $statScope()->count(),
+            'pending' => $statScope()->where(function ($q) {
                 $q->where('status_kalab', 'pending')->orWhereNull('status_kalab');
             })->count(),
-            'disetujui' => Pengajuan::where('status_kalab', 'disetujui')->count(),
-            'ditolak' => Pengajuan::where('status_kalab', 'ditolak')->count(),
+            'disetujui' => $statScope()->where('status_kalab', 'disetujui')->count(),
+            'ditolak' => $statScope()->where('status_kalab', 'ditolak')->count(),
         ];
 
         return view('ka_lab.pengajuan.index', compact('pengajuan', 'stats', 'status', 'search'));

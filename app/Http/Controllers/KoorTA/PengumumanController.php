@@ -24,14 +24,14 @@ class PengumumanController extends Controller
             ->orderBy('pengumuman.created_at', 'desc')
             ->get();
 
-        $periode = Periode::orderBy('created_at', 'desc')->get();
+        $periode = Periode::urutKronologis()->get();
 
         return view('koor-ta.pengumuman.index', compact('pengumuman', 'periode'));
     }
 
     public function create()
     {
-        $periode = Periode::orderBy('created_at', 'desc')->get();
+        $periode = Periode::urutKronologis()->get();
         return view('koor-ta.pengumuman.create', compact('periode'));
     }
 

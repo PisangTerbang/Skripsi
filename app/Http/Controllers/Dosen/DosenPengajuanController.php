@@ -24,7 +24,7 @@ class DosenPengajuanController extends Controller
         $dosenId = $user->id;
 
         // Daftar periode untuk dropdown filter + periode aktif sebagai default.
-        $periodeList = Periode::orderBy('created_at', 'desc')->get();
+        $periodeList = Periode::urutKronologis()->get();
         $aktifId = Periode::periodeAktif()?->id;
         // Default ke periode aktif; jika belum ada periode aktif, tampilkan semua (riwayat).
         $selectedPeriode = $request->get('periode_id') ?? ($aktifId ? (string) $aktifId : 'semua');

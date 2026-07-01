@@ -14,7 +14,7 @@ class ExportController extends Controller
 {
     public function index()
     {
-        $periode = Periode::orderBy('created_at', 'desc')->get();
+        $periode = Periode::urutKronologis()->get();
 
         return view('koor-ta.export.index', compact('periode'));
     }
