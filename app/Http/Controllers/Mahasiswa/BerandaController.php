@@ -22,21 +22,23 @@ class BerandaController extends Controller
             ->pluck('periode_id')
             ->all();
 
-        $total = Pengajuan::where('mahasiswa_id', $mahasiswaId)->count();
+        // Semua statistik beranda di-scope ke PERIODE AKTIF (ikut reset tiap ganti periode).
+        $total = Pengajuan::where('mahasiswa_id', $mahasiswaId)
+            ->where('periode_id', $activePeriodeId)
+            ->count();
 
         // "Diproses" = sudah diajukan tapi periodenya belum diumumkan (hasil dirahasiakan s/d pengumuman).
         $pending = Pengajuan::where('mahasiswa_id', $mahasiswaId)
+            ->where('periode_id', $activePeriodeId)
             ->whereNotIn('periode_id', $announcedPeriodes)
             ->count();
 
         // Penolakan hanya boleh tampil setelah pengumuman resmi.
         $ditolak = Pengajuan::where('mahasiswa_id', $mahasiswaId)
+            ->where('periode_id', $activePeriodeId)
             ->whereIn('periode_id', $announcedPeriodes)
             ->where('status', 'ditolak')
             ->count();
-
-        $totalSemua = Pengajuan::count();
-        $disetujuiSemua = Pengajuan::where('status', 'disetujui')->count();
 
         // Hanya pengajuan di periode aktif yang menentukan progress — pengajuan periode lama ada di Riwayat.
         $latestPengajuan = $activePeriodeId
@@ -64,6 +66,7 @@ class BerandaController extends Controller
 
         $riwayat = Pengajuan::with(['judulDitetapkan', 'pilihan1'])
             ->where('mahasiswa_id', $mahasiswaId)
+            ->where('periode_id', $activePeriodeId)
             ->latest()
             ->take(5)
             ->get()
@@ -97,8 +100,6 @@ class BerandaController extends Controller
             'total',
             'pending',
             'ditolak',
-            'totalSemua',
-            'disetujuiSemua',
             'disetujui',
             'riwayat',
             'statusProgress',
@@ -138,10 +139,14 @@ class BerandaController extends Controller
             $status = 'none';
         }
 
-        $jumlah = Pengajuan::where('mahasiswa_id', $mahasiswaId)->count();
+        // Semua di-scope ke periode aktif (ikut reset tiap ganti periode).
+        $jumlah = Pengajuan::where('mahasiswa_id', $mahasiswaId)
+            ->where('periode_id', $activePeriodeId)
+            ->count();
 
         $riwayat = Pengajuan::with(['judulDitetapkan', 'pilihan1'])
             ->where('mahasiswa_id', $mahasiswaId)
+            ->where('periode_id', $activePeriodeId)
             ->latest()
             ->take(5)
             ->get()
@@ -160,6 +165,7 @@ class BerandaController extends Controller
             });
 
         $notif = Pengajuan::where('mahasiswa_id', $mahasiswaId)
+            ->where('periode_id', $activePeriodeId)
             ->whereNotIn('periode_id', $announcedPeriodes)
             ->count();
 

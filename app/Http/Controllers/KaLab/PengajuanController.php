@@ -23,12 +23,17 @@ class PengajuanController extends Controller
         $status = $request->get('status', 'all');
         $search = $request->get('search', '');
 
+        // Ka Lab hanya menangani laboratoriumnya sendiri (review berjenjang: hanya
+        // pengajuan yang lab_aktif_id-nya = lab ini yang muncul di antrean).
+        $myLab = $user->laboratorium_id;
+
         // Filter periode: default PERIODE AKTIF (tak campur), tapi bisa memilih periode
         // lain / "semua" untuk menelusuri riwayat — lebih terstruktur.
         $periodeList = \App\Models\Periode::urutKronologis()->get();
         $aktifId = \App\Models\Periode::periodeAktif()?->id;
         $selectedPeriode = $request->get('periode_id') ?? ($aktifId ? (string) $aktifId : 'semua');
-        $scopePeriode = fn($q) => $q->when($selectedPeriode !== 'semua', fn($qq) => $qq->where('periode_id', $selectedPeriode));
+        $scopePeriode = fn($q) => $q->where('lab_aktif_id', $myLab)
+            ->when($selectedPeriode !== 'semua', fn($qq) => $qq->where('periode_id', $selectedPeriode));
 
         $query = $scopePeriode(Pengajuan::with([
             'mahasiswa',
@@ -96,7 +101,20 @@ class PengajuanController extends Controller
             'judulDitetapkan.dosen',
             'reviewerKalab',
             'reviewerKaprodi',
+            'labAktif',
         ])->findOrFail($id);
+
+        // Guard: hanya bila pengajuan sedang ditangani lab Ka Lab ini (kecuali sudah final,
+        // biarkan dilihat sebagai riwayat lab yang pernah menanganinya).
+        if ($pengajuan->lab_aktif_id !== $user->laboratorium_id) {
+            abort(403, 'Pengajuan ini bukan wewenang laboratorium Anda saat ini.');
+        }
+
+        // Prioritas & judul yang sedang direview lab ini (untuk aksi setuju/tolak).
+        $prioritasAktif = $pengajuan->prioritas_aktif ?: 1;
+        $judulAktif = $pengajuan->jenis === 'mandiri'
+            ? null
+            : $pengajuan->judulPrioritasAktif();
 
         $pilihanStatus = [];
 
@@ -110,8 +128,11 @@ class PengajuanController extends Controller
                 continue;
             }
 
+            // Hanya cek tabrakan DALAM periode yang sama. Judul yang dipakai di
+            // periode lampau otomatis terbuka lagi di periode ini (tidak "nyangkut").
             $sudahDiambil = Pengajuan::with('mahasiswa')
                 ->where('judul_ditetapkan_id', $judulId)
+                ->where('periode_id', $pengajuan->periode_id)
                 ->where('status_kalab', 'disetujui')
                 ->where('id', '!=', $pengajuan->id)
                 ->first();
@@ -135,25 +156,29 @@ class PengajuanController extends Controller
             'pengajuan',
             'pilihanStatus',
             'semuaPilihanDiambil',
-            'laboratorium'
+            'laboratorium',
+            'prioritasAktif',
+            'judulAktif'
         ));
     }
 
     public function approve(Request $request, $id)
     {
+        // Review berjenjang: Ka Lab menyetujui judul pada PRIORITAS AKTIF pengajuan
+        // (bukan memilih bebas 1 dari 3). Catatan kini wajib.
         $request->validate([
-            'judul_terpilih' => 'required|in:pilihan_1,pilihan_2,pilihan_3,mandiri',
-            'catatan_kalab' => 'nullable|string|max:1000',
-            // ✅ Wajib pilih lab kalau judul mandiri
-            'laboratorium_id' => 'required_if:judul_terpilih,mandiri|nullable|exists:laboratorium,id',
+            'catatan_kalab' => 'required|string|max:1000',
         ], [
-            'laboratorium_id.required_if' => 'Laboratorium wajib dipilih untuk judul mandiri.',
+            'catatan_kalab.required' => 'Catatan validasi wajib diisi.',
         ]);
 
         $pengajuan = Pengajuan::findOrFail($id);
         $user = Auth::user();
-        $sumberJudul = $request->judul_terpilih;
-        $judulId = null;
+
+        // Guard: pengajuan harus sedang ditangani lab milik Ka Lab ini.
+        if ($pengajuan->lab_aktif_id !== $user->laboratorium_id) {
+            return back()->with('error', 'Pengajuan ini bukan wewenang laboratorium Anda saat ini.');
+        }
 
         if (!$pengajuan->canBeReviewedByKalab()) {
             return back()->with('error', 'Pengajuan ini tidak dapat direview saat ini.');
@@ -163,33 +188,34 @@ class PengajuanController extends Controller
             return back()->with('error', 'Pengajuan ini berada di periode yang sudah ditutup (arsip) dan tidak dapat diproses.');
         }
 
-        if ($sumberJudul === 'pilihan_1') {
-            $judulId = $pengajuan->pilihan_1_id;
-        } elseif ($sumberJudul === 'pilihan_2') {
-            $judulId = $pengajuan->pilihan_2_id;
-        } elseif ($sumberJudul === 'pilihan_3') {
-            $judulId = $pengajuan->pilihan_3_id;
-        }
+        // Tentukan judul & sumber dari prioritas aktif (atau mandiri).
+        if ($pengajuan->jenis === 'mandiri') {
+            $sumberJudul = 'mandiri';
+            $judulId = null;
+        } else {
+            $prioritas = $pengajuan->prioritas_aktif ?: 1;
+            $sumberJudul = 'pilihan_' . $prioritas;
+            $judulId = $pengajuan->{"pilihan_{$prioritas}_id"};
 
-        // Cek apakah judul sudah diambil mahasiswa lain — hanya dalam periode yang sama.
-        // (Judul yang dipakai di periode lalu otomatis terbuka lagi di periode baru.)
-        if ($judulId && $sumberJudul !== 'mandiri') {
-            $sudahDiambil = Pengajuan::where('judul_ditetapkan_id', $judulId)
-                ->where('periode_id', $pengajuan->periode_id)
-                ->where('status_kalab', 'disetujui')
-                ->where('id', '!=', $pengajuan->id)
-                ->exists();
+            // Cek apakah judul prioritas ini sudah diambil mahasiswa lain (periode sama).
+            if ($judulId) {
+                $sudahDiambil = Pengajuan::where('judul_ditetapkan_id', $judulId)
+                    ->where('periode_id', $pengajuan->periode_id)
+                    ->where('status_kalab', 'disetujui')
+                    ->where('id', '!=', $pengajuan->id)
+                    ->exists();
 
-            if ($sudahDiambil) {
-                return back()->with('error', 'Judul ini sudah diambil oleh mahasiswa lain. Pilih judul alternatif lainnya.');
+                if ($sudahDiambil) {
+                    return back()->with('error', 'Judul ini sudah diambil mahasiswa lain. Silakan tolak agar diteruskan ke prioritas berikutnya.');
+                }
             }
         }
 
         DB::beginTransaction();
         try {
             if ($sumberJudul === 'mandiri') {
-                // ✅ Pass laboratorium_id dari request
-                $judulId = $this->createJudulMandiri($pengajuan, $request->laboratorium_id);
+                // Lab sudah ditentukan dosen saat konfirmasi (lab_aktif_id).
+                $judulId = $this->createJudulMandiri($pengajuan, $pengajuan->lab_aktif_id);
             }
 
             $success = $pengajuan->approveByKalab(
@@ -226,6 +252,11 @@ class PengajuanController extends Controller
         $pengajuan = Pengajuan::findOrFail($id);
         $user = Auth::user();
 
+        // Guard: pengajuan harus sedang ditangani lab milik Ka Lab ini.
+        if ($pengajuan->lab_aktif_id !== $user->laboratorium_id) {
+            return back()->with('error', 'Pengajuan ini bukan wewenang laboratorium Anda saat ini.');
+        }
+
         if (!$pengajuan->canBeReviewedByKalab()) {
             return back()->with('error', 'Pengajuan ini tidak dapat direview saat ini.');
         }
@@ -245,11 +276,17 @@ class PengajuanController extends Controller
                 throw new \Exception('Gagal menolak pengajuan.');
             }
 
+            // Pesan menyesuaikan: diteruskan ke prioritas berikutnya vs ditolak final.
+            $pengajuan->refresh();
+            $pesan = is_null($pengajuan->status_kalab)
+                ? 'Prioritas ini ditolak. Pengajuan diteruskan ke lab prioritas berikutnya (prioritas ke-' . $pengajuan->prioritas_aktif . ').'
+                : 'Pengajuan ditolak final (semua prioritas habis). Mahasiswa diberi tahu setelah pengumuman resmi.';
+
             DB::commit();
 
             return redirect()
                 ->route('ka-lab.pengajuan.index')
-                ->with('success', 'Pengajuan berhasil ditolak. Mahasiswa akan mendapat notifikasi setelah pengumuman resmi dari Koordinator TA.');
+                ->with('success', $pesan);
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -260,6 +297,10 @@ class PengajuanController extends Controller
     // ✅ Terima laboratorium_id sebagai parameter
     private function createJudulMandiri($pengajuan, $laboratoriumId = null)
     {
+        // Judul mandiri DISIMPAN sebagai golongan 'mandiri' — hanya untuk pencatatan
+        // & laporan, TIDAK dijadikan katalog 'ditawarkan'. Jadi ia tidak akan muncul
+        // sebagai pilihan judul di periode berikutnya (daftar mahasiswa memfilter
+        // status_judul = 'ditawarkan').
         $judul = Judul::create([
             'nama_judul' => $pengajuan->judul_mandiri,
             'deskripsi' => $pengajuan->deskripsi_mandiri,
@@ -267,8 +308,8 @@ class PengajuanController extends Controller
             'dosen_id' => $pengajuan->dosen_pembimbing_id,
             'laboratorium_id' => $laboratoriumId,
             'kode' => Judul::generateKode($laboratoriumId),
-            'status_judul' => 'ditawarkan',
-            'aktif' => DB::raw('true'),
+            'status_judul' => 'mandiri',
+            'aktif' => DB::raw('false'),
             'is_locked' => DB::raw('false'),
             'created_at' => now(),
             'updated_at' => now(),
@@ -279,8 +320,9 @@ class PengajuanController extends Controller
             'user_id' => Auth::id(),
             'aksi' => 'dibuat_dari_pengajuan',
             'dari_status' => null,
-            'ke_status' => 'ditawarkan',
-            'catatan' => 'Judul mandiri dari pengajuan mahasiswa: ' . $pengajuan->mahasiswa->name,
+            'ke_status' => 'mandiri',
+            'catatan' => 'Judul mandiri dari pengajuan mahasiswa: ' . $pengajuan->mahasiswa->name
+                . ' (disimpan sebagai golongan mandiri, tidak ditawarkan).',
             'created_at' => now(),
             'updated_at' => now(),
         ]);

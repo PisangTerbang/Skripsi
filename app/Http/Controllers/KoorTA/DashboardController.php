@@ -24,23 +24,54 @@ class DashboardController extends Controller
 
         // Pengajuan & status di-scope ke periode aktif (aktivitas berjalan).
         // Histori lintas periode tersedia di chart per-periode & menu Monitoring.
-        $totalPengajuan = Pengajuan::where('periode_id', $pid)->count();
-        $pengajuanPending = Pengajuan::where('periode_id', $pid)->whereNull('status_kalab')->count();
-        $pengajuanProses = Pengajuan::where('periode_id', $pid)
-            ->where('status_kalab', 'disetujui')
-            ->whereNull('status_kaprodi')->count();
-        $pengajuanSelesai = Pengajuan::where('periode_id', $pid)
-            ->where('status_kaprodi', 'disetujui')->count();
-        $pengajuanDitolak = Pengajuan::where('periode_id', $pid)
-            ->where(function ($q) {
-                $q->where('status_kalab', 'ditolak')
-                    ->orWhere('status_kaprodi', 'ditolak');
-            })->count();
+        // Satu query agregat (FILTER) menggantikan 5 count terpisah → hemat latency DB remote.
+        $p = Pengajuan::where('periode_id', $pid)->selectRaw("
+            count(*)                                                                as total,
+            count(*) filter (where status_kalab is null)                            as pending,
+            count(*) filter (where status_kalab = 'disetujui' and status_kaprodi is null) as proses,
+            count(*) filter (where status_kaprodi = 'disetujui')                    as selesai,
+            count(*) filter (where status_kalab = 'ditolak' or status_kaprodi = 'ditolak') as ditolak
+        ")->first();
+        $totalPengajuan = (int) $p->total;
+        $pengajuanPending = (int) $p->pending;
+        $pengajuanProses = (int) $p->proses;
+        $pengajuanSelesai = (int) $p->selesai;
+        $pengajuanDitolak = (int) $p->ditolak;
 
         // Pengajuan per periode (untuk chart)
         $pengajuanPerPeriode = Periode::withCount('pengajuan')
             ->orderBy('created_at', 'desc')
             ->take(5)
+            ->get();
+
+        // ========== DATA GRAFIK ==========
+        // Donut: distribusi keputusan pengajuan PERIODE AKTIF (ikut reset tiap ganti periode).
+        $distribusiKeputusan = [
+            'selesai' => $pengajuanSelesai,
+            'proses' => $pengajuanProses,
+            'pending' => $pengajuanPending,
+            'ditolak' => $pengajuanDitolak,
+        ];
+
+        // Line: tren pengajuan masuk per periode (lintas periode, kronologis).
+        $trenPengajuan = Periode::select(
+            'periode.nama',
+            DB::raw('count(pengajuan.id) as total')
+        )
+            ->leftJoin('pengajuan', 'periode.id', '=', 'pengajuan.periode_id')
+            ->groupBy('periode.id', 'periode.nama')
+            ->orderByRaw('COALESCE(periode.tanggal_buka, periode.created_at::date) asc')
+            ->get();
+
+        // Bar: tren keputusan final per periode (disetujui Kaprodi vs ditolak Ka Lab/Prodi).
+        $trenKeputusan = Periode::select(
+            'periode.nama',
+            DB::raw("count(case when pengajuan.status_kaprodi = 'disetujui' then 1 end) as disetujui"),
+            DB::raw("count(case when pengajuan.status_kalab = 'ditolak' or pengajuan.status_kaprodi = 'ditolak' then 1 end) as ditolak")
+        )
+            ->leftJoin('pengajuan', 'periode.id', '=', 'pengajuan.periode_id')
+            ->groupBy('periode.id', 'periode.nama')
+            ->orderByRaw('COALESCE(periode.tanggal_buka, periode.created_at::date) asc')
             ->get();
 
         // User terbaru
@@ -68,6 +99,9 @@ class DashboardController extends Controller
             'pengajuanPerPeriode',
             'userTerbaru',
             'pengajuanTerbaru',
+            'distribusiKeputusan',
+            'trenPengajuan',
+            'trenKeputusan',
         ));
     }
 }

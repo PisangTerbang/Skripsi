@@ -30,6 +30,77 @@
                     </div>
                 </div>
 
+                {{-- ===== USULAN MANDIRI MENUNGGU KONFIRMASI DOSEN ===== --}}
+                @if ($mandiriPending->isNotEmpty())
+                    <div class="rounded-2xl border-2 border-amber-200 bg-amber-50 p-5 shadow-sm">
+                        <div class="mb-1 flex items-center gap-2">
+                            <x-heroicon-o-light-bulb class="h-5 w-5 text-amber-600" />
+                            <h2 class="text-sm font-black text-amber-800">
+                                Usulan Mandiri Menunggu Konfirmasi Anda ({{ $mandiriPending->count() }})
+                            </h2>
+                        </div>
+                        <p class="mb-4 text-xs text-amber-600">Sebagai calon pembimbing, konfirmasi &amp; tentukan
+                            laboratorium agar usulan diteruskan ke Ka Lab, atau tolak usulan.</p>
+                        <div class="space-y-3">
+                            @foreach ($mandiriPending as $m)
+                                <div x-data="{ tolak: false }" class="rounded-xl border-2 border-amber-200 bg-white p-4">
+                                    <p class="text-sm font-black text-gray-800">{{ $m->judul_mandiri ?? '-' }}</p>
+                                    <p class="mt-0.5 text-xs text-gray-500">{{ $m->mahasiswa->name ?? '-' }} ·
+                                        {{ $m->mahasiswa->nim ?? '-' }}</p>
+                                    @if ($m->deskripsi_mandiri)
+                                        <p class="mt-1 text-xs text-gray-600">{{ $m->deskripsi_mandiri }}</p>
+                                    @endif
+
+                                    {{-- Konfirmasi + pilih lab --}}
+                                    <form method="POST"
+                                        action="{{ route('dosen.pengajuan.konfirmasi-mandiri', $m->id) }}"
+                                        x-show="!tolak" class="mt-3 flex flex-wrap items-end gap-2">
+                                        @csrf
+                                        <div class="min-w-[180px] flex-1">
+                                            <label class="mb-1 block text-[11px] font-bold text-gray-600">Tentukan
+                                                Laboratorium <span class="text-red-500">*</span></label>
+                                            <select name="laboratorium_id" required
+                                                class="w-full rounded-xl border-2 border-gray-200 px-3 py-2 text-sm text-gray-800 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 transition">
+                                                <option value="">-- Pilih Lab --</option>
+                                                @foreach ($labList as $lab)
+                                                    <option value="{{ $lab->id }}">{{ $lab->nama }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <button type="submit"
+                                            class="rounded-xl border-2 border-emerald-300 bg-emerald-600 px-4 py-2 text-xs font-black text-white shadow-sm transition hover:bg-emerald-700">
+                                            Konfirmasi &amp; Teruskan
+                                        </button>
+                                        <button type="button" @click="tolak = true"
+                                            class="rounded-xl border-2 border-red-200 bg-white px-4 py-2 text-xs font-black text-red-600 transition hover:bg-red-50">
+                                            Tolak
+                                        </button>
+                                    </form>
+
+                                    {{-- Tolak (catatan wajib) --}}
+                                    <form method="POST" action="{{ route('dosen.pengajuan.tolak-mandiri', $m->id) }}"
+                                        x-show="tolak" x-cloak x-data="{ c: '' }" class="mt-3 space-y-2">
+                                        @csrf
+                                        <textarea name="catatan_dosen" x-model="c" rows="2" placeholder="Alasan penolakan (wajib)..."
+                                            class="w-full rounded-xl border-2 border-red-200 px-3 py-2 text-sm text-gray-800 placeholder-gray-400 focus:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-100 resize-none transition"></textarea>
+                                        <div class="flex gap-2">
+                                            <button type="submit" x-bind:disabled="c.trim() === ''"
+                                                x-bind:class="c.trim() === '' ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-700'"
+                                                class="rounded-xl border-2 border-red-300 bg-red-600 px-4 py-2 text-xs font-black text-white shadow-sm transition focus:outline-none">
+                                                Konfirmasi Penolakan
+                                            </button>
+                                            <button type="button" @click="tolak = false"
+                                                class="rounded-xl border-2 border-gray-200 bg-white px-4 py-2 text-xs font-black text-gray-500 transition hover:bg-gray-50">
+                                                Batal
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
                 {{-- Alert --}}
                 @if (session('success'))
                     <div x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 4000)"
@@ -427,11 +498,23 @@
                                             </div>
                                         </div>
 
-                                        {{-- View-only: dosen memantau; keputusan ada di Ka Lab → Prodi --}}
+                                        {{-- Badge LAB tujuan untuk usulan mandiri yang SUDAH dikonfirmasi dosen. --}}
+                                        <template x-if="item.jenis === 'mandiri' && item.status_dosen === 'dikonfirmasi' && item.lab_aktif">
+                                            <div
+                                                class="mb-2 inline-flex items-center gap-1.5 rounded-full border-2 border-teal-200 bg-teal-50 px-3 py-1 text-xs font-black text-teal-700">
+                                                <x-heroicon-o-beaker class="h-3.5 w-3.5" />
+                                                <span x-text="'Dikonfirmasi → Lab ' + item.lab_aktif"></span>
+                                            </div>
+                                        </template>
+
+                                        {{-- Mandiri menunggu konfirmasi dosen → label khusus (aksi ada di panel atas).
+                                             Mandiri dikonfirmasi → sebut lab tujuan. Pilih judul → menunggu Ka Lab & Prodi. --}}
                                         <div x-show="item.status === 'pending'"
-                                            class="rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 px-4 py-3 text-center">
-                                            <p class="text-xs font-semibold text-gray-400">
-                                                Menunggu keputusan Ka Lab &amp; Prodi
+                                            class="rounded-xl border-2 border-dashed px-4 py-3 text-center"
+                                            x-bind:class="(item.jenis === 'mandiri' && (item.status_dosen === null || item.status_dosen === '')) ? 'border-amber-300 bg-amber-50' : 'border-gray-200 bg-gray-50'">
+                                            <p class="text-xs font-semibold"
+                                                x-bind:class="(item.jenis === 'mandiri' && (item.status_dosen === null || item.status_dosen === '')) ? 'text-amber-600' : 'text-gray-400'"
+                                                x-text="(item.jenis === 'mandiri' && (item.status_dosen === null || item.status_dosen === '')) ? 'Menunggu konfirmasi Anda — akan diteruskan ke Ka Lab &amp; Prodi' : ((item.jenis === 'mandiri' && item.status_dosen === 'dikonfirmasi' && item.lab_aktif) ? ('Sudah dikonfirmasi ke Lab ' + item.lab_aktif + ' — menunggu keputusan Ka Lab &amp; Prodi') : 'Menunggu keputusan Ka Lab &amp; Prodi')">
                                             </p>
                                         </div>
 

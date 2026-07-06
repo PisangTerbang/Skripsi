@@ -375,7 +375,20 @@
                                                     @endif
                                                 @endforeach
                                                 @if (!$item->pilihan1 && !$item->pilihan2 && !$item->pilihan3)
-                                                    <span class="text-xs italic text-gray-400">Belum ada pilihan</span>
+                                                    @if ($item->jenis === 'mandiri')
+                                                        <div class="flex items-start gap-2">
+                                                            <span
+                                                                class="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-orange-500 text-[10px] font-black text-white shadow-sm">
+                                                                M
+                                                            </span>
+                                                            <p class="text-xs font-semibold leading-relaxed text-gray-700 line-clamp-1">
+                                                                {{ $item->judul_mandiri ?? '-' }}
+                                                                <span class="font-bold text-orange-600">(Usulan Mandiri)</span>
+                                                            </p>
+                                                        </div>
+                                                    @else
+                                                        <span class="text-xs italic text-gray-400">Belum ada pilihan</span>
+                                                    @endif
                                                 @endif
                                             </div>
                                         </td>

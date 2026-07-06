@@ -92,7 +92,16 @@ class Judul extends Model
      */
     public function getTotalPeminatAttribute()
     {
-        // Peminat dihitung untuk PERIODE AKTIF saja → ikut reset tiap ganti periode.
+        // Hindari N+1: pakai hasil withCount() bila controller sudah memuatnya.
+        if (array_key_exists('pengajuan_pilihan1_count', $this->attributes)
+            || array_key_exists('pengajuan_pilihan2_count', $this->attributes)
+            || array_key_exists('pengajuan_pilihan3_count', $this->attributes)) {
+            return ($this->pengajuan_pilihan1_count ?? 0)
+                + ($this->pengajuan_pilihan2_count ?? 0)
+                + ($this->pengajuan_pilihan3_count ?? 0);
+        }
+
+        // Fallback (jika tak di-withCount): hitung untuk PERIODE AKTIF saja.
         $pid = Periode::periodeAktif()?->id;
         if (!$pid) {
             return 0;
@@ -108,6 +117,10 @@ class Judul extends Model
      */
     public function getJumlahDitetapkanAttribute()
     {
+        if (array_key_exists('pengajuan_ditetapkan_count', $this->attributes)) {
+            return $this->pengajuan_ditetapkan_count ?? 0;
+        }
+
         $pid = Periode::periodeAktif()?->id;
         if (!$pid) {
             return 0;

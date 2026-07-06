@@ -43,18 +43,21 @@
                 <div class="p-6">
                     <p class="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{{ $pengumuman->isi }}</p>
 
-                    <div class="mt-4 flex flex-wrap gap-3">
-                        <span class="inline-flex items-center gap-1.5 rounded-full border-2 border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700">
-                            <x-heroicon-o-check-circle class="h-3.5 w-3.5" /> {{ $diterima }} Diterima
-                        </span>
-                        <span class="inline-flex items-center gap-1.5 rounded-full border-2 border-red-200 bg-red-50 px-3 py-1 text-xs font-black text-red-700">
-                            <x-heroicon-o-x-circle class="h-3.5 w-3.5" /> {{ $ditolak }} Ditolak
-                        </span>
-                    </div>
+                    @if ($tampilkanHasil)
+                        <div class="mt-4 flex flex-wrap gap-3">
+                            <span class="inline-flex items-center gap-1.5 rounded-full border-2 border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700">
+                                <x-heroicon-o-check-circle class="h-3.5 w-3.5" /> {{ $diterima }} Diterima
+                            </span>
+                            <span class="inline-flex items-center gap-1.5 rounded-full border-2 border-red-200 bg-red-50 px-3 py-1 text-xs font-black text-red-700">
+                                <x-heroicon-o-x-circle class="h-3.5 w-3.5" /> {{ $ditolak }} Ditolak
+                            </span>
+                        </div>
+                    @endif
                 </div>
             </div>
 
-            {{-- Tabel hasil --}}
+            {{-- Tabel hasil (hanya untuk pengumuman hasil pengajuan) --}}
+            @if ($tampilkanHasil)
             <div class="overflow-hidden rounded-2xl border-2 border-gray-200 bg-white shadow-md">
                 <div class="border-b-2 border-gray-100 px-6 py-4">
                     <h2 class="font-extrabold text-gray-800">Hasil Penetapan Judul TA</h2>
@@ -116,6 +119,7 @@
                     </table>
                 </div>
             </div>
+            @endif
 
         </div>
     </div>

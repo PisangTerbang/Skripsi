@@ -19,14 +19,22 @@ class ValidasiController extends Controller
             abort(403, 'Anda tidak memiliki akses sebagai Kepala Lab');
         }
 
+        // Peminat = aktivitas periode aktif (ikut reset tiap ganti periode).
+        $activePeriodeId = \App\Models\Periode::periodeAktif()?->id;
+        $diPeriodeAktif = fn($q) => $q->where('periode_id', $activePeriodeId);
+
+        // Ka Lab hanya menangani laboratoriumnya sendiri.
+        $myLab = $user->laboratorium_id;
+
         // ========== JUDUL PENDING VALIDASI ==========
         $judulPending = Judul::with(['dosen', 'laboratorium'])
             ->withCount([
-                'pengajuanPilihan1',
-                'pengajuanPilihan2',
-                'pengajuanPilihan3',
-                'pengajuanDitetapkan'
+                'pengajuanPilihan1' => $diPeriodeAktif,
+                'pengajuanPilihan2' => $diPeriodeAktif,
+                'pengajuanPilihan3' => $diPeriodeAktif,
+                'pengajuanDitetapkan' => $diPeriodeAktif,
             ])
+            ->where('laboratorium_id', $myLab)
             ->where('status_judul', 'pending_kalab')
             ->orderBy('created_at', 'asc')
             ->get()
@@ -41,11 +49,12 @@ class ValidasiController extends Controller
         // ========== JUDUL SUDAH DIVALIDASI ==========
         $judulSelesai = Judul::with(['dosen', 'laboratorium', 'reviewerKalab'])
             ->withCount([
-                'pengajuanPilihan1',
-                'pengajuanPilihan2',
-                'pengajuanPilihan3',
-                'pengajuanDitetapkan'
+                'pengajuanPilihan1' => $diPeriodeAktif,
+                'pengajuanPilihan2' => $diPeriodeAktif,
+                'pengajuanPilihan3' => $diPeriodeAktif,
+                'pengajuanDitetapkan' => $diPeriodeAktif,
             ])
+            ->where('laboratorium_id', $myLab)
             ->whereIn('status_judul', ['ditawarkan', 'ditolak_kalab'])
             ->whereNotNull('reviewed_at_kalab')
             ->orderBy('reviewed_at_kalab', 'desc')
@@ -58,14 +67,16 @@ class ValidasiController extends Controller
                 return $item;
             });
 
-        // ========== STATISTIK ==========
-        $totalJudul = Judul::count();
+        // ========== STATISTIK (scope lab) ==========
+        $totalJudul = Judul::where('laboratorium_id', $myLab)->count();
 
-        $divalidasi = Judul::where('status_judul', 'ditawarkan')
+        $divalidasi = Judul::where('laboratorium_id', $myLab)
+            ->where('status_judul', 'ditawarkan')
             ->whereNotNull('reviewed_at_kalab')
             ->count();
 
-        $ditolak = Judul::where('status_judul', 'ditolak_kalab')
+        $ditolak = Judul::where('laboratorium_id', $myLab)
+            ->where('status_judul', 'ditolak_kalab')
             ->whereNotNull('reviewed_at_kalab')
             ->count();
 
@@ -75,11 +86,15 @@ class ValidasiController extends Controller
                     ->orOn('pengajuan.pilihan_2_id', '=', 'judul.id')
                     ->orOn('pengajuan.pilihan_3_id', '=', 'judul.id');
             })
+            ->where('judul.laboratorium_id', $myLab)
+            ->where('pengajuan.periode_id', $activePeriodeId)
             ->count();
 
-        // "Ditetapkan" = pengajuan yang judulnya sudah ditetapkan Ka Lab (bukan status 'ditetapkan' yang tak ada).
+        // "Ditetapkan" = pengajuan yang judulnya sudah ditetapkan Ka Lab, di lab ini.
         $totalDitetapkan = DB::table('pengajuan')
-            ->whereNotNull('judul_ditetapkan_id')
+            ->join('judul', 'pengajuan.judul_ditetapkan_id', '=', 'judul.id')
+            ->where('judul.laboratorium_id', $myLab)
+            ->whereNotNull('pengajuan.judul_ditetapkan_id')
             ->count();
 
         // ========== JSON DATA UNTUK ALPINE.JS ==========
@@ -150,7 +165,9 @@ class ValidasiController extends Controller
     public function approve(Request $request, $id)
     {
         $request->validate([
-            'catatan_kalab' => 'nullable|string|max:1000',
+            'catatan_kalab' => 'required|string|max:1000',
+        ], [
+            'catatan_kalab.required' => 'Catatan validasi wajib diisi.',
         ]);
 
         $judul = Judul::findOrFail($id);
@@ -158,6 +175,10 @@ class ValidasiController extends Controller
 
         if ($user->role !== 'ka_lab') {
             return back()->with('error', 'Anda tidak memiliki akses sebagai Kepala Lab.');
+        }
+
+        if ($judul->laboratorium_id !== $user->laboratorium_id) {
+            return back()->with('error', 'Judul ini bukan wewenang laboratorium Anda.');
         }
 
         if ($judul->status_judul !== 'pending_kalab') {
@@ -218,6 +239,10 @@ class ValidasiController extends Controller
 
         if ($user->role !== 'ka_lab') {
             return back()->with('error', 'Anda tidak memiliki akses sebagai Kepala Lab.');
+        }
+
+        if ($judul->laboratorium_id !== $user->laboratorium_id) {
+            return back()->with('error', 'Judul ini bukan wewenang laboratorium Anda.');
         }
 
         if ($judul->status_judul !== 'pending_kalab') {

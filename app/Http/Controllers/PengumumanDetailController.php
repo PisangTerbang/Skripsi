@@ -28,17 +28,24 @@ class PengumumanDetailController extends Controller
             ->whereNotNull('pengumuman.dikirim_at')
             ->firstOrFail();
 
+        // Info umum (tampilkan_hasil = false) → tanpa tabel hasil. Kolom bisa null
+        // untuk data lama sebelum migrasi → anggap true (perilaku semula).
+        $tampilkanHasil = $pengumuman->tampilkan_hasil ?? true;
+
         // Hasil per-periode: pengajuan yang sudah diputuskan (diterima/ditolak)
-        $hasil = Pengajuan::with(['mahasiswa', 'judulDitetapkan.dosen'])
-            ->where('periode_id', $pengumuman->periode_id)
-            ->whereIn('status', ['disetujui', 'ditolak'])
-            ->get()
-            ->sortBy(fn($p) => $p->mahasiswa->name ?? '')
-            ->values();
+        $hasil = $tampilkanHasil
+            ? Pengajuan::with(['mahasiswa', 'judulDitetapkan.dosen'])
+                ->where('periode_id', $pengumuman->periode_id)
+                ->whereIn('status', ['disetujui', 'ditolak'])
+                ->get()
+                ->sortBy(fn($p) => $p->mahasiswa->name ?? '')
+                ->values()
+            : collect();
 
         return view('pengumuman.detail', [
             'pengumuman' => $pengumuman,
             'hasil' => $hasil,
+            'tampilkanHasil' => $tampilkanHasil,
             'myId' => Auth::id(),
             'title' => 'Detail Pengumuman',
         ]);

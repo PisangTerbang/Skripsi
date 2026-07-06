@@ -61,6 +61,29 @@
                 <div class="h-px flex-1 bg-gradient-to-l from-transparent to-gray-200"></div>
             </div>
 
+            {{-- Filter Jenis --}}
+            @php
+                $tabs = [
+                    'all' => ['label' => 'Semua', 'count' => $jumlah['all']],
+                    'penetapan' => ['label' => 'Penetapan Judul', 'count' => $jumlah['penetapan']],
+                    'biasa' => ['label' => 'Info Umum', 'count' => $jumlah['biasa']],
+                ];
+            @endphp
+            <div class="flex flex-wrap items-center gap-2">
+                @foreach ($tabs as $key => $tab)
+                    <a href="{{ route('koor-ta.pengumuman.index', $key === 'all' ? [] : ['jenis' => $key]) }}"
+                        class="inline-flex items-center gap-2 rounded-xl border-2 px-4 py-2 text-xs font-black transition
+                            {{ $jenis === $key
+                                ? 'border-indigo-300 bg-indigo-600 text-white shadow-sm'
+                                : 'border-gray-200 bg-white text-gray-600 hover:border-indigo-200 hover:bg-indigo-50' }}">
+                        {{ $tab['label'] }}
+                        <span class="rounded-full px-2 py-0.5 text-[10px] {{ $jenis === $key ? 'bg-white/25 text-white' : 'bg-gray-100 text-gray-500' }}">
+                            {{ $tab['count'] }}
+                        </span>
+                    </a>
+                @endforeach
+            </div>
+
             {{-- Table Card --}}
             <div class="overflow-hidden rounded-2xl border-2 border-gray-200 bg-white shadow-md">
 
@@ -74,7 +97,6 @@
                         </div>
                         <div>
                             <h2 class="text-base font-extrabold text-white">Semua Pengumuman</h2>
-                            <p class="text-xs text-indigo-200">Diurutkan berdasarkan terbaru</p>
                         </div>
                     </div>
                     <span
@@ -134,6 +156,17 @@
 
                                         {{-- Judul --}}
                                         <td class="max-w-[240px] px-6 py-4">
+                                            <div class="mb-1">
+                                                @if ($item->tampilkan_hasil)
+                                                    <span class="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-blue-700">
+                                                        <x-heroicon-o-clipboard-document-check class="h-3 w-3" /> Penetapan Judul
+                                                    </span>
+                                                @else
+                                                    <span class="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-gray-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-gray-500">
+                                                        <x-heroicon-o-megaphone class="h-3 w-3" /> Info Umum
+                                                    </span>
+                                                @endif
+                                            </div>
                                             <p class="font-bold text-gray-800 line-clamp-1">{{ $item->judul }}</p>
                                             <p class="mt-0.5 text-xs text-gray-400 line-clamp-1">{{ $item->isi }}</p>
                                         </td>

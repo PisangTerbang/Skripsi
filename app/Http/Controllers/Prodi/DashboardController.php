@@ -23,17 +23,23 @@ class DashboardController extends Controller
         // status_kaprodi bernilai null saat menunggu (bukan 'pending'), jadi pakai whereNull.
         $pid = Periode::periodeAktif()?->id;
 
-        $totalJudul = Judul::count();
-        $judulDitawarkan = Judul::where('status_judul', 'ditawarkan')->count();
-        $pendingFinal = Pengajuan::where('periode_id', $pid)
-            ->where('status_kalab', 'disetujui')
-            ->whereNull('status_kaprodi')
-            ->count();
-        $totalPengajuan = Pengajuan::where('periode_id', $pid)->count();
+        // Dua query agregat (FILTER) menggantikan 6 count terpisah → hemat latency DB remote.
+        $jd = Judul::selectRaw("count(*) as total, count(*) filter (where status_judul = 'ditawarkan') as ditawarkan")->first();
+        $totalJudul = (int) $jd->total;
+        $judulDitawarkan = (int) $jd->ditawarkan;
+
+        $p = Pengajuan::where('periode_id', $pid)->selectRaw("
+            count(*)                                                                     as total,
+            count(*) filter (where status_kalab = 'disetujui' and status_kaprodi is null) as pending_final,
+            count(*) filter (where status_kaprodi = 'disetujui')                         as final_disetujui,
+            count(*) filter (where status_kaprodi = 'ditolak')                           as final_ditolak
+        ")->first();
+        $totalPengajuan = (int) $p->total;
+        $pendingFinal = (int) $p->pending_final;
 
         // ========== DONUT: keputusan final Prodi (periode aktif) ==========
-        $finalDisetujui = Pengajuan::where('periode_id', $pid)->where('status_kaprodi', 'disetujui')->count();
-        $finalDitolak = Pengajuan::where('periode_id', $pid)->where('status_kaprodi', 'ditolak')->count();
+        $finalDisetujui = (int) $p->final_disetujui;
+        $finalDitolak = (int) $p->final_ditolak;
         $finalMenunggu = $pendingFinal; // sudah disetujui Ka Lab, belum diputus Prodi
 
         // ========== DATA GRAFIK (lintas periode) ==========

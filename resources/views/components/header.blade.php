@@ -36,19 +36,62 @@
 
         <div class="flex items-center gap-2">
 
-            <a href="{{ route('mahasiswa.notifikasi') }}"
-                x-data="{ hover: false }"
-                @mousenter="hover = true"
-                @mouseleave="hover = false"
-                class="relative p-2.5 text-gray-400 hover:text-indigo-600 rounded-xl hover:bg-indigo-50 transition-all duration-200 active:scale-95">
-                <x-heroicon-o-bell class="w-5 h-5" />
-                <span x-cloak
-                    x-show="$store.notif.unread > 0"
-                    x-transition
-                    x-text="$store.notif.unread > 9 ? '9+' : $store.notif.unread"
-                    class="absolute -top-0.5 -right-0.5 min-w-[1.25rem] h-5 flex items-center justify-center bg-red-500 text-white text-[10px] font-bold px-1.5 rounded-full ring-2 ring-white animate-pulse">
-                </span>
-            </a>
+            {{-- Notifikasi: klik bell → preview dropdown (tak pindah halaman); klik item → pindah --}}
+            <div x-data="{ notifOpen: false }" class="relative">
+                <button @click="notifOpen = !notifOpen; if (notifOpen) $store.notif.fetch()"
+                    class="relative p-2.5 text-gray-400 hover:text-indigo-600 rounded-xl hover:bg-indigo-50 transition-all duration-200 active:scale-95">
+                    <x-heroicon-o-bell class="w-5 h-5" />
+                    <span x-cloak x-show="$store.notif.unread > 0" x-transition
+                        x-text="$store.notif.unread > 9 ? '9+' : $store.notif.unread"
+                        class="absolute -top-0.5 -right-0.5 min-w-[1.25rem] h-5 flex items-center justify-center bg-red-500 text-white text-[10px] font-bold px-1.5 rounded-full ring-2 ring-white animate-pulse">
+                    </span>
+                </button>
+
+                <div x-cloak x-show="notifOpen" @click.away="notifOpen = false"
+                    x-transition:enter="transition ease-out duration-150"
+                    x-transition:enter-start="opacity-0 translate-y-1 scale-95"
+                    x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                    x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100"
+                    x-transition:leave-end="opacity-0"
+                    class="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden">
+
+                    <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                        <div class="flex items-center gap-2">
+                            <p class="text-sm font-bold text-gray-800">Notifikasi</p>
+                            <span x-show="$store.notif.unread > 0" x-text="$store.notif.unread"
+                                class="min-w-[1.25rem] h-5 flex items-center justify-center bg-red-100 text-red-600 text-[10px] font-black px-1.5 rounded-full"></span>
+                        </div>
+                        <button x-show="$store.notif.unread > 0" @click="$store.notif.markAllRead()"
+                            class="text-[11px] font-bold text-indigo-500 hover:text-indigo-700">Tandai dibaca</button>
+                    </div>
+
+                    <div class="max-h-80 overflow-y-auto">
+                        <template x-if="$store.notif.items.length === 0">
+                            <div class="px-4 py-10 text-center">
+                                <x-heroicon-o-inbox class="w-10 h-10 mx-auto text-gray-200" />
+                                <p class="mt-2 text-xs text-gray-400">Belum ada notifikasi</p>
+                            </div>
+                        </template>
+                        <template x-for="item in $store.notif.items" :key="item.id">
+                            <a :href="item.link || '{{ route('mahasiswa.notifikasi') }}'"
+                                class="flex items-start gap-3 px-4 py-3 border-b border-gray-50 hover:bg-indigo-50/50 transition-colors">
+                                <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full"
+                                    :class="item.is_read ? 'bg-gray-200' : 'bg-indigo-500'"></span>
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-xs leading-relaxed text-gray-700 line-clamp-2"
+                                        :class="!item.is_read ? 'font-semibold' : ''" x-text="item.pesan"></p>
+                                    <p class="mt-0.5 text-[11px] text-gray-400" x-text="item.waktu"></p>
+                                </div>
+                            </a>
+                        </template>
+                    </div>
+
+                    <a href="{{ route('mahasiswa.notifikasi') }}"
+                        class="block px-4 py-2.5 text-center text-xs font-bold text-indigo-600 hover:bg-indigo-50 border-t border-gray-100">
+                        Lihat Semua Notifikasi
+                    </a>
+                </div>
+            </div>
 
             <div class="hidden md:block w-px h-8 bg-gray-200"></div>
 
@@ -106,13 +149,11 @@
                     </div>
 
                     <div class="border-t border-gray-100 pt-1.5">
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-                            <button type="submit" class="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-500 hover:bg-red-50 hover:text-red-700 transition-colors">
-                                <x-heroicon-o-arrow-right-on-rectangle class="w-4 h-4" />
-                                Keluar
-                            </button>
-                        </form>
+                        <button type="button" @click="logoutModal = true; open = false"
+                            class="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-500 hover:bg-red-50 hover:text-red-700 transition-colors">
+                            <x-heroicon-o-arrow-right-on-rectangle class="w-4 h-4" />
+                            Keluar
+                        </button>
                     </div>
                 </div>
             </div>

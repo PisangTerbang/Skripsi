@@ -20,6 +20,9 @@
     <p class="px-4 pt-4 pb-2 text-[11px] font-semibold uppercase tracking-wider text-sky-300/70">Lainnya</p>
 
     <div class="space-y-1">
+        <x-nav-link-kalab route="ka-lab.export.index" icon="arrow-down-tray">
+            Export Laporan
+        </x-nav-link-kalab>
         <x-nav-link-kalab route="ka-lab.notifikasi" icon="bell">
             Notifikasi
         </x-nav-link-kalab>

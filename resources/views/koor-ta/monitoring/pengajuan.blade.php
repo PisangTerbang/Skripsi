@@ -177,8 +177,14 @@
                                                 <p class="line-clamp-2 text-sm font-semibold text-gray-800">
                                                     {{ $item->judulDitetapkan->nama_judul ?? $item->judulDitetapkan->judul }}
                                                 </p>
+                                            @elseif ($item->status === 'ditolak')
+                                                <span class="italic text-gray-400 text-xs">Tidak ada judul ditetapkan</span>
                                             @else
-                                                <span class="italic text-gray-400 text-xs">Belum ditetapkan</span>
+                                                {{-- Belum ditetapkan → tampilkan yang diusulkan (mandiri / prioritas-1) --}}
+                                                <p class="text-sm text-gray-600">
+                                                    {{ $item->jenis === 'mandiri' ? ($item->judul_mandiri ?? '-') : ($item->pilihan1->nama_judul ?? '-') }}
+                                                    <span class="text-xs italic text-gray-400">({{ $item->jenis === 'mandiri' ? 'mandiri, ' : '' }}belum ditetapkan)</span>
+                                                </p>
                                             @endif
                                         </td>
 

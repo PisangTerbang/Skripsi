@@ -87,6 +87,22 @@
                             @enderror
                         </div>
 
+                        {{-- Tampilkan tabel hasil? --}}
+                        <div class="rounded-xl border-2 border-gray-200 bg-gray-50 px-4 py-3">
+                            <label class="flex cursor-pointer items-start gap-3">
+                                <input type="checkbox" name="tampilkan_hasil" value="1"
+                                    {{ old('tampilkan_hasil', '1') ? 'checked' : '' }}
+                                    class="mt-0.5 h-5 w-5 rounded border-2 border-gray-300 text-indigo-600 focus:ring-indigo-200" />
+                                <span>
+                                    <span class="block text-sm font-bold text-gray-700">Sertakan tabel hasil penetapan judul</span>
+                                    <span class="mt-0.5 block text-xs text-gray-500">
+                                        Centang untuk pengumuman hasil pengajuan (menampilkan tabel Diterima/Ditolak
+                                        per mahasiswa). Kosongkan untuk pengumuman info umum (tanpa tabel hasil).
+                                    </span>
+                                </span>
+                            </label>
+                        </div>
+
                         {{-- Info --}}
                         <div class="rounded-xl border-2 border-yellow-200 bg-yellow-50 px-4 py-3">
                             <p class="text-xs font-semibold text-yellow-700">

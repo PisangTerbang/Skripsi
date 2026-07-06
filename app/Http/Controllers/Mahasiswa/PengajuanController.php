@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Mahasiswa;
 use App\Http\Controllers\Controller;
 use App\Models\Judul;
 use App\Models\Pengajuan;
+use App\Models\Periode;
 use App\Models\Laboratorium;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -58,9 +59,13 @@ class PengajuanController extends Controller
             ->pluck('periode_id')
             ->all();
 
-        $pengajuanSaya = Pengajuan::where('mahasiswa_id', $mahasiswaId)
-            ->pluck('judul_id')
-            ->toArray();
+        // Hanya periode aktif → judul yang diajukan di periode lama tak menandai "sudah diajukan" sekarang.
+        $pengajuanSaya = $periodeAktif
+            ? Pengajuan::where('mahasiswa_id', $mahasiswaId)
+                ->where('periode_id', $periodeAktif->id)
+                ->pluck('judul_id')
+                ->toArray()
+            : [];
 
         $laboratorium = Laboratorium::all();
 
@@ -154,68 +159,86 @@ class PengajuanController extends Controller
             'pilihan_3_id.different' => 'Pilihan 3 harus berbeda dengan Pilihan 1 dan 2',
         ]);
 
+        $jenis = !empty($validated['judul_mandiri']) ? 'mandiri' : 'pilih';
+
+        // Routing review berjenjang:
+        // - 'pilih'   → langsung ke lab pemilik judul PRIORITAS 1.
+        // - 'mandiri' → belum ke lab; menunggu konfirmasi dosen (lab_aktif_id null, status_dosen null).
+        $labAwal = $jenis === 'pilih'
+            ? Judul::whereKey($validated['pilihan_1_id'])->value('laboratorium_id')
+            : null;
+
         Pengajuan::create([
             'mahasiswa_id' => $mahasiswaId,
             'periode_id' => $periodeAktif->id,
             'judul_mandiri' => $validated['judul_mandiri'] ?? null,
             'deskripsi_mandiri' => $validated['deskripsi_mandiri'] ?? null,
-            'dosen_pembimbing_id' => $validated['dosen_pembimbing_id'] ?? null, // ✅
+            'dosen_pembimbing_id' => $validated['dosen_pembimbing_id'] ?? null,
             'pilihan_1_id' => $validated['pilihan_1_id'],
             'pilihan_2_id' => $validated['pilihan_2_id'],
             'pilihan_3_id' => $validated['pilihan_3_id'],
             'alasan_1' => $validated['alasan_1'] ?? null,
             'alasan_2' => $validated['alasan_2'] ?? null,
             'alasan_3' => $validated['alasan_3'] ?? null,
-            'jenis' => !empty($validated['judul_mandiri']) ? 'mandiri' : 'pilih',
+            'jenis' => $jenis,
             'status' => 'pending',
+            'prioritas_aktif' => 1,
+            'lab_aktif_id' => $labAwal,
         ]);
-
-        $dosenIds = [];
-
-        foreach (['pilihan_1_id', 'pilihan_2_id', 'pilihan_3_id'] as $key) {
-            $j = Judul::find($validated[$key]);
-            if ($j && $j->dosen_id && !in_array($j->dosen_id, $dosenIds)) {
-                $dosenIds[] = $j->dosen_id;
-            }
-        }
-
-        // ✅ Notifikasi ke dosen pembimbing yang dipilih untuk judul mandiri
-        if (!empty($validated['judul_mandiri']) && !empty($validated['dosen_pembimbing_id'])) {
-            $dosenPembimbingId = $validated['dosen_pembimbing_id'];
-            if (!in_array($dosenPembimbingId, $dosenIds)) {
-                $dosenIds[] = $dosenPembimbingId;
-            }
-        }
 
         $now = now();
         $rows = [];
 
-        // Dosen pemilik judul yang dipilih (termasuk pembimbing judul mandiri)
-        $dosenLink = route('dosen.pengajuan', [], false);
-        foreach ($dosenIds as $dosenId) {
-            $rows[] = [
-                'user_id' => $dosenId,
-                'tipe' => 'pengajuan_baru',
-                'pesan' => $mahasiswaName . ' memilih salah satu judul Anda pada pengajuan TA-nya.',
-                'link' => $dosenLink,
-                'is_read' => DB::raw('false'),
-                'created_at' => $now,
-                'updated_at' => $now,
-            ];
-        }
+        if ($jenis === 'mandiri') {
+            // Mandiri → masuk ke DOSEN pembimbing dulu untuk konfirmasi & penentuan lab.
+            if (!empty($validated['dosen_pembimbing_id'])) {
+                $rows[] = [
+                    'user_id' => $validated['dosen_pembimbing_id'],
+                    'tipe' => 'mandiri_konfirmasi',
+                    'pesan' => $mahasiswaName . ' mengajukan judul mandiri & memilih Anda sebagai pembimbing. Mohon konfirmasi dan tentukan laboratorium.',
+                    'link' => route('dosen.pengajuan', [], false),
+                    'is_read' => DB::raw('false'),
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
+        } else {
+            // 'pilih' → beri tahu dosen pemilik judul (informasi) + Ka Lab lab PRIORITAS 1 saja.
+            $dosenIds = [];
+            foreach (['pilihan_1_id', 'pilihan_2_id', 'pilihan_3_id'] as $key) {
+                $j = Judul::find($validated[$key] ?? null);
+                if ($j && $j->dosen_id && !in_array($j->dosen_id, $dosenIds)) {
+                    $dosenIds[] = $j->dosen_id;
+                }
+            }
+            $dosenLink = route('dosen.pengajuan', [], false);
+            foreach ($dosenIds as $dosenId) {
+                $rows[] = [
+                    'user_id' => $dosenId,
+                    'tipe' => 'pengajuan_baru',
+                    'pesan' => $mahasiswaName . ' memilih salah satu judul Anda pada pengajuan TA-nya.',
+                    'link' => $dosenLink,
+                    'is_read' => DB::raw('false'),
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
 
-        // ✅ Notifikasi ke semua Ka Lab: pengajuan baru masuk untuk direview
-        $kalabLink = route('ka-lab.pengajuan.index', [], false);
-        foreach (User::where('role', 'ka_lab')->pluck('id') as $kalabId) {
-            $rows[] = [
-                'user_id' => $kalabId,
-                'tipe' => 'pengajuan_masuk',
-                'pesan' => $mahasiswaName . ' mengirim pengajuan judul TA baru untuk direview.',
-                'link' => $kalabLink,
-                'is_read' => DB::raw('false'),
-                'created_at' => $now,
-                'updated_at' => $now,
-            ];
+            // Ka Lab lab prioritas-1 saja (bukan semua lab).
+            if ($labAwal) {
+                $kalabLink = route('ka-lab.pengajuan.index', [], false);
+                foreach (User::where('role', 'ka_lab')->where('laboratorium_id', $labAwal)->pluck('id') as $kalabId) {
+                    $rows[] = [
+                        'user_id' => $kalabId,
+                        'tipe' => 'pengajuan_masuk',
+                        'pesan' => $mahasiswaName . ' mengirim pengajuan (judul prioritas 1 di lab Anda) untuk direview.',
+                        'link' => $kalabLink,
+                        'is_read' => DB::raw('false'),
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ];
+                }
+            }
         }
 
         // ✅ Satu kali batch insert, bukan N query
@@ -231,6 +254,10 @@ class PengajuanController extends Controller
     {
         $mahasiswaId = Auth::id();
 
+        // Riwayat hanya menampilkan pengajuan PERIODE AKTIF (ikut reset tiap ganti periode).
+        // Pengajuan periode lampau diarsipkan di DB, tapi tak lagi ditampilkan ke mahasiswa.
+        $periodeAktifId = Periode::periodeAktif()?->id;
+
         $pengajuan = Pengajuan::with([
             'pilihan1.laboratorium',
             'pilihan1.dosen',
@@ -244,6 +271,7 @@ class PengajuanController extends Controller
             'periode',
         ])
             ->where('mahasiswa_id', $mahasiswaId)
+            ->where('periode_id', $periodeAktifId)
             ->latest()
             ->get();
 

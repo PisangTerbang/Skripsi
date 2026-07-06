@@ -16,16 +16,17 @@ class DosenDashboardController extends Controller
         $pid = $periodeAktif?->id;
 
         // ================= STATS =================
-        $total = Pengajuan::where('periode_id', $pid)->count();
-        $disetujui = Pengajuan::where('periode_id', $pid)
-            ->where('status', 'disetujui')
-            ->count();
-        $ditolak = Pengajuan::where('periode_id', $pid)
-            ->where('status', 'ditolak')
-            ->count();
-        $pending = Pengajuan::where('periode_id', $pid)
-            ->where('status', 'pending')
-            ->count();
+        // Satu query agregat (FILTER) menggantikan 4 count terpisah → hemat latency DB remote.
+        $s = Pengajuan::where('periode_id', $pid)->selectRaw("
+            count(*)                                        as total,
+            count(*) filter (where status = 'disetujui')    as disetujui,
+            count(*) filter (where status = 'ditolak')      as ditolak,
+            count(*) filter (where status = 'pending')      as pending
+        ")->first();
+        $total = (int) $s->total;
+        $disetujui = (int) $s->disetujui;
+        $ditolak = (int) $s->ditolak;
+        $pending = (int) $s->pending;
 
         $totalSemua = max($total, 1); // cegah bagi 0
 
@@ -56,7 +57,9 @@ class DosenDashboardController extends Controller
             ->orderBy('periode.id')
             ->get();
 
-        // ================= LAB STATS =================
+        // ================= LAB STATS (SEMUA PERIODE) =================
+        // Statistik per-lab dihitung lintas SEMUA periode (bukan periode aktif saja)
+        // agar rasio antar-lab merepresentasikan keseluruhan riwayat.
         $labDisetujui = \App\Models\Laboratorium::select(
             'laboratorium.nama',
             DB::raw('count(pengajuan.id) as total')
@@ -64,7 +67,6 @@ class DosenDashboardController extends Controller
             ->join('judul', 'laboratorium.id', '=', 'judul.laboratorium_id')
             ->join('pengajuan', 'judul.id', '=', 'pengajuan.judul_ditetapkan_id')
             ->where('pengajuan.status', 'disetujui')
-            ->where('pengajuan.periode_id', $pid)
             ->groupBy('laboratorium.nama')
             ->orderByDesc('total')
             ->take(5)
@@ -77,7 +79,6 @@ class DosenDashboardController extends Controller
             ->join('judul', 'laboratorium.id', '=', 'judul.laboratorium_id')
             ->join('pengajuan', 'judul.id', '=', 'pengajuan.judul_ditetapkan_id')
             ->where('pengajuan.status', 'ditolak')
-            ->where('pengajuan.periode_id', $pid)
             ->groupBy('laboratorium.nama')
             ->orderByDesc('total')
             ->take(5)
@@ -90,8 +91,8 @@ class DosenDashboardController extends Controller
         )
             ->join('judul', 'laboratorium.id', '=', 'judul.laboratorium_id')
             ->join('pengajuan', 'judul.id', '=', 'pengajuan.judul_ditetapkan_id')
-            ->where('pengajuan.periode_id', $pid)
             ->groupBy('laboratorium.nama')
+            ->orderByDesc(DB::raw("count(pengajuan.id)"))
             ->get();
 
         // ================= RECENT SUBMISSIONS (NEW) =================

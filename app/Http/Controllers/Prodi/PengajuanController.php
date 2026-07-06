@@ -71,7 +71,9 @@ class PengajuanController extends Controller
     public function approve(Request $request, $id)
     {
         $validated = $request->validate([
-            'catatan_kaprodi' => 'nullable|string|max:1000',
+            'catatan_kaprodi' => 'required|string|max:1000',
+        ], [
+            'catatan_kaprodi.required' => 'Catatan persetujuan wajib diisi.',
         ]);
 
         $pengajuan = Pengajuan::with('judulDitetapkan')->findOrFail($id);
@@ -138,7 +140,8 @@ class PengajuanController extends Controller
         // bisa dipilih per periode.
         $periodeList = \App\Models\Periode::urutKronologis()->get();
         $aktifId = \App\Models\Periode::periodeAktif()?->id;
-        $selectedPeriode = $request->get('periode_id') ?? 'semua';
+        // Default ke periode aktif (konsisten dgn Dosen/Ka Lab); filter tetap bisa lihat riwayat lama.
+        $selectedPeriode = $request->get('periode_id') ?? ($aktifId ? (string) $aktifId : 'semua');
 
         $pengajuan = Pengajuan::with([
             'mahasiswa',

@@ -18,7 +18,11 @@ class JudulController extends Controller
             abort(403, 'Anda tidak memiliki akses sebagai Kepala Lab');
         }
 
+        // Ka Lab hanya menangani laboratoriumnya sendiri.
+        $myLab = $user->laboratorium_id;
+
         $query = Judul::with(['dosen', 'laboratorium'])
+            ->where('laboratorium_id', $myLab)
             ->whereIn('status_judul', [
                 'draft',
                 'pending_kalab',
@@ -48,19 +52,24 @@ class JudulController extends Controller
         $juduls = $query->latest()->paginate($request->per_page ?? 10)->withQueryString();
 
         $stats = [
-            'total' => Judul::whereIn('status_judul', ['draft', 'pending_kalab', 'ditawarkan', 'ditolak_kalab'])->count(),
-            'draft' => Judul::where('status_judul', 'draft')->count(),
-            'pending_kalab' => Judul::where('status_judul', 'pending_kalab')->count(),
-            'ditawarkan' => Judul::where('status_judul', 'ditawarkan')->count(),
-            'ditolak_kalab' => Judul::where('status_judul', 'ditolak_kalab')->count(),
+            'total' => Judul::where('laboratorium_id', $myLab)->whereIn('status_judul', ['draft', 'pending_kalab', 'ditawarkan', 'ditolak_kalab'])->count(),
+            'draft' => Judul::where('laboratorium_id', $myLab)->where('status_judul', 'draft')->count(),
+            'pending_kalab' => Judul::where('laboratorium_id', $myLab)->where('status_judul', 'pending_kalab')->count(),
+            'ditawarkan' => Judul::where('laboratorium_id', $myLab)->where('status_judul', 'ditawarkan')->count(),
+            'ditolak_kalab' => Judul::where('laboratorium_id', $myLab)->where('status_judul', 'ditolak_kalab')->count(),
         ];
 
+        // Peminat = aktivitas periode aktif (ikut reset tiap ganti periode).
+        $activePeriodeId = \App\Models\Periode::periodeAktif()?->id;
+        $diPeriodeAktif = fn($q) => $q->where('periode_id', $activePeriodeId);
+
         $judulList = Judul::with(['dosen', 'laboratorium'])
+            ->where('laboratorium_id', $myLab)
             ->withCount([
-                'pengajuanPilihan1',
-                'pengajuanPilihan2',
-                'pengajuanPilihan3',
-                'pengajuanDitetapkan',
+                'pengajuanPilihan1' => $diPeriodeAktif,
+                'pengajuanPilihan2' => $diPeriodeAktif,
+                'pengajuanPilihan3' => $diPeriodeAktif,
+                'pengajuanDitetapkan' => $diPeriodeAktif,
             ])
             ->whereIn('status_judul', ['draft', 'pending_kalab', 'ditawarkan', 'ditolak_kalab'])
             ->get()
@@ -149,6 +158,10 @@ class JudulController extends Controller
             'pengajuanPilihan3.mahasiswa',
             'pengajuanDitetapkan.mahasiswa'
         ])->findOrFail($id);
+
+        if ($judul->laboratorium_id !== $user->laboratorium_id) {
+            abort(403, 'Judul ini bukan wewenang laboratorium Anda.');
+        }
 
         return view('ka_lab.judul', compact('judul'));
     }

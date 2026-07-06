@@ -41,6 +41,7 @@ class MonitoringController extends Controller
             'periode',
             'judulDitetapkan.dosen',
             'judulDitetapkan.laboratorium',
+            'pilihan1', // judul prioritas-1 (untuk baris yang belum ditetapkan)
             'reviewerKalab',
             'reviewerKaprodi',
         ]);

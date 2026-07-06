@@ -9,8 +9,7 @@ class LaboratoriumSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('laboratorium')->truncate();
-
+        // Pembersihan tabel terpusat di DatabaseSeeder (TRUNCATE ... CASCADE).
         DB::table('laboratorium')->insert([
             [
                 'id' => 1,

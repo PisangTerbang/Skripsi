@@ -122,8 +122,11 @@ Route::middleware(['auth', 'role:dosen'])
         // DASHBOARD
         Route::get('/', [DosenDashboardController::class, 'index'])->name('dashboard');
 
-        // PENGAJUAN MAHASISWA (view-only — keputusan ada di Ka Lab → Prodi)
+        // PENGAJUAN MAHASISWA (view-only untuk pilih; mandiri butuh konfirmasi dosen)
         Route::get('/pengajuan', [DosenPengajuanController::class, 'index'])->name('pengajuan');
+        // Usulan mandiri: dosen konfirmasi (pilih lab → teruskan ke Ka Lab) atau tolak.
+        Route::post('/pengajuan/{id}/konfirmasi-mandiri', [DosenPengajuanController::class, 'konfirmasiMandiri'])->name('pengajuan.konfirmasi-mandiri');
+        Route::post('/pengajuan/{id}/tolak-mandiri', [DosenPengajuanController::class, 'tolakMandiri'])->name('pengajuan.tolak-mandiri');
 
         // JUDUL MANAGEMENT
         Route::prefix('judul')->name('judul.')->group(function () {
@@ -181,6 +184,11 @@ Route::middleware(['auth', 'role:ka_lab'])
             Route::post('/{id}/reject', [KaLabPengajuanController::class, 'reject'])->name('reject');
             Route::get('/{id}', [KaLabPengajuanController::class, 'show'])->name('show');
         });
+
+        // EXPORT LAPORAN
+        Route::get('/export', [\App\Http\Controllers\KaLab\ExportController::class, 'index'])->name('export.index');
+        Route::post('/export/excel', [\App\Http\Controllers\KaLab\ExportController::class, 'exportExcel'])->name('export.excel');
+        Route::post('/export/pdf', [\App\Http\Controllers\KaLab\ExportController::class, 'exportPdf'])->name('export.pdf');
 
         // NOTIFIKASI — tambah di dalam group ka-lab
         Route::get('/notifikasi', [\App\Http\Controllers\KaLab\NotifikasiController::class, 'index'])->name('notifikasi');
@@ -273,6 +281,7 @@ Route::middleware(['auth', 'role:koordinator_ta'])
             Route::put('/{periode}', [KoorTAPeriodeController::class, 'update'])->name('update');
             Route::delete('/{periode}', [KoorTAPeriodeController::class, 'destroy'])->name('destroy');
             Route::post('/{periode}/toggle-active', [KoorTAPeriodeController::class, 'toggleActive'])->name('toggle-active');
+            Route::post('/sinkron-kunci', [KoorTAPeriodeController::class, 'sinkronKunci'])->name('sinkron-kunci');
         });
 
         // PENGUMUMAN

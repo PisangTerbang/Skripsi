@@ -40,6 +40,10 @@ class Pengajuan extends Model
         'sumber_judul',
         'jenis',
         'dosen_pembimbing_id',
+        // Routing lab (review berjenjang & mandiri)
+        'prioritas_aktif',
+        'lab_aktif_id',
+        'status_dosen',
     ];
 
     protected $casts = [
@@ -57,6 +61,30 @@ class Pengajuan extends Model
     public function periode()
     {
         return $this->belongsTo(Periode::class);
+    }
+
+    public function labAktif()
+    {
+        return $this->belongsTo(Laboratorium::class, 'lab_aktif_id');
+    }
+
+    public function dosenPembimbing()
+    {
+        return $this->belongsTo(User::class, 'dosen_pembimbing_id');
+    }
+
+    /** ID judul pada prioritas yang sedang direview Ka Lab. */
+    public function judulIdPrioritasAktif()
+    {
+        $p = $this->prioritas_aktif ?: 1;
+        return $this->{"pilihan_{$p}_id"};
+    }
+
+    /** Objek judul pada prioritas aktif (null bila mandiri / tak ada). */
+    public function judulPrioritasAktif()
+    {
+        $id = $this->judulIdPrioritasAktif();
+        return $id ? Judul::find($id) : null;
     }
 
     public function pilihan1()
@@ -215,6 +243,13 @@ class Pengajuan extends Model
         }
     }
 
+    /**
+     * Penolakan BERJENJANG oleh Ka Lab.
+     * - Jenis 'pilih': bila masih ada prioritas berikutnya yang punya judul, pengajuan
+     *   diteruskan ke lab pemilik judul prioritas tsb (tetap pending). Bila prioritas
+     *   sudah habis → ditolak final.
+     * - Jenis 'mandiri': tak punya prioritas berikutnya → langsung ditolak final.
+     */
     public function rejectByKalab($userId, $catatan)
     {
         if (!$this->isPeriodeAktif()) {
@@ -223,20 +258,70 @@ class Pengajuan extends Model
 
         DB::beginTransaction();
         try {
-            $this->update([
-                'status_kalab' => 'ditolak',
-                'catatan_kalab_pengajuan' => $catatan,
-                'tanggal_review_kalab' => now(),
-                'reviewed_by_kalab' => $userId,
-                'status' => 'ditolak',
-            ]);
+            $prioritasSkrg = $this->prioritas_aktif ?: 1;
 
-            // Mahasiswa tidak dinotif di sini — menunggu pengumuman Koordinator TA.
+            // Catat penolakan prioritas ini (jangan timpa catatan prioritas sebelumnya).
+            $labSkrg = optional(Laboratorium::find($this->lab_aktif_id))->nama ?? 'Lab';
+            $catatanGabung = trim(
+                ($this->catatan_kalab_pengajuan ? $this->catatan_kalab_pengajuan . "\n" : '')
+                . "[Prioritas {$prioritasSkrg} · {$labSkrg}] " . $catatan
+            );
+
+            // Cari prioritas berikutnya yang punya judul (khusus jenis 'pilih').
+            $prioritasLanjut = null;
+            if ($this->jenis === 'pilih') {
+                for ($p = $prioritasSkrg + 1; $p <= 3; $p++) {
+                    if ($this->{"pilihan_{$p}_id"}) {
+                        $prioritasLanjut = $p;
+                        break;
+                    }
+                }
+            }
+
+            if ($prioritasLanjut !== null) {
+                // Berjenjang: pindah ke lab pemilik judul prioritas berikutnya (tetap pending).
+                $labBerikut = DB::table('judul')
+                    ->where('id', $this->{"pilihan_{$prioritasLanjut}_id"})
+                    ->value('laboratorium_id');
+
+                $this->update([
+                    'prioritas_aktif' => $prioritasLanjut,
+                    'lab_aktif_id' => $labBerikut,
+                    'catatan_kalab_pengajuan' => $catatanGabung,
+                    'tanggal_review_kalab' => now(),
+                    'reviewed_by_kalab' => $userId,
+                    // status & status_kalab tetap pending (null) → antre di lab berikutnya
+                ]);
+
+                if ($labBerikut) {
+                    $kaLabIds = User::where('role', 'ka_lab')
+                        ->where('laboratorium_id', $labBerikut)
+                        ->pluck('id')->all();
+                    if ($kaLabIds) {
+                        Aktivitas::buatBanyak(
+                            $kaLabIds,
+                            'pengajuan_review',
+                            'Ada pengajuan diteruskan ke lab Anda (prioritas ke-' . $prioritasLanjut . ').',
+                            route('ka-lab.pengajuan.index', [], false)
+                        );
+                    }
+                }
+            } else {
+                // Prioritas habis → tolak final.
+                $this->update([
+                    'status_kalab' => 'ditolak',
+                    'catatan_kalab_pengajuan' => $catatanGabung,
+                    'tanggal_review_kalab' => now(),
+                    'reviewed_by_kalab' => $userId,
+                    'status' => 'ditolak',
+                ]);
+            }
 
             DB::commit();
             return true;
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('rejectByKalab error: ' . $e->getMessage(), ['pengajuan_id' => $this->id]);
             return false;
         }
     }

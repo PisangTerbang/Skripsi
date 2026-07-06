@@ -9,8 +9,7 @@ class JudulSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('judul')->truncate();
-
+        // Pembersihan tabel terpusat di DatabaseSeeder (TRUNCATE ... CASCADE).
         $sriMulyati = DB::table('users')->where('email', 'srimulyati@dosen.com')->value('id');
         $fayruz = DB::table('users')->where('email', 'fayruz@dosen.com')->value('id');
         $erika = DB::table('users')->where('email', 'erika@dosen.com')->value('id');

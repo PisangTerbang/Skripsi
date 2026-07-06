@@ -261,11 +261,20 @@
                                             @if ($item->judulDitetapkan)
                                                 <p
                                                     class="line-clamp-2 text-sm font-semibold leading-relaxed text-gray-800">
-                                                    {{ $item->judulDitetapkan->judul }}
+                                                    {{ $item->judulDitetapkan->nama_judul ?? ($item->judulDitetapkan->judul ?? '-') }}
+                                                    @if ($item->jenis === 'mandiri')
+                                                        <span class="text-xs font-bold text-orange-600">(Mandiri)</span>
+                                                    @endif
                                                 </p>
                                                 <p class="mt-1 text-xs text-gray-400">
                                                     {{ $item->judulDitetapkan->laboratorium->nama ?? '-' }}
                                                 </p>
+                                            @elseif ($item->status === 'ditolak')
+                                                <span
+                                                    class="inline-flex items-center gap-1.5 rounded-lg border-2 border-gray-200 bg-gray-50 px-2.5 py-1 text-xs font-bold text-gray-500">
+                                                    <x-heroicon-o-x-circle class="h-3 w-3" />
+                                                    Tidak ada judul ditetapkan
+                                                </span>
                                             @else
                                                 <span
                                                     class="inline-flex items-center gap-1.5 rounded-lg border-2 border-orange-200 bg-orange-50 px-2.5 py-1 text-xs font-bold text-orange-600">

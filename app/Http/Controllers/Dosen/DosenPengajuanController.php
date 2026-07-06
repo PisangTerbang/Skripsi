@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Dosen;
 use App\Http\Controllers\Controller;
 use App\Models\Pengajuan;
 use App\Models\Periode;
+use App\Models\Laboratorium;
+use App\Models\User;
+use App\Models\Aktivitas;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -35,6 +38,7 @@ class DosenPengajuanController extends Controller
         $pengajuan = Pengajuan::with([
             'mahasiswa',
             'periode',
+            'labAktif',
             'pilihan1.laboratorium',
             'pilihan1.dosen',
             'pilihan2.laboratorium',
@@ -116,10 +120,25 @@ class DosenPengajuanController extends Controller
                         'waktu' => $p->created_at->diffForHumans(),
                         'periode' => $p->periode->nama ?? trim(($p->periode->semester ?? '') . ' ' . ($p->periode->tahun_ajaran ?? '')) ?: '-',
                         'status_kaprodi' => $p->status_kaprodi ?? '',
+                        // Untuk mandiri: null=menunggu konfirmasi dosen, dikonfirmasi, ditolak.
+                        'status_dosen' => $p->status_dosen,
+                        // Lab tujuan yang dipilih dosen saat mengonfirmasi usulan mandiri.
+                        'lab_aktif' => optional($p->labAktif)->nama,
                     ];
                 })->values(),
             ];
         })->values();
+
+        // Usulan mandiri PERIODE AKTIF yang menunggu konfirmasi dosen ini (pilih lab).
+        $mandiriPending = Pengajuan::with(['mahasiswa', 'periode'])
+            ->where('jenis', 'mandiri')
+            ->where('dosen_pembimbing_id', $dosenId)
+            ->whereNull('status_dosen')
+            ->when($aktifId, fn($q) => $q->where('periode_id', $aktifId))
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $labList = Laboratorium::orderBy('nama')->get();
 
         return view('dosen.pengajuan', [
             'pengajuanJson' => $pengajuanJson,
@@ -130,7 +149,83 @@ class DosenPengajuanController extends Controller
             'periodeList' => $periodeList,
             'selectedPeriode' => $selectedPeriode,
             'aktifId' => $aktifId,
+            'mandiriPending' => $mandiriPending,
+            'labList' => $labList,
             'title' => 'Pengajuan Mahasiswa',
         ]);
+    }
+
+    /**
+     * Konfirmasi usulan mandiri: dosen menentukan laboratorium, lalu pengajuan
+     * diteruskan ke Ka Lab lab tersebut (masuk antrean review berjenjang).
+     */
+    public function konfirmasiMandiri(Request $request, $id)
+    {
+        $request->validate([
+            'laboratorium_id' => 'required|exists:laboratorium,id',
+        ], [
+            'laboratorium_id.required' => 'Laboratorium wajib dipilih.',
+        ]);
+
+        $dosenId = Auth::id();
+        $pengajuan = Pengajuan::where('id', $id)
+            ->where('jenis', 'mandiri')
+            ->where('dosen_pembimbing_id', $dosenId)
+            ->firstOrFail();
+
+        if (!is_null($pengajuan->status_dosen)) {
+            return back()->with('error', 'Usulan ini sudah dikonfirmasi atau ditolak.');
+        }
+
+        $pengajuan->update([
+            'status_dosen' => 'dikonfirmasi',
+            'lab_aktif_id' => $request->laboratorium_id,
+            'prioritas_aktif' => 1,
+        ]);
+
+        // Notifikasi Ka Lab lab terkait.
+        $kaLabIds = User::where('role', 'ka_lab')
+            ->where('laboratorium_id', $request->laboratorium_id)
+            ->pluck('id')->all();
+        if ($kaLabIds) {
+            Aktivitas::buatBanyak(
+                $kaLabIds,
+                'pengajuan_masuk',
+                'Usulan judul mandiri dikonfirmasi dosen & masuk ke lab Anda untuk direview.',
+                route('ka-lab.pengajuan.index', [], false)
+            );
+        }
+
+        return back()->with('success', 'Usulan mandiri dikonfirmasi & diteruskan ke Ka Lab lab terkait.');
+    }
+
+    /**
+     * Dosen menolak menjadi pembimbing usulan mandiri → pengajuan ditolak final.
+     */
+    public function tolakMandiri(Request $request, $id)
+    {
+        $request->validate([
+            'catatan_dosen' => 'required|string|max:1000',
+        ], [
+            'catatan_dosen.required' => 'Alasan penolakan wajib diisi.',
+        ]);
+
+        $dosenId = Auth::id();
+        $pengajuan = Pengajuan::where('id', $id)
+            ->where('jenis', 'mandiri')
+            ->where('dosen_pembimbing_id', $dosenId)
+            ->firstOrFail();
+
+        if (!is_null($pengajuan->status_dosen)) {
+            return back()->with('error', 'Usulan ini sudah dikonfirmasi atau ditolak.');
+        }
+
+        $pengajuan->update([
+            'status_dosen' => 'ditolak',
+            'status' => 'ditolak',
+            'catatan_dosen' => $request->catatan_dosen,
+        ]);
+
+        return back()->with('success', 'Usulan mandiri ditolak.');
     }
 }

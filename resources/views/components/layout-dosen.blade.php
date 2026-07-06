@@ -25,6 +25,7 @@
         document.addEventListener('alpine:init', () => {
             Alpine.store('notifDosen', {
                 unread: 0,
+                items: [],
                 loading: false,
                 interval: null,
 
@@ -40,6 +41,7 @@
 
                         const oldCount = this.unread;
                         this.unread = data.unread || 0;
+                        this.items = data.data || [];
 
                         if (this.unread > oldCount && this.unread > 0) {
                             this.showNotification();
@@ -142,7 +144,7 @@
 
 <body class="bg-gradient-to-br from-slate-50 via-indigo-50/30 to-slate-100 h-screen overflow-hidden antialiased">
 
-    <div x-data="{ mobileMenu: false, scrolled: false }" class="h-screen flex overflow-hidden">
+    <div x-data="{ mobileMenu: false, scrolled: false, logoutModal: false }" class="h-screen flex overflow-hidden">
 
         {{-- Mobile Backdrop --}}
         <div x-cloak x-show="mobileMenu" x-transition:enter="transition-opacity ease-out duration-300"
@@ -249,6 +251,37 @@
 
             </main>
 
+        </div>
+
+        {{-- ===== Modal Konfirmasi Keluar ===== --}}
+        <div x-cloak x-show="logoutModal" @keydown.escape.window="logoutModal = false"
+            x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+            @click.self="logoutModal = false"
+            class="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <div x-show="logoutModal" x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                class="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-2xl">
+                <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-red-100">
+                    <x-heroicon-o-arrow-right-on-rectangle class="h-7 w-7 text-red-600" />
+                </div>
+                <h3 class="mt-4 text-lg font-bold text-gray-800">Keluar dari sistem?</h3>
+                <p class="mt-1 text-sm text-gray-500">Anda perlu login kembali untuk mengakses akun.</p>
+                <div class="mt-6 flex gap-3">
+                    <button type="button" @click="logoutModal = false"
+                        class="flex-1 rounded-xl border-2 border-gray-200 bg-white px-4 py-2.5 text-sm font-bold text-gray-600 transition hover:bg-gray-50">
+                        Batal
+                    </button>
+                    <form method="POST" action="{{ route('logout') }}" class="flex-1">
+                        @csrf
+                        <button type="submit"
+                            class="w-full rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-red-700">
+                            Ya, Keluar
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
 
     </div>

@@ -527,13 +527,14 @@
                         </div>
 
                         <form method="POST" x-bind:action="'/ka-lab/validasi/' + selectedItem.id + '/approve'"
-                            class="space-y-3 mb-4">
+                            x-data="{ c: '' }" class="space-y-3 mb-4">
                             @csrf
-                            <textarea name="catatan_kalab" rows="2" placeholder="Catatan validasi (opsional)..."
+                            <textarea name="catatan_kalab" x-model="c" rows="2" placeholder="Catatan validasi (wajib)..."
                                 class="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 resize-none transition">
                         </textarea>
-                            <button type="submit"
-                                class="w-full inline-flex items-center justify-center gap-2 rounded-xl border-2 border-emerald-300 bg-emerald-600 px-4 py-3 text-sm font-black text-white shadow-sm transition hover:bg-emerald-700 hover:shadow-md">
+                            <button type="submit" x-bind:disabled="c.trim() === ''"
+                                x-bind:class="c.trim() === '' ? 'opacity-50 cursor-not-allowed' : 'hover:bg-emerald-700 hover:shadow-md'"
+                                class="w-full inline-flex items-center justify-center gap-2 rounded-xl border-2 border-emerald-300 bg-emerald-600 px-4 py-3 text-sm font-black text-white shadow-sm transition focus:outline-none">
                                 <x-heroicon-o-check-circle class="h-5 w-5" />
                                 Validasi & Tawarkan ke Mahasiswa
                             </button>
@@ -549,13 +550,14 @@
                         </div>
 
                         <form method="POST" x-bind:action="'/ka-lab/validasi/' + selectedItem.id + '/reject'"
-                            class="space-y-3">
+                            x-data="{ c: '' }" class="space-y-3">
                             @csrf
-                            <textarea name="catatan_kalab" required rows="2" placeholder="Alasan penolakan (wajib)..."
+                            <textarea name="catatan_kalab" x-model="c" required rows="2" placeholder="Alasan penolakan (wajib)..."
                                 class="w-full rounded-xl border-2 border-red-200 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-100 resize-none transition">
                         </textarea>
-                            <button type="submit"
-                                class="w-full inline-flex items-center justify-center gap-2 rounded-xl border-2 border-red-300 bg-red-600 px-4 py-3 text-sm font-black text-white shadow-sm transition hover:bg-red-700 hover:shadow-md">
+                            <button type="submit" x-bind:disabled="c.trim() === ''"
+                                x-bind:class="c.trim() === '' ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-700 hover:shadow-md'"
+                                class="w-full inline-flex items-center justify-center gap-2 rounded-xl border-2 border-red-300 bg-red-600 px-4 py-3 text-sm font-black text-white shadow-sm transition focus:outline-none">
                                 <x-heroicon-o-x-circle class="h-5 w-5" />
                                 Tolak & Kembalikan ke Dosen
                             </button>

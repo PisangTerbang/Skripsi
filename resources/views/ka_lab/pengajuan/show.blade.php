@@ -269,30 +269,23 @@
                                             action="{{ route('ka-lab.pengajuan.approve', $pengajuan->id) }}"
                                             class="space-y-3">
                                             @csrf
-                                            <input type="hidden" name="judul_terpilih" value="mandiri" />
-                                            {{-- ✅ Dropdown pilih laboratorium --}}
-                                            <div>
-                                                <label class="mb-1 block text-xs font-bold text-gray-600">
-                                                    Laboratorium <span class="text-red-500">*</span>
-                                                </label>
-                                                <select name="laboratorium_id" required
-                                                    class="w-full rounded-xl border-2 border-gray-200 px-3 py-2 text-sm text-gray-800 focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-100 transition">
-                                                    <option value="">-- Pilih Laboratorium --</option>
-                                                    @foreach ($laboratorium as $lab)
-                                                        <option value="{{ $lab->id }}">{{ $lab->nama }}
-                                                        </option>
-                                                    @endforeach
-                                                </select>
+                                            {{-- Lab sudah ditentukan dosen saat konfirmasi (lab_aktif). --}}
+                                            <div
+                                                class="rounded-xl border-2 border-orange-200 bg-orange-50 px-3 py-2 text-xs font-semibold text-orange-700">
+                                                Laboratorium: {{ optional($pengajuan->labAktif)->nama ?? '-' }}
+                                                <span class="font-normal text-orange-500">(ditentukan dosen pembimbing)</span>
                                             </div>
                                             <div>
-                                                <label class="mb-1 block text-xs font-bold text-gray-600">Catatan <span
-                                                        class="text-gray-400 font-normal">(opsional)</span></label>
-                                                <textarea name="catatan_kalab" x-model="catatanApprove" rows="2" placeholder="Tambahkan catatan..."
+                                                <label class="mb-1 block text-xs font-bold text-gray-600">Catatan
+                                                    <span class="text-red-500">*</span></label>
+                                                <textarea name="catatan_kalab" x-model="catatanApprove" rows="2" placeholder="Catatan persetujuan (wajib)..."
                                                     class="w-full rounded-xl border-2 border-gray-200 px-3 py-2 text-sm text-gray-800 placeholder-gray-400 focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-100 resize-none transition">
                                                 </textarea>
                                             </div>
                                             <button type="submit"
-                                                class="w-full rounded-xl border-2 border-orange-300 bg-orange-500 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-orange-600 hover:shadow-md">
+                                                x-bind:disabled="catatanApprove.trim() === ''"
+                                                x-bind:class="catatanApprove.trim() === '' ? 'opacity-50 cursor-not-allowed' : 'hover:bg-orange-600 hover:shadow-md'"
+                                                class="w-full rounded-xl border-2 border-orange-300 bg-orange-500 px-4 py-2.5 text-sm font-black text-white shadow-sm transition focus:outline-none">
                                                 Konfirmasi — Tetapkan Judul Mandiri
                                             </button>
                                         </form>
@@ -309,6 +302,8 @@
                                 $isDitetapkan = $pengajuan->judul_ditetapkan_id === $p['judul']->id;
                                 $statusPilihan = $pilihanStatus[$p['value']] ?? null;
                                 $sudahDiambil = $statusPilihan && $statusPilihan['diambil'];
+                                // Review berjenjang: hanya prioritas aktif yang boleh diputuskan lab ini.
+                                $isPrioritasAktif = $p['value'] === 'pilihan_' . ($prioritasAktif ?? 1);
                             @endphp
                             <div
                                 class="rounded-xl border-2 overflow-hidden
@@ -408,16 +403,21 @@
                                         </div>
                                     </div>
 
-                                    {{-- Tombol Tetapkan per Pilihan --}}
-                                    @if ($pengajuan->canBeReviewedByKalab())
+                                    {{-- Aksi hanya untuk PRIORITAS AKTIF (review berjenjang) --}}
+                                    @if ($pengajuan->canBeReviewedByKalab() && $isPrioritasAktif)
                                         <div
                                             class="mt-3 border-t-2 {{ $sudahDiambil ? 'border-gray-200' : 'border-gray-100' }} pt-3">
+                                            <span
+                                                class="mb-2 inline-flex items-center gap-1 rounded-full bg-{{ $p['color'] }}-100 px-2 py-0.5 text-[10px] font-black text-{{ $p['color'] }}-700">
+                                                <x-heroicon-o-arrow-right-circle class="h-3 w-3" />
+                                                Prioritas ke-{{ $prioritasAktif }} — giliran lab Anda
+                                            </span>
                                             @if ($sudahDiambil)
-                                                {{-- Disabled — sudah diambil --}}
+                                                {{-- Disabled — sudah diambil; tolak agar cascade ke prioritas berikutnya --}}
                                                 <span
                                                     class="inline-flex items-center gap-2 rounded-xl border-2 border-gray-200 bg-gray-100 px-4 py-2 text-xs font-black text-gray-400 cursor-not-allowed">
                                                     <x-heroicon-o-lock-closed class="h-4 w-4" />
-                                                    Tidak Tersedia
+                                                    Judul sudah diambil — silakan tolak
                                                 </span>
                                             @else
                                                 <button type="button"
@@ -429,12 +429,12 @@
                                                     class="inline-flex items-center gap-2 rounded-xl border-2 px-4 py-2 text-xs font-black transition">
                                                     <x-heroicon-o-check-circle class="h-4 w-4" />
                                                     <span
-                                                        x-text="activeJudul === '{{ $p['value'] }}' ? 'Batal' : 'Tetapkan Judul Ini'"></span>
+                                                        x-text="activeJudul === '{{ $p['value'] }}' ? 'Batal' : 'Setujui Judul Ini'"></span>
                                                 </button>
                                             @endif
                                         </div>
 
-                                        {{-- Form approve per pilihan (hanya kalau tidak diambil) --}}
+                                        {{-- Form approve (catatan wajib; tombol nonaktif s/d catatan diisi) --}}
                                         @if (!$sudahDiambil)
                                             <div x-show="activeJudul === '{{ $p['value'] }}'" x-transition
                                                 class="mt-3">
@@ -442,25 +442,31 @@
                                                     action="{{ route('ka-lab.pengajuan.approve', $pengajuan->id) }}"
                                                     class="space-y-3">
                                                     @csrf
-                                                    <input type="hidden" name="judul_terpilih"
-                                                        value="{{ $p['value'] }}" />
                                                     <div>
                                                         <label class="mb-1 block text-xs font-bold text-gray-600">
-                                                            Catatan <span
-                                                                class="text-gray-400 font-normal">(opsional)</span>
+                                                            Catatan <span class="text-red-500">*</span>
                                                         </label>
                                                         <textarea name="catatan_kalab" x-model="catatanApprove" rows="2"
-                                                            placeholder="Tambahkan catatan persetujuan..."
+                                                            placeholder="Catatan persetujuan (wajib)..."
                                                             class="w-full rounded-xl border-2 border-gray-200 px-3 py-2 text-sm text-gray-800 placeholder-gray-400 focus:border-{{ $p['color'] }}-400 focus:outline-none focus:ring-2 focus:ring-{{ $p['color'] }}-100 resize-none transition">
                                                         </textarea>
                                                     </div>
                                                     <button type="submit"
-                                                        class="w-full rounded-xl border-2 border-{{ $p['color'] }}-300 bg-{{ $p['color'] }}-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-{{ $p['color'] }}-700 hover:shadow-md">
-                                                        Konfirmasi — Tetapkan {{ $p['label'] }}
+                                                        x-bind:disabled="catatanApprove.trim() === ''"
+                                                        x-bind:class="catatanApprove.trim() === '' ? 'opacity-50 cursor-not-allowed' : 'hover:bg-{{ $p['color'] }}-700 hover:shadow-md'"
+                                                        class="w-full rounded-xl border-2 border-{{ $p['color'] }}-300 bg-{{ $p['color'] }}-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition focus:outline-none">
+                                                        Konfirmasi — Setujui {{ $p['label'] }}
                                                     </button>
                                                 </form>
                                             </div>
                                         @endif
+                                    @elseif ($pengajuan->canBeReviewedByKalab())
+                                        <div class="mt-3 border-t-2 border-gray-100 pt-3">
+                                            <span class="text-xs italic text-gray-400">
+                                                Bukan prioritas yang sedang direview lab ini
+                                                (giliran saat ini: prioritas ke-{{ $prioritasAktif }}).
+                                            </span>
+                                        </div>
                                     @endif
 
                                 </div>
@@ -492,9 +498,9 @@
                             <div class="p-4">
                                 <div class="flex items-center justify-between">
                                     <div>
-                                        <p class="text-sm font-black text-red-700">Tolak Semua Pilihan</p>
-                                        <p class="text-xs text-red-500 mt-0.5">Pengajuan akan ditolak dan mahasiswa
-                                            perlu mengajukan ulang</p>
+                                        <p class="text-sm font-black text-red-700">Tolak Prioritas Ini</p>
+                                        <p class="text-xs text-red-500 mt-0.5">Jika masih ada prioritas berikutnya,
+                                            pengajuan diteruskan ke lab tersebut; jika habis, ditolak final</p>
                                     </div>
                                     <button type="button"
                                         @click="showReject = !showReject; catatanReject = ''; activeJudul = null"

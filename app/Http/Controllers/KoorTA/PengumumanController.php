@@ -11,22 +11,47 @@ use Illuminate\Support\Facades\DB;
 
 class PengumumanController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $pengumuman = DB::table('pengumuman')
+        // Filter jenis: semua / penetapan (ada tabel hasil) / biasa (info umum).
+        $jenis = in_array($request->get('jenis'), ['penetapan', 'biasa'], true)
+            ? $request->get('jenis')
+            : 'all';
+
+        $query = DB::table('pengumuman')
             ->join('users', 'pengumuman.dibuat_oleh', '=', 'users.id')
             ->join('periode', 'pengumuman.periode_id', '=', 'periode.id')
             ->select(
                 'pengumuman.*',
                 'users.name as nama_pembuat',
                 'periode.nama as nama_periode'
-            )
+            );
+
+        if ($jenis === 'penetapan') {
+            $query->whereRaw('pengumuman.tampilkan_hasil = true');
+        } elseif ($jenis === 'biasa') {
+            $query->whereRaw('pengumuman.tampilkan_hasil = false');
+        }
+
+        $pengumuman = $query
+            // 1) Draft (belum dikirim) di atas,
+            // 2) lalu periode/semester terbaru → terlama,
+            // 3) lalu dibuat terbaru dulu sebagai tie-breaker.
+            ->orderByRaw('pengumuman.dikirim_at IS NULL DESC')
+            ->orderByRaw('COALESCE(periode.tanggal_buka, periode.created_at::date) DESC')
             ->orderBy('pengumuman.created_at', 'desc')
             ->get();
 
+        // Jumlah per jenis (tanpa terpengaruh filter) untuk label tab.
+        $jumlah = [
+            'all' => DB::table('pengumuman')->count(),
+            'penetapan' => DB::table('pengumuman')->whereRaw('tampilkan_hasil = true')->count(),
+            'biasa' => DB::table('pengumuman')->whereRaw('tampilkan_hasil = false')->count(),
+        ];
+
         $periode = Periode::urutKronologis()->get();
 
-        return view('koor-ta.pengumuman.index', compact('pengumuman', 'periode'));
+        return view('koor-ta.pengumuman.index', compact('pengumuman', 'periode', 'jenis', 'jumlah'));
     }
 
     public function create()
@@ -43,10 +68,14 @@ class PengumumanController extends Controller
             'isi' => 'required|string',
         ]);
 
+        // Info umum bisa mematikan tabel hasil; default (checkbox tercentang) = tampilkan.
+        $tampilkanHasil = $request->boolean('tampilkan_hasil');
+
         DB::table('pengumuman')->insert([
             'periode_id' => $validated['periode_id'],
             'judul' => $validated['judul'],
             'isi' => $validated['isi'],
+            'tampilkan_hasil' => DB::raw($tampilkanHasil ? 'true' : 'false'),
             'dibuat_oleh' => auth()->id(),
             'dikirim_at' => null,
             'created_at' => now(),

@@ -51,6 +51,7 @@ class PeriodeController extends Controller
 
         // Periode baru belum punya pengajuan → sinkronisasi membuka semua judul (mulai bersih).
         if ($aktif) {
+            $this->tolakPengajuanPendingPeriodeLain($periode->id);
             $this->sinkronkanKunciJudul($periode->id);
             $this->bersihkanNotifikasi();
         }
@@ -119,6 +120,7 @@ class PeriodeController extends Controller
             // Periode baru: semua judul terbuka. Periode lama diaktifkan ulang:
             // judul yang dulu ditetapkan di periode itu terkunci kembali (bukan terbuka).
             if (!$wasActive) {
+                $this->tolakPengajuanPendingPeriodeLain($periode->id);
                 $this->sinkronkanKunciJudul($periode->id);
                 $this->bersihkanNotifikasi();
             }
@@ -137,29 +139,66 @@ class PeriodeController extends Controller
     }
 
     /**
-     * Sinkronkan status kunci judul dengan SATU periode aktif.
+     * Sinkronkan status kunci judul dengan SATU periode aktif ("reset agresif").
      *
      * Kunci judul (is_locked) bersifat global, tetapi maknanya "judul ini sudah
-     * ditetapkan ke mahasiswa pada periode aktif". Jadi saat periode aktif berganti,
-     * kunci harus DIHITUNG ULANG dari data periode tsb — bukan asal dibuka semua:
-     *  - Periode baru (belum ada pengajuan) → semua judul terbuka (mulai bersih).
-     *  - Periode lama diaktifkan ulang → judul yang dulu ditetapkan-final di periode
-     *    itu terkunci kembali, sehingga riwayat penetapannya tidak hilang.
+     * ditetapkan ke mahasiswa pada periode aktif". Prinsipnya: ganti periode = SEMUA
+     * judul terbuka kembali, sehingga judul yang dulu terpakai bisa diambil lagi.
+     *
+     * Setelah membuka semua, kunci hanya dipasang kembali untuk melindungi periode
+     * yang MASIH BERJALAN dari tabrakan judul:
+     *  - Periode arsip (sudah diumumkan resmi ATAU ditutup) → dibiarkan terbuka semua.
+     *    Inilah yang membuat judul "nyangkut" dari siklus lampau bisa diambil lagi.
+     *  - Periode berjalan (belum diumumkan) → judul yang sudah ditetapkan-final di
+     *    periode itu dikunci lagi agar tidak diberikan ke dua mahasiswa sekaligus.
      *
      * Judul dianggap terkunci bila ada pengajuan periode tsb yang final disetujui
      * (status='disetujui') dan menetapkan judul itu (judul_ditetapkan_id) — sama
      * persis kondisi saat is_locked di-set true oleh approveByKaprodi().
      * Data pengajuan periode mana pun TIDAK pernah dihapus.
      */
+    /**
+     * Otomatis menolak pengajuan yang masih 'pending' di periode SELAIN yang baru
+     * diaktifkan. Prinsipnya: begitu periode berganti, pengajuan lama yang belum
+     * diputus dianggap kedaluwarsa (tak akan direview lagi) → status difinalkan
+     * menjadi 'ditolak'. Data pengajuan TIDAK dihapus, hanya statusnya diubah.
+     */
+    private function tolakPengajuanPendingPeriodeLain(int $periodeAktifId): void
+    {
+        DB::table('pengajuan')
+            ->where('periode_id', '!=', $periodeAktifId)
+            ->where('status', 'pending')
+            ->update([
+                'status' => 'ditolak',
+                // Finalkan juga tahap yang belum diputus agar rekam data konsisten
+                // (tidak ada "ditolak tapi status_kalab masih kosong"). Keputusan yang
+                // sudah ada (mis. kalab 'disetujui') tetap dipertahankan.
+                'status_kalab' => DB::raw("CASE WHEN status_kalab IS NULL OR status_kalab = '' THEN 'ditolak' ELSE status_kalab END"),
+                'catatan_kaprodi' => DB::raw("COALESCE(NULLIF(catatan_kaprodi, ''), 'Otomatis ditolak: periode berganti tanpa keputusan final.')"),
+                'updated_at' => now(),
+            ]);
+    }
+
     private function sinkronkanKunciJudul(int $periodeAktifId): void
     {
-        // Buka semua judul dulu.
+        // 1) Buka SEMUA judul dulu (reset agresif — mulai bersih tiap ganti periode).
         DB::table('judul')->update([
             'is_locked' => DB::raw('false'),
             'updated_at' => now(),
         ]);
 
-        // Kunci kembali judul yang sudah ditetapkan-final pada periode aktif ini.
+        // 2) Periode arsip → cukup terbuka semua, tidak perlu dikunci ulang.
+        $periode = DB::table('periode')->where('id', $periodeAktifId)->first();
+        $sudahDiumumkan = DB::table('pengumuman')
+            ->where('periode_id', $periodeAktifId)
+            ->whereNotNull('dikirim_at')
+            ->exists();
+
+        if (($periode && $periode->ditutup) || $sudahDiumumkan) {
+            return;
+        }
+
+        // 3) Periode berjalan → kunci kembali judul yang sudah ditetapkan-final di sini.
         $judulTerkunci = DB::table('pengajuan')
             ->where('periode_id', $periodeAktifId)
             ->where('status', 'disetujui')
@@ -176,6 +215,31 @@ class PeriodeController extends Controller
                     'updated_at' => now(),
                 ]);
         }
+    }
+
+    /**
+     * Aksi manual: sinkronkan ulang kunci judul terhadap periode aktif sekarang.
+     *
+     * Jaring pengaman bila ada judul yang "nyangkut" (terkunci padahal seharusnya
+     * terbuka). Koordinator TA bisa menjalankannya kapan saja tanpa mengubah periode.
+     */
+    public function sinkronKunci()
+    {
+        $aktif = Periode::periodeAktif();
+
+        if (!$aktif) {
+            // Tidak ada periode aktif → buka semua judul saja.
+            DB::table('judul')->update([
+                'is_locked' => DB::raw('false'),
+                'updated_at' => now(),
+            ]);
+
+            return back()->with('success', 'Tidak ada periode aktif — semua judul dibuka kembali.');
+        }
+
+        $this->sinkronkanKunciJudul($aktif->id);
+
+        return back()->with('success', "Kunci judul disinkronkan ulang dengan periode aktif ({$aktif->nama}).");
     }
 
     /**

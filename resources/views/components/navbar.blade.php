@@ -48,32 +48,9 @@ $watch('$store.notif.unread', (val, oldVal) => {
         </p>
 
         <div class="space-y-1">
-            {{-- Notifikasi --}}
+            {{-- Notifikasi (badge angka dipindah ke lonceng di header; sidebar bersih) --}}
             <x-nav-link route="mahasiswa.notifikasi" icon="bell">
                 <span :class="{ 'animate-bell-shake': bellShake }">Notifikasi</span>
-
-                <x-slot:badge>
-                    {{-- Loading Skeleton --}}
-                    <span x-show="$store.notif.loading" x-transition class="ml-auto">
-                        <span class="block w-6 h-6 rounded-full bg-white/20 animate-pulse"></span>
-                    </span>
-
-                    {{-- Badge Counter --}}
-                    <span x-cloak x-show="!$store.notif.loading && $store.notif.unread > 0"
-                        x-transition:enter="transition ease-out duration-300"
-                        x-transition:enter-start="opacity-0 scale-0 rotate-12"
-                        x-transition:enter-end="opacity-100 scale-100 rotate-0"
-                        x-transition:leave="transition ease-in duration-200"
-                        x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-0"
-                        x-text="$store.notif.unread > 99 ? '99+' : $store.notif.unread"
-                        class="ml-auto min-w-[1.5rem] h-6 flex items-center justify-center
-                                 bg-gradient-to-br from-red-400 to-red-600
-                                 text-white text-xs font-bold
-                                 px-2 rounded-full
-                                 shadow-lg shadow-red-500/40
-                                 ring-2 ring-white/20">
-                    </span>
-                </x-slot:badge>
             </x-nav-link>
 
             {{-- Pengaturan --}}
@@ -90,26 +67,24 @@ $watch('$store.notif.unread', (val, oldVal) => {
     <div class="pt-3 px-1">
         <div class="h-px bg-gradient-to-r from-transparent via-white/15 to-transparent mb-3"></div>
 
-        <form method="POST" action="{{ route('logout') }}">
-            @csrf
-            <button type="submit" x-data="{ hover: false }" @mouseenter="hover = true" @mouseleave="hover = false"
-                class="group relative w-full flex items-center gap-3 px-4 py-2.5 rounded-xl
+        <button type="button" @click="logoutModal = true" x-data="{ hover: false }" @mouseenter="hover = true"
+            @mouseleave="hover = false"
+            class="group relative w-full flex items-center gap-3 px-4 py-2.5 rounded-xl
                 text-indigo-200 hover:text-red-300 hover:bg-red-500/10
                        transition-all duration-200 ease-out">
 
-                <span class="w-5 h-5 flex-shrink-0 transition-transform duration-200 group-hover:scale-110">
-                    <x-heroicon-o-arrow-right-on-rectangle class="w-5 h-5" />
-                </span>
+            <span class="w-5 h-5 flex-shrink-0 transition-transform duration-200 group-hover:scale-110">
+                <x-heroicon-o-arrow-right-on-rectangle class="w-5 h-5" />
+            </span>
 
-                <span class="font-medium">Keluar</span>
+            <span class="font-medium">Keluar</span>
 
-                {{-- Hover Effect --}}
-                <span x-show="hover" x-transition:enter="transition ease-out duration-200"
-                    x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-                    class="absolute inset-0 bg-red-500/5 rounded-xl pointer-events-none">
-                </span>
-            </button>
-        </form>
+            {{-- Hover Effect --}}
+            <span x-show="hover" x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                class="absolute inset-0 bg-red-500/5 rounded-xl pointer-events-none">
+            </span>
+        </button>
     </div>
 
 </nav>

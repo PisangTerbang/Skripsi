@@ -20,58 +20,57 @@ class DashboardController extends Controller
             abort(403, 'Anda tidak memiliki akses sebagai Kepala Lab');
         }
 
-        // ========== STATISTIK JUDUL ==========
-        // Ka Lab tidak perlu filter per lab karena cuma 1 orang untuk semua lab
+        // Ka Lab hanya menangani laboratoriumnya sendiri.
+        $myLab = $user->laboratorium_id;
+
+        // ========== STATISTIK JUDUL (scope lab) ==========
+        // Satu query agregat (FILTER) menggantikan 6 count terpisah → hemat latency DB remote.
+        $j = Judul::where('laboratorium_id', $myLab)->selectRaw("
+            count(*) filter (where status_judul = 'draft')         as draft,
+            count(*) filter (where status_judul = 'pending_kalab') as pending_kalab,
+            count(*) filter (where status_judul = 'ditawarkan')    as ditawarkan,
+            count(*) filter (where status_judul = 'ditolak_kalab') as ditolak_kalab,
+            count(*) filter (where status_judul in ('draft','pending_kalab','ditawarkan','ditolak_kalab')) as total_judul
+        ")->first();
         $stats = [
-            // Card 1: Judul baru dari dosen, belum direview
-            'draft' => Judul::where('status_judul', 'draft')->count(),
-
-            // Card 2: Judul pending validasi Ka Lab
-            'pending_kalab' => Judul::where('status_judul', 'pending_kalab')->count(),
-
-            // Card 3: Sudah disetujui Ka Lab, tersedia untuk mahasiswa
-            'ditawarkan' => Judul::where('status_judul', 'ditawarkan')->count(),
-
-            // Card 4: Ditolak Ka Lab, perlu revisi
-            'ditolak_kalab' => Judul::where('status_judul', 'ditolak_kalab')->count(),
-            'ditolak' => Judul::where('status_judul', 'ditolak_kalab')->count(),
-
-            // Total semua judul
-            'total_judul' => Judul::whereIn('status_judul', [
-                'draft',
-                'pending_kalab',
-                'ditawarkan',
-                'ditolak_kalab'
-            ])->count(),
+            'draft'         => (int) $j->draft,
+            'pending_kalab' => (int) $j->pending_kalab,
+            'ditawarkan'    => (int) $j->ditawarkan,
+            'ditolak_kalab' => (int) $j->ditolak_kalab,
+            'ditolak'       => (int) $j->ditolak_kalab,
+            'total_judul'   => (int) $j->total_judul,
         ];
 
         // ========== STATISTIK PENGAJUAN MAHASISWA ==========
         // Statistik pengajuan di-scope ke PERIODE AKTIF (ikut reset tiap ganti periode).
+        // Satu query agregat menggantikan 5 count terpisah.
         $pid = \App\Models\Periode::periodeAktif()?->id;
+        $p = Pengajuan::where('periode_id', $pid)->where('lab_aktif_id', $myLab)->selectRaw("
+            count(*)                                                as total_pengajuan,
+            count(*) filter (where status_kalab is null)            as pending_review,
+            count(*) filter (where status_kalab = 'disetujui')      as disetujui,
+            count(*) filter (where status_kalab = 'ditolak')        as ditolak,
+            count(*) filter (where judul_ditetapkan_id is not null) as ditetapkan
+        ")->first();
         $pengajuanStats = [
-            // Total pengajuan mahasiswa periode aktif
-            'total_pengajuan' => Pengajuan::where('periode_id', $pid)->count(),
-
-            // Pengajuan yang perlu direview Ka Lab (status_kalab masih null)
-            'pending_review' => Pengajuan::where('periode_id', $pid)->whereNull('status_kalab')->count(),
-
-            // Pengajuan yang sudah disetujui Ka Lab
-            'disetujui' => Pengajuan::where('periode_id', $pid)->where('status_kalab', 'disetujui')->count(),
-
-            // Pengajuan yang ditolak Ka Lab
-            'ditolak' => Pengajuan::where('periode_id', $pid)->where('status_kalab', 'ditolak')->count(),
-
-            // Pengajuan yang judulnya sudah ditetapkan ke mahasiswa
-            'ditetapkan' => Pengajuan::where('periode_id', $pid)->whereNotNull('judul_ditetapkan_id')->count(),
+            'total_pengajuan' => (int) $p->total_pengajuan,
+            'pending_review'  => (int) $p->pending_review,
+            'disetujui'       => (int) $p->disetujui,
+            'ditolak'         => (int) $p->ditolak,
+            'ditetapkan'      => (int) $p->ditetapkan,
         ];
 
-        // ========== DATA GRAFIK (lintas periode) ==========
-        // Tren pengajuan masuk per periode.
+        // ========== DATA GRAFIK (lintas periode, scope lab) ==========
+        // Tren pengajuan masuk per periode. Filter lab diletakkan di kondisi JOIN
+        // agar periode tanpa pengajuan tetap tampil (leftJoin).
         $trenPengajuan = \App\Models\Periode::select(
             'periode.nama',
             DB::raw('count(pengajuan.id) as total')
         )
-            ->leftJoin('pengajuan', 'periode.id', '=', 'pengajuan.periode_id')
+            ->leftJoin('pengajuan', function ($j) use ($myLab) {
+                $j->on('periode.id', '=', 'pengajuan.periode_id')
+                    ->where('pengajuan.lab_aktif_id', '=', $myLab);
+            })
             ->groupBy('periode.id', 'periode.nama')
             ->orderBy('periode.id')
             ->get();
@@ -82,15 +81,19 @@ class DashboardController extends Controller
             DB::raw("count(case when pengajuan.status_kalab = 'disetujui' then 1 end) as disetujui"),
             DB::raw("count(case when pengajuan.status_kalab = 'ditolak' then 1 end) as ditolak")
         )
-            ->leftJoin('pengajuan', 'periode.id', '=', 'pengajuan.periode_id')
+            ->leftJoin('pengajuan', function ($j) use ($myLab) {
+                $j->on('periode.id', '=', 'pengajuan.periode_id')
+                    ->where('pengajuan.lab_aktif_id', '=', $myLab);
+            })
             ->groupBy('periode.id', 'periode.nama')
             ->orderBy('periode.id')
             ->get();
 
-        // ========== AKTIVITAS TERBARU (5 terakhir) ==========
+        // ========== AKTIVITAS TERBARU (5 terakhir, scope lab) ==========
         $recentActivities = DB::table('judul_logs')
             ->join('judul', 'judul_logs.judul_id', '=', 'judul.id')
             ->join('users', 'judul_logs.user_id', '=', 'users.id')
+            ->where('judul.laboratorium_id', $myLab)
             ->select(
                 'judul_logs.*',
                 'judul.nama_judul',
@@ -101,14 +104,15 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        // ========== JUDUL YANG PERLU VALIDASI (5 terakhir) ==========
+        // ========== JUDUL YANG PERLU VALIDASI (5 terakhir, scope lab) ==========
         $judulPerluValidasi = Judul::with(['dosen', 'laboratorium'])
+            ->where('laboratorium_id', $myLab)
             ->where('status_judul', 'pending_kalab')
             ->latest()
             ->limit(5)
             ->get();
 
-        // ========== PENGAJUAN YANG PERLU DIREVIEW (5 terakhir) ==========
+        // ========== PENGAJUAN YANG PERLU DIREVIEW (5 terakhir, scope lab) ==========
         $pengajuanPerluReview = Pengajuan::with([
             'mahasiswa',
             'periode',
@@ -119,6 +123,9 @@ class DashboardController extends Controller
             'pilihan3.laboratorium',
             'pilihan3.dosen'
         ])
+            ->where('periode_id', $pid) // hanya periode aktif → pengajuan periode lama tak muncul
+            ->where('lab_aktif_id', $myLab) // hanya pengajuan yang saat ini ditangani lab ini
+            ->where('status', 'pending') // sudah difinalkan (ditolak/disetujui) tidak perlu direview lagi
             ->where(function ($q) {
                 $q->where('status_kalab', 'pending')
                     ->orWhereNull('status_kalab');

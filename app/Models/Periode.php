@@ -74,12 +74,26 @@ class Periode extends Model
 
     // ========== STATIC METHODS ==========
 
+    /** Cache periode aktif untuk satu request (dipanggil berkali-kali per halaman). */
+    protected static $cachedPeriodeAktif = false;
+
     /**
-     * Get periode yang sedang aktif
+     * Get periode yang sedang aktif.
+     * Dimemoisasi per-request agar tidak query berulang (hemat latency ke DB remote).
      */
     public static function periodeAktif()
     {
-        return self::whereRaw("is_active = true")->first();
+        if (self::$cachedPeriodeAktif === false) {
+            self::$cachedPeriodeAktif = self::whereRaw('is_active = true')->first();
+        }
+
+        return self::$cachedPeriodeAktif;
+    }
+
+    /** Reset cache periode aktif (panggil setelah mengubah periode yang aktif). */
+    public static function lupakanPeriodeAktif(): void
+    {
+        self::$cachedPeriodeAktif = false;
     }
 
     // ========== METHODS ==========

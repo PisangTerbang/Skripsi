@@ -17,11 +17,24 @@
                             <p class="mt-0.5 text-xs text-gray-400">Kelola periode buka/tutup pengajuan judul TA</p>
                         </div>
                     </div>
-                    <a href="{{ route('koor-ta.periode.create') }}"
-                        class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-indigo-700 hover:shadow-md">
-                        <x-heroicon-o-plus class="h-3.5 w-3.5" />
-                        Tambah Periode
-                    </a>
+                    <div class="flex items-center gap-2">
+                        {{-- Jaring pengaman: buka ulang judul yang "nyangkut" terhadap periode aktif --}}
+                        <form method="POST" action="{{ route('koor-ta.periode.sinkron-kunci') }}"
+                            onsubmit="return confirm('Sinkronkan ulang kunci judul dengan periode aktif? Judul dari siklus lampau akan dibuka kembali.')">
+                            @csrf
+                            <button type="submit"
+                                title="Buka kembali judul yang terkunci dari periode lampau, samakan dengan periode aktif"
+                                class="inline-flex items-center gap-2 rounded-xl border-2 border-indigo-200 bg-white px-4 py-2 text-xs font-bold text-indigo-700 shadow-sm transition hover:bg-indigo-50 hover:shadow-md">
+                                <x-heroicon-o-arrow-path class="h-3.5 w-3.5" />
+                                Sinkron Kunci Judul
+                            </button>
+                        </form>
+                        <a href="{{ route('koor-ta.periode.create') }}"
+                            class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-indigo-700 hover:shadow-md">
+                            <x-heroicon-o-plus class="h-3.5 w-3.5" />
+                            Tambah Periode
+                        </a>
+                    </div>
                 </div>
             </div>
 

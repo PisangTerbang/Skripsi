@@ -43,203 +43,99 @@
                         </div>
                     </div>
 
-                    {{-- Quick Stats di Banner --}}
-                    <div class="hidden lg:grid shrink-0 grid-cols-2 gap-3">
-                        <div
-                            class="rounded-2xl border-2 border-white/20 bg-white/15 px-5 py-4 text-center backdrop-blur-sm">
-                            <p class="text-xs font-bold uppercase tracking-widest text-sky-200">Perlu Validasi</p>
-                            <p class="mt-1 text-4xl font-black text-white">{{ $stats['pending_kalab'] }}</p>
-                            <p class="text-xs text-sky-300">judul</p>
-                        </div>
-                        <div
-                            class="rounded-2xl border-2 border-white/20 bg-white/15 px-5 py-4 text-center backdrop-blur-sm">
-                            <p class="text-xs font-bold uppercase tracking-widest text-sky-200">Pengajuan</p>
-                            <p class="mt-1 text-4xl font-black text-white">{{ $pengajuanStats['pending_review'] }}</p>
-                            <p class="text-xs text-sky-300">pending</p>
-                        </div>
-                    </div>
                 </div>
             </div>
 
-            {{-- ===== SECTION: STATS JUDUL ===== --}}
-            <div class="flex items-center gap-3">
-                <div class="h-px flex-1 bg-gradient-to-r from-transparent to-gray-200"></div>
-                <span
-                    class="flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-bold uppercase tracking-widest text-gray-400 shadow-sm">
-                    <x-heroicon-o-chart-bar class="h-3 w-3" />
-                    Ringkasan Judul
-                </span>
-                <div class="h-px flex-1 bg-gradient-to-l from-transparent to-gray-200"></div>
+            {{-- ===== AKSES CEPAT (di atas agar langsung terlihat) ===== --}}
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <a href="{{ route('ka-lab.validasi.index') }}"
+                    class="group flex items-center gap-3 rounded-2xl border-2 border-gray-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-yellow-300 hover:shadow-md">
+                    <div
+                        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border-2 border-yellow-200 bg-yellow-100 text-yellow-600 transition group-hover:bg-yellow-200">
+                        <x-heroicon-o-clipboard-document-check class="h-5 w-5" />
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="font-extrabold text-gray-800 group-hover:text-yellow-700">Validasi Judul</p>
+                        @if ($stats['pending_kalab'] > 0)
+                            <span class="text-xs font-bold text-yellow-600">{{ $stats['pending_kalab'] }} menunggu</span>
+                        @else
+                            <span class="text-xs text-gray-400">Validasi judul dosen</span>
+                        @endif
+                    </div>
+                    <x-heroicon-o-arrow-right
+                        class="h-4 w-4 shrink-0 text-gray-300 transition group-hover:translate-x-1 group-hover:text-yellow-500" />
+                </a>
+                <a href="{{ route('ka-lab.pengajuan.index') }}"
+                    class="group flex items-center gap-3 rounded-2xl border-2 border-gray-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-md">
+                    <div
+                        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border-2 border-sky-200 bg-sky-100 text-sky-600 transition group-hover:bg-sky-200">
+                        <x-heroicon-o-clipboard-document-list class="h-5 w-5" />
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="font-extrabold text-gray-800 group-hover:text-sky-700">Pengajuan Mahasiswa</p>
+                        @if ($pengajuanStats['pending_review'] > 0)
+                            <span class="text-xs font-bold text-sky-600">{{ $pengajuanStats['pending_review'] }}
+                                menunggu</span>
+                        @else
+                            <span class="text-xs text-gray-400">Review pengajuan TA</span>
+                        @endif
+                    </div>
+                    <x-heroicon-o-arrow-right
+                        class="h-4 w-4 shrink-0 text-gray-300 transition group-hover:translate-x-1 group-hover:text-sky-500" />
+                </a>
+                <a href="{{ route('ka-lab.judul.index') }}"
+                    class="group flex items-center gap-3 rounded-2xl border-2 border-gray-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-md">
+                    <div
+                        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border-2 border-emerald-200 bg-emerald-100 text-emerald-600 transition group-hover:bg-emerald-200">
+                        <x-heroicon-o-document-text class="h-5 w-5" />
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="font-extrabold text-gray-800 group-hover:text-emerald-700">Monitoring Judul</p>
+                        <span class="text-xs text-gray-400">{{ $stats['total_judul'] }} total judul</span>
+                    </div>
+                    <x-heroicon-o-arrow-right
+                        class="h-4 w-4 shrink-0 text-gray-300 transition group-hover:translate-x-1 group-hover:text-emerald-500" />
+                </a>
             </div>
 
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-
-                {{-- Draft --}}
-                <div
-                    class="relative overflow-hidden rounded-2xl border-2 border-gray-300 bg-gradient-to-br from-gray-500 via-gray-600 to-gray-700 p-6 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl">
-                    <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10"></div>
-                    <div class="absolute -bottom-6 -left-4 h-20 w-20 rounded-full bg-white/5"></div>
-                    <div class="relative flex items-start justify-between">
-                        <div>
-                            <p class="text-xs font-bold uppercase tracking-widest text-gray-200">Draft</p>
-                            <p class="mt-3 text-5xl font-black leading-none text-white">{{ $stats['draft'] }}</p>
-                            <p class="mt-2 text-xs font-medium text-gray-200">judul dari dosen</p>
-                        </div>
-                        <div
-                            class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border-2 border-white/20 bg-white/20">
-                            <x-heroicon-o-document class="h-5 w-5 text-white" />
+            {{-- ===== RINGKASAN JUDUL (kartu ringan) ===== --}}
+            <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <p class="text-xs font-semibold text-gray-400">Draft</p>
+                        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+                            <x-heroicon-o-document class="h-4 w-4" />
                         </div>
                     </div>
-                    <div class="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-white/20">
-                        <div class="h-full w-full rounded-full bg-white/60"></div>
-                    </div>
-                    <a href="{{ route('ka-lab.judul.index') }}?status=draft"
-                        class="mt-3 flex items-center gap-1 text-xs font-bold text-gray-200 transition hover:text-white">
-                        Lihat draft <x-heroicon-o-arrow-right class="h-3 w-3" />
-                    </a>
+                    <p class="mt-2 text-3xl font-black text-gray-800">{{ $stats['draft'] }}</p>
                 </div>
-
-                {{-- Pending Validasi --}}
-                <div
-                    class="relative overflow-hidden rounded-2xl border-2 border-yellow-300 bg-gradient-to-br from-yellow-400 via-yellow-500 to-orange-500 p-6 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl">
-                    <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10"></div>
-                    <div class="absolute -bottom-6 -left-4 h-20 w-20 rounded-full bg-white/5"></div>
-                    <div class="relative flex items-start justify-between">
-                        <div>
-                            <p class="text-xs font-bold uppercase tracking-widest text-yellow-100">Perlu Validasi</p>
-                            <p class="mt-3 text-5xl font-black leading-none text-white">{{ $stats['pending_kalab'] }}
-                            </p>
-                            <p class="mt-2 text-xs font-medium text-yellow-100">menunggu review</p>
-                        </div>
-                        <div
-                            class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border-2 border-white/20 bg-white/20">
-                            <x-heroicon-o-clock class="h-5 w-5 text-white" />
+                <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <p class="text-xs font-semibold text-gray-400">Perlu Validasi</p>
+                        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-yellow-100 text-yellow-600">
+                            <x-heroicon-o-clock class="h-4 w-4" />
                         </div>
                     </div>
-                    <div class="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-white/20">
-                        <div
-                            class="h-full {{ $stats['pending_kalab'] > 0 ? 'animate-pulse' : '' }} w-full rounded-full bg-white/60">
-                        </div>
-                    </div>
-                    <a href="{{ route('ka-lab.validasi.index') }}"
-                        class="mt-3 flex items-center gap-1 text-xs font-bold text-yellow-100 transition hover:text-white">
-                        Validasi sekarang <x-heroicon-o-arrow-right class="h-3 w-3" />
-                    </a>
+                    <p class="mt-2 text-3xl font-black text-yellow-600">{{ $stats['pending_kalab'] }}</p>
                 </div>
-
-                {{-- Ditawarkan --}}
-                <div
-                    class="relative overflow-hidden rounded-2xl border-2 border-emerald-300 bg-gradient-to-br from-emerald-500 via-emerald-600 to-green-700 p-6 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl">
-                    <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10"></div>
-                    <div class="absolute -bottom-6 -left-4 h-20 w-20 rounded-full bg-white/5"></div>
-                    <div class="relative flex items-start justify-between">
-                        <div>
-                            <p class="text-xs font-bold uppercase tracking-widest text-emerald-200">Ditawarkan</p>
-                            <p class="mt-3 text-5xl font-black leading-none text-white">{{ $stats['ditawarkan'] }}</p>
-                            <p class="mt-2 text-xs font-medium text-emerald-200">tersedia mahasiswa</p>
-                        </div>
-                        <div
-                            class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border-2 border-white/20 bg-white/20">
-                            <x-heroicon-o-check-circle class="h-5 w-5 text-white" />
+                <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <p class="text-xs font-semibold text-gray-400">Ditawarkan</p>
+                        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600">
+                            <x-heroicon-o-check-circle class="h-4 w-4" />
                         </div>
                     </div>
-                    <div class="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-white/20">
-                        <div class="h-full w-full rounded-full bg-white/60"></div>
-                    </div>
-                    <a href="{{ route('ka-lab.judul.index') }}?status=ditawarkan"
-                        class="mt-3 flex items-center gap-1 text-xs font-bold text-emerald-200 transition hover:text-white">
-                        Lihat judul <x-heroicon-o-arrow-right class="h-3 w-3" />
-                    </a>
+                    <p class="mt-2 text-3xl font-black text-emerald-600">{{ $stats['ditawarkan'] }}</p>
                 </div>
-
-                {{-- Ditolak --}}
-                <div
-                    class="relative overflow-hidden rounded-2xl border-2 border-red-300 bg-gradient-to-br from-red-500 via-red-600 to-rose-700 p-6 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl">
-                    <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10"></div>
-                    <div class="absolute -bottom-6 -left-4 h-20 w-20 rounded-full bg-white/5"></div>
-                    <div class="relative flex items-start justify-between">
-                        <div>
-                            <p class="text-xs font-bold uppercase tracking-widest text-red-200">Ditolak</p>
-                            <p class="mt-3 text-5xl font-black leading-none text-white">{{ $stats['ditolak'] }}</p>
-                            <p class="mt-2 text-xs font-medium text-red-200">perlu revisi</p>
-                        </div>
-                        <div
-                            class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border-2 border-white/20 bg-white/20">
-                            <x-heroicon-o-x-circle class="h-5 w-5 text-white" />
+                <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <p class="text-xs font-semibold text-gray-400">Ditolak</p>
+                        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-red-100 text-red-600">
+                            <x-heroicon-o-x-circle class="h-4 w-4" />
                         </div>
                     </div>
-                    <div class="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-white/20">
-                        <div class="h-full w-full rounded-full bg-white/60"></div>
-                    </div>
-                    <p class="mt-3 text-xs font-bold text-red-200">Perlu tindak lanjut</p>
+                    <p class="mt-2 text-3xl font-black text-red-600">{{ $stats['ditolak'] }}</p>
                 </div>
-
-            </div>
-
-            {{-- ===== SECTION: STATS PENGAJUAN ===== --}}
-            <div class="flex items-center gap-3">
-                <div class="h-px flex-1 bg-gradient-to-r from-transparent to-gray-200"></div>
-                <span
-                    class="flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-bold uppercase tracking-widest text-gray-400 shadow-sm">
-                    <x-heroicon-o-document-text class="h-3 w-3" />
-                    Ringkasan Pengajuan
-                </span>
-                <div class="h-px flex-1 bg-gradient-to-l from-transparent to-gray-200"></div>
-            </div>
-
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-
-                {{-- Pengajuan Pending --}}
-                <div
-                    class="relative overflow-hidden rounded-2xl border-2 border-sky-300 bg-gradient-to-br from-sky-500 via-sky-600 to-blue-700 p-6 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl">
-                    <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10"></div>
-                    <div class="absolute -bottom-6 -left-4 h-20 w-20 rounded-full bg-white/5"></div>
-                    <div class="relative flex items-start justify-between">
-                        <div>
-                            <p class="text-xs font-bold uppercase tracking-widest text-sky-200">Pengajuan Pending</p>
-                            <p class="mt-3 text-5xl font-black leading-none text-white">
-                                {{ $pengajuanStats['pending_review'] }}</p>
-                            <p class="mt-2 text-xs font-medium text-sky-200">menunggu review Ka Lab</p>
-                        </div>
-                        <div
-                            class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border-2 border-white/20 bg-white/20">
-                            <x-heroicon-o-clipboard-document-list class="h-5 w-5 text-white" />
-                        </div>
-                    </div>
-                    <div class="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-white/20">
-                        <div
-                            class="h-full {{ $pengajuanStats['pending_review'] > 0 ? 'animate-pulse' : '' }} w-full rounded-full bg-white/60">
-                        </div>
-                    </div>
-                    <a href="{{ route('ka-lab.pengajuan.index') }}"
-                        class="mt-3 flex items-center gap-1 text-xs font-bold text-sky-200 transition hover:text-white">
-                        Review pengajuan <x-heroicon-o-arrow-right class="h-3 w-3" />
-                    </a>
-                </div>
-
-                {{-- Total Pengajuan --}}
-                <div
-                    class="relative overflow-hidden rounded-2xl border-2 border-violet-300 bg-gradient-to-br from-violet-500 via-violet-600 to-purple-700 p-6 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl">
-                    <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10"></div>
-                    <div class="absolute -bottom-6 -left-4 h-20 w-20 rounded-full bg-white/5"></div>
-                    <div class="relative flex items-start justify-between">
-                        <div>
-                            <p class="text-xs font-bold uppercase tracking-widest text-violet-200">Total Pengajuan</p>
-                            <p class="mt-3 text-5xl font-black leading-none text-white">
-                                {{ $pengajuanStats['total_pengajuan'] }}</p>
-                            <p class="mt-2 text-xs font-medium text-violet-200">semua periode</p>
-                        </div>
-                        <div
-                            class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border-2 border-white/20 bg-white/20">
-                            <x-heroicon-o-users class="h-5 w-5 text-white" />
-                        </div>
-                    </div>
-                    <div class="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-white/20">
-                        <div class="h-full w-full rounded-full bg-white/60"></div>
-                    </div>
-                    <p class="mt-3 text-xs font-bold text-violet-200">Semua status</p>
-                </div>
-
             </div>
 
             {{-- ===== SECTION: VISUALISASI DATA ===== --}}
@@ -308,117 +204,6 @@
                         <canvas id="trenKeputusanChart"></canvas>
                     </div>
                 </div>
-            </div>
-
-            {{-- ===== SECTION: QUICK ACCESS ===== --}}
-            <div class="flex items-center gap-3">
-                <div class="h-px flex-1 bg-gradient-to-r from-transparent to-gray-200"></div>
-                <span
-                    class="flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-bold uppercase tracking-widest text-gray-400 shadow-sm">
-                    <x-heroicon-o-bolt class="h-3 w-3" />
-                    Akses Cepat
-                </span>
-                <div class="h-px flex-1 bg-gradient-to-l from-transparent to-gray-200"></div>
-            </div>
-
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-
-                {{-- Validasi Judul --}}
-                <a href="{{ route('ka-lab.validasi.index') }}"
-                    class="group relative overflow-hidden rounded-2xl border-2 border-gray-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-yellow-300 hover:shadow-lg">
-                    <div
-                        class="absolute right-0 top-0 h-24 w-24 translate-x-8 -translate-y-8 rounded-full bg-yellow-50 transition group-hover:bg-yellow-100">
-                    </div>
-                    <div class="relative flex items-start gap-4">
-                        <div
-                            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border-2 border-yellow-200 bg-yellow-100 transition group-hover:border-yellow-400 group-hover:bg-yellow-200">
-                            <x-heroicon-o-clipboard-document-check class="h-6 w-6 text-yellow-600" />
-                        </div>
-                        <div class="flex-1">
-                            <h3 class="font-extrabold text-gray-800 transition group-hover:text-yellow-700">Validasi
-                                Judul</h3>
-                            <p class="mt-1 text-xs text-gray-400 leading-relaxed">Review dan validasi judul dari dosen
-                            </p>
-                            @if ($stats['pending_kalab'] > 0)
-                                <span
-                                    class="mt-2 inline-flex items-center gap-1 rounded-full border border-yellow-200 bg-yellow-50 px-2.5 py-1 text-xs font-black text-yellow-700">
-                                    <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-yellow-500"></span>
-                                    {{ $stats['pending_kalab'] }} menunggu
-                                </span>
-                            @else
-                                <span
-                                    class="mt-2 inline-flex items-center gap-1 rounded-full border border-green-200 bg-green-50 px-2.5 py-1 text-xs font-bold text-green-600">
-                                    <span class="h-1.5 w-1.5 rounded-full bg-green-500"></span>
-                                    Semua selesai
-                                </span>
-                            @endif
-                        </div>
-                        <x-heroicon-o-arrow-right
-                            class="h-4 w-4 shrink-0 text-gray-300 transition group-hover:translate-x-1 group-hover:text-yellow-500" />
-                    </div>
-                </a>
-
-                {{-- Pengajuan Mahasiswa --}}
-                <a href="{{ route('ka-lab.pengajuan.index') }}"
-                    class="group relative overflow-hidden rounded-2xl border-2 border-gray-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-lg">
-                    <div
-                        class="absolute right-0 top-0 h-24 w-24 translate-x-8 -translate-y-8 rounded-full bg-sky-50 transition group-hover:bg-sky-100">
-                    </div>
-                    <div class="relative flex items-start gap-4">
-                        <div
-                            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border-2 border-sky-200 bg-sky-100 transition group-hover:border-sky-400 group-hover:bg-sky-200">
-                            <x-heroicon-o-clipboard-document-list class="h-6 w-6 text-sky-600" />
-                        </div>
-                        <div class="flex-1">
-                            <h3 class="font-extrabold text-gray-800 transition group-hover:text-sky-700">Pengajuan
-                                Mahasiswa</h3>
-                            <p class="mt-1 text-xs text-gray-400 leading-relaxed">Review pengajuan judul TA mahasiswa
-                            </p>
-                            @if ($pengajuanStats['pending_review'] > 0)
-                                <span
-                                    class="mt-2 inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-xs font-black text-sky-700">
-                                    <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-sky-500"></span>
-                                    {{ $pengajuanStats['pending_review'] }} menunggu
-                                </span>
-                            @else
-                                <span
-                                    class="mt-2 inline-flex items-center gap-1 rounded-full border border-green-200 bg-green-50 px-2.5 py-1 text-xs font-bold text-green-600">
-                                    <span class="h-1.5 w-1.5 rounded-full bg-green-500"></span>
-                                    Semua selesai
-                                </span>
-                            @endif
-                        </div>
-                        <x-heroicon-o-arrow-right
-                            class="h-4 w-4 shrink-0 text-gray-300 transition group-hover:translate-x-1 group-hover:text-sky-500" />
-                    </div>
-                </a>
-
-                {{-- Monitoring Judul --}}
-                <a href="{{ route('ka-lab.judul.index') }}"
-                    class="group relative overflow-hidden rounded-2xl border-2 border-gray-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-lg">
-                    <div
-                        class="absolute right-0 top-0 h-24 w-24 translate-x-8 -translate-y-8 rounded-full bg-emerald-50 transition group-hover:bg-emerald-100">
-                    </div>
-                    <div class="relative flex items-start gap-4">
-                        <div
-                            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border-2 border-emerald-200 bg-emerald-100 transition group-hover:border-emerald-400 group-hover:bg-emerald-200">
-                            <x-heroicon-o-document-text class="h-6 w-6 text-emerald-600" />
-                        </div>
-                        <div class="flex-1">
-                            <h3 class="font-extrabold text-gray-800 transition group-hover:text-emerald-700">Monitoring
-                                Judul</h3>
-                            <p class="mt-1 text-xs text-gray-400 leading-relaxed">Pantau semua judul TA yang terdaftar
-                            </p>
-                            <span
-                                class="mt-2 inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-600">
-                                {{ $stats['total_judul'] }} total judul
-                            </span>
-                        </div>
-                        <x-heroicon-o-arrow-right
-                            class="h-4 w-4 shrink-0 text-gray-300 transition group-hover:translate-x-1 group-hover:text-emerald-500" />
-                    </div>
-                </a>
-
             </div>
 
             {{-- ===== SECTION: CONTENT ROW ===== --}}
@@ -556,100 +341,6 @@
 
             </div>
 
-            {{-- ===== SECTION: AKTIVITAS TERBARU ===== --}}
-            @if ($recentActivities->count() > 0)
-                <div class="flex items-center gap-3">
-                    <div class="h-px flex-1 bg-gradient-to-r from-transparent to-gray-200"></div>
-                    <span
-                        class="flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-bold uppercase tracking-widest text-gray-400 shadow-sm">
-                        <x-heroicon-o-bolt class="h-3 w-3" />
-                        Aktivitas Terbaru
-                    </span>
-                    <div class="h-px flex-1 bg-gradient-to-l from-transparent to-gray-200"></div>
-                </div>
-
-                <div class="overflow-hidden rounded-2xl border-2 border-gray-200 bg-white shadow-md">
-
-                    <div
-                        class="flex items-center justify-between border-b-4 border-sky-200 bg-gradient-to-r from-sky-700 to-blue-700 px-6 py-4">
-                        <div class="flex items-center gap-3">
-                            <div
-                                class="flex h-9 w-9 items-center justify-center rounded-xl border-2 border-white/30 bg-white/20">
-                                <x-heroicon-o-bolt class="h-5 w-5 text-white" />
-                            </div>
-                            <h3 class="font-extrabold text-white">Aktivitas Terbaru</h3>
-                        </div>
-                        <span
-                            class="rounded-full border-2 border-white/30 bg-white/20 px-3 py-1 text-xs font-black text-white">
-                            {{ $recentActivities->count() }} aktivitas
-                        </span>
-                    </div>
-
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm">
-                            <thead>
-                                <tr
-                                    class="border-b-2 border-gray-200 bg-gray-50 text-left text-xs font-black uppercase tracking-wider text-gray-500">
-                                    <th class="px-6 py-4">Waktu</th>
-                                    <th class="px-6 py-4">Judul</th>
-                                    <th class="px-6 py-4">Aksi</th>
-                                    <th class="px-6 py-4">Oleh</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y-2 divide-gray-100">
-                                @foreach ($recentActivities as $activity)
-                                    <tr class="group transition-colors hover:bg-sky-50/30">
-                                        <td class="px-6 py-4">
-                                            <div
-                                                class="rounded-xl border-2 border-gray-100 bg-gray-50 px-3 py-2 text-center">
-                                                <p class="text-xs font-black text-gray-700">
-                                                    {{ \Carbon\Carbon::parse($activity->created_at)->format('d M Y') }}
-                                                </p>
-                                                <p class="text-xs text-gray-400">
-                                                    {{ \Carbon\Carbon::parse($activity->created_at)->diffForHumans() }}
-                                                </p>
-                                            </div>
-                                        </td>
-                                        <td class="max-w-[220px] px-6 py-4">
-                                            <p class="text-sm font-bold text-gray-800 line-clamp-1">
-                                                {{ $activity->nama_judul }}</p>
-                                            <span
-                                                class="mt-1 inline-block rounded-lg bg-gray-100 px-2 py-0.5 text-xs font-black text-gray-600">
-                                                {{ $activity->kode }}
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4">
-                                            <span
-                                                class="inline-flex items-center gap-1.5 rounded-full border-2 border-sky-200 bg-sky-100 px-3 py-1 text-xs font-black text-sky-700">
-                                                <span class="h-1.5 w-1.5 rounded-full bg-sky-500"></span>
-                                                {{ $activity->aksi }}
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4">
-                                            <div class="flex items-center gap-2">
-                                                <div
-                                                    class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-blue-600 text-xs font-black text-white">
-                                                    {{ strtoupper(substr($activity->user_name, 0, 1)) }}
-                                                </div>
-                                                <span
-                                                    class="text-sm font-semibold text-gray-700">{{ $activity->user_name }}</span>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="flex items-center justify-between border-t-2 border-gray-200 bg-gray-50 px-6 py-4">
-                        <p class="text-xs font-semibold text-gray-500">
-                            Menampilkan <span class="font-black text-gray-800">{{ $recentActivities->count() }}</span>
-                            aktivitas terbaru
-                        </p>
-                    </div>
-
-                </div>
-            @endif
 
         </div>
     </div>
