@@ -39,6 +39,7 @@ class DosenPengajuanController extends Controller
             'mahasiswa',
             'periode',
             'labAktif',
+            'judulDitetapkan.laboratorium',
             'pilihan1.laboratorium',
             'pilihan1.dosen',
             'pilihan2.laboratorium',
@@ -61,6 +62,11 @@ class DosenPengajuanController extends Controller
 
         // Tentukan judul milik dosen ini yang dipilih (untuk label & grouping)
         $pengajuan->each(function ($p) use ($dosenId) {
+            // Default: belum settle di tempat lain.
+            $p->settled_elsewhere = false;
+            $p->settled_judul = null;
+            $p->settled_lab = null;
+
             if ($p->jenis === 'mandiri') {
                 $p->match_key = 'mandiri_' . $p->id;
                 $p->match_nama = $p->judul_mandiri ?? '-';
@@ -78,6 +84,17 @@ class DosenPengajuanController extends Controller
                     $p->match_kode = $j->kode ?? '';
                     $p->match_alasan = $p->{'alasan_' . $n} ?? '';
                     $p->match_prioritas = $n; // judul dosen ini dipilih sebagai pilihan ke-$n
+
+                    // Peminat sudah DISETUJUI judul LAIN (bukan judul dosen ini) → beri tahu agar tak ambigu.
+                    if (
+                        $p->status_kalab === 'disetujui'
+                        && $p->judul_ditetapkan_id
+                        && (int) $p->judul_ditetapkan_id !== (int) $j->id
+                    ) {
+                        $p->settled_elsewhere = true;
+                        $p->settled_judul = $p->judulDitetapkan->nama_judul ?? '-';
+                        $p->settled_lab = $p->judulDitetapkan->laboratorium->nama ?? '-';
+                    }
                     return;
                 }
             }
@@ -124,6 +141,10 @@ class DosenPengajuanController extends Controller
                         'status_dosen' => $p->status_dosen,
                         // Lab tujuan yang dipilih dosen saat mengonfirmasi usulan mandiri.
                         'lab_aktif' => optional($p->labAktif)->nama,
+                        // Peminat ini sudah disetujui judul LAIN (di lab lain) → agar tak ambigu.
+                        'settled_elsewhere' => (bool) ($p->settled_elsewhere ?? false),
+                        'settled_judul' => $p->settled_judul ?? null,
+                        'settled_lab' => $p->settled_lab ?? null,
                     ];
                 })->values(),
             ];

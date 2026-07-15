@@ -63,7 +63,17 @@ class JudulController extends Controller
         $activePeriodeId = \App\Models\Periode::periodeAktif()?->id;
         $diPeriodeAktif = fn($q) => $q->where('periode_id', $activePeriodeId);
 
-        $judulList = Judul::with(['dosen', 'laboratorium'])
+        // Peminat (dgn mahasiswa & judul yang ditetapkan) untuk deteksi "sudah disetujui judul lain".
+        $diPeriodePeminat = fn($q) => $q->where('periode_id', $activePeriodeId)
+            ->with(['mahasiswa', 'judulDitetapkan.laboratorium']);
+
+        $judulList = Judul::with([
+                'dosen',
+                'laboratorium',
+                'pengajuanPilihan1' => $diPeriodePeminat,
+                'pengajuanPilihan2' => $diPeriodePeminat,
+                'pengajuanPilihan3' => $diPeriodePeminat,
+            ])
             ->where('laboratorium_id', $myLab)
             ->withCount([
                 'pengajuanPilihan1' => $diPeriodeAktif,
@@ -114,6 +124,23 @@ class JudulController extends Controller
                 'catatan_penolakan_kalab' => $j->catatan_kalab ?? '',
                 'total_peminat' => $j->total_peminat ?? 0,
                 'jumlah_ditetapkan' => $j->jumlah_ditetapkan ?? 0,
+                // Daftar peminat + tanda bila mahasiswa sudah disetujui judul LAIN (agar tak ambigu).
+                'peminat' => collect([1 => $j->pengajuanPilihan1, 2 => $j->pengajuanPilihan2, 3 => $j->pengajuanPilihan3])
+                    ->flatMap(function ($coll, $prio) use ($j) {
+                        return $coll->map(function ($p) use ($prio, $j) {
+                            $settled = $p->status_kalab === 'disetujui'
+                                && $p->judul_ditetapkan_id
+                                && (int) $p->judul_ditetapkan_id !== (int) $j->id;
+                            return [
+                                'nama' => $p->mahasiswa->name ?? '-',
+                                'nim' => $p->mahasiswa->nim ?? '-',
+                                'prioritas' => $prio,
+                                'settled_elsewhere' => $settled,
+                                'settled_judul' => $settled ? ($p->judulDitetapkan->nama_judul ?? '-') : null,
+                                'settled_lab' => $settled ? ($p->judulDitetapkan->laboratorium->nama ?? '-') : null,
+                            ];
+                        });
+                    })->values(),
             ];
         })->values();
 

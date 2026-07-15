@@ -1,5 +1,9 @@
 # Checklist Testing per Role — Sistem Skripsi
 
+> ⚠️ **DOKUMEN LAMA (pra-revisi).** Langkah di bawah masih alur lama (single Ka Lab,
+> belum review berjenjang & mandiri-lewat-dosen). Untuk panduan terbaru gunakan
+> **PANDUAN-PENGUJI.md**. Kredensial di sini sudah disesuaikan agar tetap bisa login.
+>
 > Ikuti urutan ini (beberapa langkah saling bergantung). Centang `[x]` jika lolos.
 > **Password semua akun:** `password`
 
@@ -11,8 +15,8 @@
 | Role | Email | Nama |
 |------|-------|------|
 | Koordinator TA | `koordinatorta@informatika.com` | Admin Koordinator TA |
-| Ka Lab | `kalab@informatika.com` | Dr. Ahmad Fauzi |
-| Prodi | `prodi@informatika.com` | Dr. Budi Santoso |
+| Ka Lab | `novi@informatika.com` | Dr. Novi Setiani |
+| Prodi | `chanifah@informatika.com` | Chanifah Indah Ratnasari |
 | Dosen | `srimulyati@dosen.com` | Sri Mulyati |
 | Mahasiswa | `mhs1@mail.com` (Andi) | NIM 22523001 |
 
@@ -27,7 +31,7 @@ Login **Dosen** (`srimulyati@dosen.com`) → menu **Manajemen Judul**
 - [ ] Kartu statistik atas: angka **Draft / Menunggu Validasi / Ditawarkan** sesuai
 - [ ] Filter pills (Draft/Menunggu/Ditawarkan/Ditolak) menyaring dengan benar
 
-Login **Ka Lab** (`kalab@informatika.com`) → menu **Validasi Judul**
+Login **Ka Lab** (`novi@informatika.com`) → menu **Validasi Judul**
 - [ ] Judul yang tadi diajukan **muncul** di antrian (sebelumnya selalu kosong)
 - [ ] Klik **Setujui/Validasi** → status jadi **Ditawarkan**
 - [ ] (ulangi 1 judul) Klik **Tolak** + isi catatan → judul jadi **Ditolak**
@@ -54,7 +58,7 @@ Login **Dosen** pemilik salah satu judul → **Pengajuan Mahasiswa**
 Login **Ka Lab** → **Pengajuan**
 - [ ] Pengajuan Budi muncul (Belum Review) → buka detail → **tetapkan judul** (pilih salah satu) → **Setujui**
 
-Login **Prodi** (`prodi@informatika.com`) → **Review Pengajuan**
+Login **Prodi** (`chanifah@informatika.com`) → **Review Pengajuan**
 - [ ] Pengajuan Budi **muncul** di daftar (dulu kosong karena bug Koor Lab — pastikan ada)
 - [ ] Tabel **tidak ada** kolom "Status Koor"
 - [ ] Buka detail → **Setujui** (atau Tolak + catatan)

@@ -124,12 +124,15 @@ class PengajuanSeeder extends Seeder
                 ]);
             } elseif ($outcome === 'kalab_approved') {
                 // Sudah disetujui Ka Lab, MENUNGGU keputusan Prodi (untuk demo review live).
+                // Ka Lab menetapkan judul prioritas-1 (konsisten dgn approveByKalab asli).
                 $row = array_merge($row, [
                     'status' => 'pending',
                     'status_kalab' => 'disetujui',
                     'catatan_kalab_pengajuan' => 'Judul sesuai kompetensi laboratorium.',
                     'tanggal_review_kalab' => $fmt($revKalab),
                     'reviewed_by_kalab' => $kalab,
+                    'judul_ditetapkan_id' => $p1->id,
+                    'sumber_judul' => 'pilihan_1',
                     'updated_at' => $fmt($revKalab),
                 ]);
             }

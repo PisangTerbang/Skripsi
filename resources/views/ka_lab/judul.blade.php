@@ -546,6 +546,27 @@
                         </div>
                     </div>
 
+                    {{-- Daftar peminat + tanda "sudah disetujui judul lain" agar tak ambigu --}}
+                    <template x-if="selectedItem.peminat && selectedItem.peminat.length">
+                        <div class="rounded-xl border-2 border-gray-100 bg-gray-50 p-3">
+                            <p class="mb-2 text-xs font-bold uppercase tracking-widest text-gray-400">Daftar Peminat</p>
+                            <div class="space-y-2">
+                                <template x-for="(m, i) in selectedItem.peminat" :key="i">
+                                    <div class="rounded-lg border border-gray-200 bg-white px-3 py-2">
+                                        <p class="text-sm font-bold text-gray-800" x-text="m.nama"></p>
+                                        <p class="text-xs text-gray-400">
+                                            <span x-text="m.nim"></span> · Pilihan ke-<span x-text="m.prioritas"></span>
+                                        </p>
+                                        <template x-if="m.settled_elsewhere">
+                                            <p class="mt-1 inline-flex items-center gap-1 rounded-md bg-orange-50 px-2 py-0.5 text-[11px] font-black text-orange-700"
+                                                x-text="'⚠ Sudah disetujui judul lain: ' + m.settled_judul + ' (Lab ' + m.settled_lab + ')'"></p>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
                     {{-- Info Status --}}
                     <div x-show="selectedItem.status_judul === 'draft'"
                         class="rounded-xl border-2 border-gray-200 bg-gray-50 p-4">

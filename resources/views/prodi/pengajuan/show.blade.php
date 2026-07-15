@@ -268,9 +268,9 @@
                                                     </span>
                                                     @if ($isDitetapkan)
                                                         <span
-                                                            class="inline-flex items-center gap-1 rounded-full bg-violet-600 px-2 py-0.5 text-[10px] font-black text-white">
-                                                            <x-heroicon-o-check class="h-3 w-3" />
-                                                            Ditetapkan
+                                                            class="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2.5 py-0.5 text-[10px] font-black text-white">
+                                                            <x-heroicon-o-check-badge class="h-3.5 w-3.5" />
+                                                            Judul disetujui Ka Lab
                                                         </span>
                                                     @endif
                                                 </div>

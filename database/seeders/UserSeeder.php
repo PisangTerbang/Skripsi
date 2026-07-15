@@ -59,8 +59,8 @@ class UserSeeder extends Seeder
             // ============ KEPALA LAB (KA LAB) — 1 per laboratorium ============
             // laboratorium_id: SIRKEL=1, ITSC=2, MVK=3, SISTEM SIBER=4
             [
-                'name' => 'Dr. Ahmad Fauzi, M.Kom.',
-                'email' => 'kalab.sirkel@informatika.com',
+                'name' => 'Dr. Novi Setiani, S.T., M.T.',
+                'email' => 'novi@informatika.com',
                 'nim' => null,
                 'password' => $pw,
                 'role' => 'ka_lab',
@@ -69,8 +69,8 @@ class UserSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'name' => 'Dr. Rina Kartika, M.Cs.',
-                'email' => 'kalab.itsc@informatika.com',
+                'name' => 'Ir. Chandra Kusuma Dewa, S.Kom., M.Kom., Ph.D.',
+                'email' => 'chandra@informatika.com',
                 'nim' => null,
                 'password' => $pw,
                 'role' => 'ka_lab',
@@ -79,8 +79,8 @@ class UserSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'name' => 'Dr. Bagus Nugroho, M.Kom.',
-                'email' => 'kalab.mvk@informatika.com',
+                'name' => 'Ir. Izzati Muhimmah, S.T., M.Sc., Ph.D.',
+                'email' => 'izzati@informatika.com',
                 'nim' => null,
                 'password' => $pw,
                 'role' => 'ka_lab',
@@ -89,8 +89,8 @@ class UserSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'name' => 'Dr. Sinta Maharani, M.T.',
-                'email' => 'kalab.siber@informatika.com',
+                'name' => 'Dr. Syarif Hidayat, S.Kom., M.I.T.',
+                'email' => 'syarif@informatika.com',
                 'nim' => null,
                 'password' => $pw,
                 'role' => 'ka_lab',
@@ -101,8 +101,8 @@ class UserSeeder extends Seeder
 
             // ============ PRODI (KAPRODI) ============
             [
-                'name' => 'Dr. Budi Santoso, M.T.',
-                'email' => 'prodi@informatika.com',
+                'name' => 'Chanifah Indah Ratnasari, S.Kom., M.Kom.',
+                'email' => 'chanifah@informatika.com',
                 'nim' => null,
                 'password' => $pw,
                 'role' => 'prodi',

@@ -410,6 +410,15 @@
                                                             <span
                                                                 x-text="item.status === 'pending' ? 'Pending' : item.status === 'disetujui' ? 'Disetujui' : 'Ditolak'"></span>
                                                         </span>
+                                                        {{-- Peminat sudah disetujui judul LAIN (lab lain) → agar tak ambigu --}}
+                                                        <template x-if="item.settled_elsewhere">
+                                                            <span
+                                                                class="inline-flex items-center gap-1 rounded-full border-2 border-orange-200 bg-orange-50 px-2.5 py-1 text-[11px] font-black text-orange-700">
+                                                                <x-heroicon-o-information-circle class="h-3.5 w-3.5" />
+                                                                <span
+                                                                    x-text="'Sudah disetujui judul lain: ' + item.settled_judul + ' (Lab ' + item.settled_lab + ')'"></span>
+                                                            </span>
+                                                        </template>
                                                     </div>
                                                     <div class="mt-0.5 flex items-center gap-2 text-xs text-gray-400">
                                                         <span x-show="item.prioritas">Pilihan ke-<span class="font-black"
