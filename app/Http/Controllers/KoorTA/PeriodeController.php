@@ -112,8 +112,11 @@ class PeriodeController extends Controller
                 DB::table('periode')->update(['is_active' => DB::raw('false')]);
             }
 
-            $periode->update([
+            // pgsql boolean: WAJIB lewat DB::table. Eloquent $model->update() dengan
+            // kolom cast boolean + DB::raw tidak ter-persist (is_active tetap seperti semula).
+            DB::table('periode')->where('id', $periode->id)->update([
                 'is_active' => DB::raw($wasActive ? 'false' : 'true'),
+                'updated_at' => now(),
             ]);
 
             // Mengaktifkan periode → sinkronkan kunci judul SESUAI data periode ini.
