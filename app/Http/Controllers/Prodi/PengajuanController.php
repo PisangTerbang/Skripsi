@@ -148,6 +148,13 @@ class PengajuanController extends Controller
             'periode',
             'judulDitetapkan.dosen',
             'judulDitetapkan.laboratorium',
+            'pilihan1.dosen',
+            'pilihan1.laboratorium',
+            'pilihan2.dosen',
+            'pilihan2.laboratorium',
+            'pilihan3.dosen',
+            'pilihan3.laboratorium',
+            'reviewerKalab',
             'reviewerKaprodi',
         ])
             ->whereNotNull('status_kaprodi')

@@ -161,7 +161,7 @@
             </div>
 
             {{-- ===== FILTER + TABLE ===== --}}
-            <div x-data="{ filter: 'semua' }" class="space-y-4">
+            <div x-data="{ filter: 'semua', showModal: false, sel: {} }" class="space-y-4">
 
                 {{-- Section Label --}}
                 <div class="flex items-center gap-3">
@@ -404,11 +404,46 @@
 
                                             {{-- Aksi --}}
                                             <td class="px-5 py-4 text-center">
-                                                <a href="{{ route('prodi.pengajuan.show', $item->id) }}"
+                                                @php
+                                                    $detail = [
+                                                        'nama' => $item->mahasiswa->name ?? '-',
+                                                        'nim' => $item->mahasiswa->nim ?? ($item->mahasiswa->email ?? '-'),
+                                                        'periode' => $item->periode->nama ?? '-',
+                                                        'status' => $item->status_kaprodi,
+                                                        'jenis' => $item->jenis,
+                                                        'judul' => $item->judulDitetapkan->nama_judul ?? null,
+                                                        'dosen' => $item->judulDitetapkan->dosen->name ?? null,
+                                                        'lab' => $item->judulDitetapkan->laboratorium->nama ?? null,
+                                                        'sumber' => match ($item->sumber_judul) {
+                                                            'pilihan_1' => 'Pilihan ke-1',
+                                                            'pilihan_2' => 'Pilihan ke-2',
+                                                            'pilihan_3' => 'Pilihan ke-3',
+                                                            'mandiri', 'usulan' => 'Usulan Mandiri',
+                                                            default => null,
+                                                        },
+                                                        'judul_mandiri' => $item->judul_mandiri,
+                                                        'catatan_kalab' => $item->catatan_kalab_pengajuan,
+                                                        'catatan_kaprodi' => $item->catatan_kaprodi,
+                                                        'tgl' => $item->tanggal_review_kaprodi ? $item->tanggal_review_kaprodi->format('d M Y, H:i') . ' WIB' : null,
+                                                        'reviewer_kalab' => $item->reviewerKalab->name ?? null,
+                                                        'reviewer_kaprodi' => $item->reviewerKaprodi->name ?? null,
+                                                        'pilihan' => collect([$item->pilihan1, $item->pilihan2, $item->pilihan3])
+                                                            ->map(fn($p, $i) => $p ? [
+                                                                'ke' => $i + 1,
+                                                                'judul' => $p->nama_judul ?? '-',
+                                                                'dosen' => $p->dosen->name ?? '-',
+                                                                'lab' => $p->laboratorium->nama ?? '-',
+                                                                'alasan' => $item->{'alasan_' . ($i + 1)} ?? null,
+                                                            ] : null)
+                                                            ->filter()->values(),
+                                                    ];
+                                                @endphp
+                                                <button type="button"
+                                                    @click='sel = @json($detail); showModal = true'
                                                     class="inline-flex items-center gap-1.5 rounded-lg border-2 border-violet-200 bg-white px-3 py-1.5 text-xs font-bold text-violet-700 transition hover:bg-violet-600 hover:text-white hover:border-violet-600">
                                                     <x-heroicon-o-eye class="h-3.5 w-3.5" />
                                                     Detail
-                                                </a>
+                                                </button>
                                             </td>
 
                                         </tr>
@@ -438,6 +473,100 @@
                     @endif
 
                 </div>
+
+                {{-- ===== MODAL DETAIL (read-only) ===== --}}
+                <div x-show="showModal" x-cloak @click.self="showModal = false"
+                    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div x-transition:enter="transition ease-out duration-200"
+                        x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                        class="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border-2 border-gray-200 bg-white shadow-2xl">
+
+                        {{-- Header --}}
+                        <div class="sticky top-0 z-10 flex items-center justify-between border-b-4 border-violet-200 bg-gradient-to-r from-violet-600 to-purple-700 px-6 py-4">
+                            <div class="min-w-0">
+                                <h3 class="font-extrabold text-white leading-tight" x-text="sel.nama"></h3>
+                                <p class="text-xs text-violet-200" x-text="(sel.nim || '') + ' · ' + (sel.periode || '')"></p>
+                            </div>
+                            <button @click="showModal = false"
+                                class="rounded-lg p-1.5 text-white/80 transition hover:bg-white/20 hover:text-white">
+                                <x-heroicon-o-x-mark class="h-5 w-5" />
+                            </button>
+                        </div>
+
+                        <div class="space-y-5 p-6">
+                            {{-- Status akhir --}}
+                            <div>
+                                <span x-show="sel.status === 'disetujui'"
+                                    class="inline-flex items-center gap-1.5 rounded-full border-2 border-emerald-200 bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-700">Diterima</span>
+                                <span x-show="sel.status === 'ditolak'"
+                                    class="inline-flex items-center gap-1.5 rounded-full border-2 border-red-200 bg-red-100 px-3 py-1 text-xs font-black text-red-700">Ditolak</span>
+                            </div>
+
+                            {{-- Judul ditetapkan --}}
+                            <div x-show="sel.judul" class="rounded-xl border-2 border-violet-200 bg-violet-50 px-4 py-3">
+                                <div class="flex items-center justify-between gap-2">
+                                    <p class="text-xs font-black uppercase tracking-widest text-violet-500">Judul Ditetapkan</p>
+                                    <span x-show="sel.sumber"
+                                        class="rounded-full border border-violet-300 bg-white px-2 py-0.5 text-[10px] font-black text-violet-700"
+                                        x-text="sel.sumber"></span>
+                                </div>
+                                <p class="mt-1 text-sm font-bold text-gray-800" x-text="sel.judul"></p>
+                                <p class="mt-0.5 text-xs text-gray-500">
+                                    <span x-text="sel.dosen"></span><span x-show="sel.lab"> · </span><span x-text="sel.lab"></span>
+                                </p>
+                            </div>
+
+                            {{-- Usulan mandiri (bila ada) --}}
+                            <div x-show="sel.judul_mandiri" class="rounded-xl border-2 border-amber-200 bg-amber-50 px-4 py-3">
+                                <p class="text-xs font-black uppercase tracking-widest text-amber-500">Usulan Judul Mandiri</p>
+                                <p class="mt-1 text-sm font-bold text-gray-800" x-text="sel.judul_mandiri"></p>
+                            </div>
+
+                            {{-- Pilihan judul --}}
+                            <div x-show="sel.pilihan && sel.pilihan.length">
+                                <p class="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Pilihan Judul Mahasiswa</p>
+                                <div class="space-y-2">
+                                    <template x-for="p in sel.pilihan" :key="p.ke">
+                                        <div class="rounded-xl border-2 border-gray-200 bg-gray-50 p-3">
+                                            <div class="flex items-start gap-2">
+                                                <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-violet-600 text-[10px] font-black text-white" x-text="p.ke"></span>
+                                                <div class="min-w-0 flex-1">
+                                                    <p class="text-sm font-bold text-gray-800" x-text="p.judul"></p>
+                                                    <p class="text-xs text-gray-500"><span x-text="p.dosen"></span> · <span x-text="p.lab"></span></p>
+                                                    <p x-show="p.alasan" class="mt-1 text-xs italic text-gray-500" x-text="'Alasan: ' + p.alasan"></p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+
+                            {{-- Catatan review --}}
+                            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                <div class="rounded-xl border border-gray-200 bg-white px-4 py-3">
+                                    <p class="text-[11px] font-black uppercase tracking-wide text-gray-400">Catatan Ka Lab</p>
+                                    <p class="mt-1 text-sm text-gray-700" x-text="sel.catatan_kalab || '—'"></p>
+                                    <p x-show="sel.reviewer_kalab" class="mt-1 text-xs text-gray-400" x-text="'oleh ' + sel.reviewer_kalab"></p>
+                                </div>
+                                <div class="rounded-xl border border-gray-200 bg-white px-4 py-3">
+                                    <p class="text-[11px] font-black uppercase tracking-wide text-gray-400">Catatan Prodi</p>
+                                    <p class="mt-1 text-sm text-gray-700" x-text="sel.catatan_kaprodi || '—'"></p>
+                                    <p x-show="sel.reviewer_kaprodi" class="mt-1 text-xs text-gray-400">
+                                        <span x-text="'oleh ' + sel.reviewer_kaprodi"></span><span x-show="sel.tgl"> · </span><span x-text="sel.tgl"></span>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-end border-t-2 border-gray-100 pt-4">
+                                <button @click="showModal = false"
+                                    class="rounded-xl border-2 border-gray-200 bg-white px-5 py-2 text-sm font-bold text-gray-600 transition hover:bg-gray-50">
+                                    Tutup
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
         </div>
