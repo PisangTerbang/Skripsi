@@ -69,6 +69,32 @@
                             </a>
                         </div>
                     </div>
+                @elseif ($sudahDiumumkan && $latestPengajuan && $latestPengajuan->status === 'ditolak')
+                    <div
+                        class="relative overflow-hidden rounded-2xl border-2 border-red-300 bg-gradient-to-br from-red-500 via-rose-600 to-red-700 p-6 shadow-xl">
+                        <div class="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/10"></div>
+                        <div class="relative">
+                            <div class="mb-2 flex flex-wrap items-center gap-2">
+                                <span
+                                    class="inline-flex items-center gap-1.5 rounded-full border-2 border-white/30 bg-white/20 px-2.5 py-0.5 text-xs font-black text-white">
+                                    <x-heroicon-o-x-circle class="h-3.5 w-3.5" /> Ditolak
+                                </span>
+                                <span
+                                    class="inline-flex items-center gap-1.5 rounded-full border-2 border-red-300/50 bg-red-400/20 px-2.5 py-0.5 text-xs font-black text-red-100">
+                                    <span class="h-1.5 w-1.5 rounded-full bg-red-200"></span> Resmi Diumumkan
+                                </span>
+                            </div>
+                            <h3 class="text-base font-black text-white">Pengajuan Anda Belum Disetujui</h3>
+                            <p class="mt-1 text-sm font-medium text-red-50">
+                                Pengajuan pada periode ini ditolak. Silakan lihat detail &amp; catatan reviewer, lalu
+                                ajukan kembali pada periode berikutnya.
+                            </p>
+                            <a href="{{ route('mahasiswa.riwayat') }}"
+                                class="mt-4 inline-flex items-center gap-2 rounded-xl border-2 border-white/30 bg-white px-4 py-2 text-sm font-black text-red-700 shadow-md transition hover:bg-red-50">
+                                <x-heroicon-o-eye class="h-4 w-4" /> Lihat Detail
+                            </a>
+                        </div>
+                    </div>
                 @elseif ($adaProsesBerjalan)
                     <div
                         class="relative overflow-hidden rounded-2xl border-2 border-blue-300 bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 p-6 shadow-xl">
@@ -423,43 +449,48 @@
                     stepLabel: '',
                     interval: null,
 
-                    // ✅ 4 step sekarang
+                    // Tahap = milestone (25% tiap tahap): Ajukan(1) → Ka Lab(2) → Kaprodi(3) → Pengumuman(4)
+                    // Hanya menunjukkan TAHAPAN, bukan hasil (diterima/ditolak).
                     mapStatus(status) {
                         switch (status) {
+                            case 'diajukan': // sudah mengajukan
+                            case 'pending': // (fallback lama)
                             case 'diproses':
-                                return 2; // sedang diproses — hasil dirahasiakan s/d pengumuman
-                            case 'pending':
-                                return 2;
+                                return 1; // 25%
+                            case 'review_kalab': // Ka Lab sudah menilai
                             case 'review':
-                                return 3;
+                                return 2; // 50%
+                            case 'review_kaprodi': // Kaprodi sudah menilai
+                            case 'menunggu_pengumuman':
                             case 'disetujui':
-                                return 3; // kaprodi approve, belum diumumkan
-                            case 'diumumkan':
-                                return 4; // sudah diumumkan = selesai
                             case 'ditolak':
-                                return 4; // ditolak juga step 4 setelah diumumkan
-                            default:
-                                return 1;
+                                return 3; // 75%
+                            case 'diumumkan': // pengumuman resmi = selesai
+                                return 4; // 100%
+                            default: // none
+                                return 0; // 0%
                         }
                     },
 
-                    // ✅ Label per step
+                    // Label = nama tahap saja (bukan hasil)
                     getStepLabel(status) {
                         switch (status) {
                             case 'none':
                                 return 'Belum ada pengajuan';
-                            case 'diproses':
-                                return 'Sedang diproses — menunggu pengumuman resmi';
+                            case 'diajukan':
                             case 'pending':
-                                return 'Menunggu review Ka Lab';
+                            case 'diproses':
+                                return 'Pengajuan terkirim — tahap Ajukan';
+                            case 'review_kalab':
                             case 'review':
-                                return 'Menunggu review Kaprodi';
+                                return 'Tahap review Ka Lab';
+                            case 'review_kaprodi':
+                            case 'menunggu_pengumuman':
                             case 'disetujui':
-                                return 'Menunggu pengumuman Koordinator TA';
-                            case 'diumumkan':
-                                return '✓ Pengumuman sudah dikirim';
                             case 'ditolak':
-                                return 'Pengajuan ditolak';
+                                return 'Tahap review Kaprodi';
+                            case 'diumumkan':
+                                return '✓ Pengumuman resmi telah dikirim';
                             default:
                                 return '';
                         }

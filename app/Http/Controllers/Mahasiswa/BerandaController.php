@@ -61,8 +61,9 @@ class BerandaController extends Controller
                 ->first()
             : null;
 
-        // Hero netral "sedang diproses" untuk pengajuan aktif yang belum diumumkan.
-        $adaProsesBerjalan = $latestPengajuan && !$sudahDiumumkan;
+        // Hero netral "sedang diproses" untuk pengajuan aktif yang belum diumumkan & belum ditolak final.
+        $adaProsesBerjalan = $latestPengajuan
+            && !$sudahDiumumkan;
 
         $riwayat = Pengajuan::with(['judulDitetapkan', 'pilihan1'])
             ->where('mahasiswa_id', $mahasiswaId)
@@ -87,14 +88,9 @@ class BerandaController extends Controller
                 ];
             });
 
-        // Progress mahasiswa: none -> diproses -> diumumkan (hasil dirahasiakan s/d pengumuman).
-        if ($sudahDiumumkan) {
-            $statusProgress = 'diumumkan';
-        } elseif ($latestPengajuan) {
-            $statusProgress = 'diproses';
-        } else {
-            $statusProgress = 'none';
-        }
+        // Progress mahasiswa mengikuti TAHAP pipeline (Ajukan → Ka Lab → Kaprodi → Pengumuman).
+        // Keputusan (diterima/ditolak) & judul tetap dirahasiakan sampai pengumuman resmi.
+        $statusProgress = $this->hitungStatusProgress($latestPengajuan, $sudahDiumumkan);
 
         return view('mahasiswa.beranda', compact(
             'total',
@@ -105,6 +101,7 @@ class BerandaController extends Controller
             'statusProgress',
             'sudahDiumumkan',
             'adaProsesBerjalan',
+            'latestPengajuan',
         ))->with('title', 'Beranda');
     }
 
@@ -130,14 +127,8 @@ class BerandaController extends Controller
         $sudahDiumumkan = $latestPengajuan
             && in_array($latestPengajuan->periode_id, $announcedPeriodes);
 
-        // Hasil dirahasiakan sampai pengumuman resmi: none -> diproses -> diumumkan.
-        if ($sudahDiumumkan) {
-            $status = 'diumumkan';
-        } elseif ($latestPengajuan) {
-            $status = 'diproses';
-        } else {
-            $status = 'none';
-        }
+        // Progress mengikuti tahap pipeline (keputusan tetap rahasia s/d pengumuman).
+        $status = $this->hitungStatusProgress($latestPengajuan, $sudahDiumumkan);
 
         // Semua di-scope ke periode aktif (ikut reset tiap ganti periode).
         $jumlah = Pengajuan::where('mahasiswa_id', $mahasiswaId)
@@ -175,5 +166,36 @@ class BerandaController extends Controller
             'riwayat' => $riwayat,
             'notif' => $notif,
         ]);
+    }
+
+    /**
+     * TAHAP progress pengajuan (progress bar beranda) — hanya menunjukkan TAHAPAN,
+     * bukan hasil (diterima/ditolak). Setiap milestone = 25%:
+     *   none            →   0%  belum mengajukan
+     *   diajukan        →  25%  sudah mengajukan (menunggu review Ka Lab)
+     *   review_kalab    →  50%  Ka Lab sudah menilai (menunggu review Kaprodi)
+     *   review_kaprodi  →  75%  Kaprodi sudah menilai (menunggu pengumuman)
+     *   diumumkan       → 100%  pengumuman resmi sudah dikirim
+     *
+     * Anti-bocor: keputusan & judul yang ditetapkan tetap dirahasiakan sampai
+     * pengumuman. Ditolak Ka Lab tetap dipetakan ke tahap "review_kalab" (bukan
+     * label penolakan), jadi bar hanya menandai sampai tahap mana berkas berjalan.
+     */
+    private function hitungStatusProgress($latestPengajuan, bool $sudahDiumumkan): string
+    {
+        if (!$latestPengajuan) {
+            return 'none';
+        }
+        if ($sudahDiumumkan) {
+            return 'diumumkan';
+        }
+        if (is_null($latestPengajuan->status_kalab)) {
+            return 'diajukan';
+        }
+        if (is_null($latestPengajuan->status_kaprodi)) {
+            return 'review_kalab';
+        }
+
+        return 'review_kaprodi';
     }
 }
