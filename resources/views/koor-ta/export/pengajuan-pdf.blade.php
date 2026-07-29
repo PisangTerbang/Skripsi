@@ -186,65 +186,114 @@
     @if ($pengajuan->isEmpty())
         <div class="no-data">Tidak ada data pengajuan</div>
     @else
-        <table>
-            <thead>
-                <tr>
-                    <th style="width:25px">No</th>
-                    <th style="width:70px">NIM</th>
-                    <th style="width:100px">Nama Mahasiswa</th>
-                    <th style="width:80px">Judul Ditetapkan</th>
-                    <th style="width:80px">Dosen</th>
-                    <th style="width:60px">Lab</th>
-                    <th style="width:55px">Status Ka Lab</th>
-                    <th style="width:55px">Status Kaprodi</th>
-                    <th style="width:60px">Tgl Pengajuan</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($pengajuan as $index => $item)
+        @php
+            $ringkas = ($jenis ?? 'lengkap') === 'ringkas';
+            $lbl = fn($s) => match ($s) {
+                'disetujui' => 'Disetujui', 'ditolak' => 'Ditolak', 'pending' => 'Pending',
+                null => 'Belum Diproses', default => ucfirst((string) $s),
+            };
+            $statusAkhir = function ($p) {
+                if ($p->status_kaprodi === 'disetujui') return ['Diterima', 'badge-green'];
+                if ($p->status_kalab === 'ditolak' || $p->status_kaprodi === 'ditolak') return ['Ditolak', 'badge-red'];
+                return ['Diproses', 'badge-yellow'];
+            };
+            $logRingkas = function ($p) use ($lbl) {
+                $k = 'Ka Lab: ' . $lbl($p->status_kalab);
+                if ($p->tanggal_review_kalab) $k .= ' (' . $p->tanggal_review_kalab->format('d/m/y H:i') . ')';
+                $parts = [$k];
+                if ($p->status_kalab !== 'ditolak') {
+                    $pr = 'Prodi: ' . $lbl($p->status_kaprodi);
+                    if ($p->tanggal_review_kaprodi) $pr .= ' (' . $p->tanggal_review_kaprodi->format('d/m/y H:i') . ')';
+                    $parts[] = $pr;
+                }
+                return implode(' → ', $parts);
+            };
+        @endphp
+
+        @if ($ringkas)
+            <table>
+                <thead>
                     <tr>
-                        <td style="text-align:center">{{ $index + 1 }}</td>
-                        <td>{{ $item->mahasiswa->nim ?? '-' }}</td>
-                        <td>{{ $item->mahasiswa->name ?? '-' }}</td>
-                        <td>{{ $item->judulDitetapkan->nama_judul ?? ($item->judulDitetapkan->judul ?? '-') }}</td>
-                        <td>{{ $item->judulDitetapkan->dosen->name ?? '-' }}</td>
-                        <td>{{ $item->judulDitetapkan->laboratorium->nama ?? '-' }}</td>
-                        <td>
-                            @php
-                                $kalabClass = match ($item->status_kalab) {
-                                    'disetujui' => 'badge-green',
-                                    'ditolak' => 'badge-red',
-                                    default => 'badge-yellow',
-                                };
-                                $kalabLabel = match ($item->status_kalab) {
-                                    'disetujui' => 'Disetujui',
-                                    'ditolak' => 'Ditolak',
-                                    default => 'Pending',
-                                };
-                            @endphp
-                            <span class="badge {{ $kalabClass }}">{{ $kalabLabel }}</span>
-                        </td>
-                        <td>
-                            @php
-                                $kaprodiClass = match ($item->status_kaprodi) {
-                                    'disetujui' => 'badge-green',
-                                    'ditolak' => 'badge-red',
-                                    default => 'badge-gray',
-                                };
-                                $kaprodiLabel = match ($item->status_kaprodi) {
-                                    'disetujui' => 'Disetujui',
-                                    'ditolak' => 'Ditolak',
-                                    null => 'Belum',
-                                    default => ucfirst($item->status_kaprodi),
-                                };
-                            @endphp
-                            <span class="badge {{ $kaprodiClass }}">{{ $kaprodiLabel }}</span>
-                        </td>
-                        <td>{{ $item->created_at->format('d/m/Y') }}</td>
+                        <th style="width:25px">No</th>
+                        <th style="width:65px">NIM</th>
+                        <th style="width:95px">Nama Mahasiswa</th>
+                        <th style="width:110px">Judul Ditetapkan</th>
+                        <th style="width:85px">Dosen</th>
+                        <th style="width:55px">Lab</th>
+                        <th style="width:55px">Status Akhir</th>
+                        <th style="width:150px">Log Ringkas</th>
+                        <th style="width:55px">Tgl</th>
                     </tr>
-                @endforeach
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach ($pengajuan as $index => $item)
+                        @php [$saLabel, $saClass] = $statusAkhir($item); @endphp
+                        <tr>
+                            <td style="text-align:center">{{ $index + 1 }}</td>
+                            <td>{{ $item->mahasiswa->nim ?? '-' }}</td>
+                            <td>{{ $item->mahasiswa->name ?? '-' }}</td>
+                            <td>{{ $item->judulDitetapkan->nama_judul ?? ($item->judulDitetapkan->judul ?? '-') }}</td>
+                            <td>{{ $item->judulDitetapkan->dosen->name ?? '-' }}</td>
+                            <td>{{ $item->judulDitetapkan->laboratorium->nama ?? '-' }}</td>
+                            <td><span class="badge {{ $saClass }}">{{ $saLabel }}</span></td>
+                            <td>{{ $logRingkas($item) }}</td>
+                            <td>{{ $item->created_at->format('d/m/Y') }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        @else
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width:25px">No</th>
+                        <th style="width:70px">NIM</th>
+                        <th style="width:100px">Nama Mahasiswa</th>
+                        <th style="width:80px">Judul Ditetapkan</th>
+                        <th style="width:80px">Dosen</th>
+                        <th style="width:60px">Lab</th>
+                        <th style="width:55px">Status Ka Lab</th>
+                        <th style="width:55px">Status Kaprodi</th>
+                        <th style="width:60px">Tgl Pengajuan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($pengajuan as $index => $item)
+                        <tr>
+                            <td style="text-align:center">{{ $index + 1 }}</td>
+                            <td>{{ $item->mahasiswa->nim ?? '-' }}</td>
+                            <td>{{ $item->mahasiswa->name ?? '-' }}</td>
+                            <td>{{ $item->judulDitetapkan->nama_judul ?? ($item->judulDitetapkan->judul ?? '-') }}</td>
+                            <td>{{ $item->judulDitetapkan->dosen->name ?? '-' }}</td>
+                            <td>{{ $item->judulDitetapkan->laboratorium->nama ?? '-' }}</td>
+                            <td>
+                                @php
+                                    $kalabClass = match ($item->status_kalab) {
+                                        'disetujui' => 'badge-green', 'ditolak' => 'badge-red', default => 'badge-yellow',
+                                    };
+                                    $kalabLabel = match ($item->status_kalab) {
+                                        'disetujui' => 'Disetujui', 'ditolak' => 'Ditolak', default => 'Pending',
+                                    };
+                                @endphp
+                                <span class="badge {{ $kalabClass }}">{{ $kalabLabel }}</span>
+                            </td>
+                            <td>
+                                @php
+                                    $kaprodiClass = match ($item->status_kaprodi) {
+                                        'disetujui' => 'badge-green', 'ditolak' => 'badge-red', default => 'badge-gray',
+                                    };
+                                    $kaprodiLabel = match ($item->status_kaprodi) {
+                                        'disetujui' => 'Disetujui', 'ditolak' => 'Ditolak', null => 'Belum', default => ucfirst($item->status_kaprodi),
+                                    };
+                                @endphp
+                                <span class="badge {{ $kaprodiClass }}">{{ $kaprodiLabel }}</span>
+                            </td>
+                            <td>{{ $item->created_at->format('d/m/Y') }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        @endif
     @endif
 
     {{-- Footer --}}

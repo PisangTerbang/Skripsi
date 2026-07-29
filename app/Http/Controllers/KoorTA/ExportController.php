@@ -24,14 +24,16 @@ class ExportController extends Controller
         $request->validate([
             'periode_id' => 'nullable|exists:periode,id',
             'status' => 'nullable|string',
+            'jenis' => 'nullable|string',
         ]);
 
         $periodeId = $request->periode_id;
         $status = $request->status ?? 'all';
+        $jenis = $request->jenis === 'ringkas' ? 'ringkas' : 'lengkap';
         $periode = $periodeId ? Periode::find($periodeId) : null;
 
         // ✅ fix: hapus karakter / \ dan spasi dari nama file
-        $filename = 'pengajuan-ta';
+        $filename = 'pengajuan-ta-' . $jenis;
         if ($periode) {
             $filename .= '-' . str_replace(['/', '\\', ' '], '-', strtolower($periode->nama));
         }
@@ -41,7 +43,7 @@ class ExportController extends Controller
         $filename .= '-' . now()->format('Ymd-His') . '.xlsx';
 
         return Excel::download(
-            new PengajuanExport($periodeId, $status),
+            new PengajuanExport($periodeId, $status, $jenis),
             $filename
         );
     }
@@ -51,10 +53,12 @@ class ExportController extends Controller
         $request->validate([
             'periode_id' => 'nullable|exists:periode,id',
             'status' => 'nullable|string',
+            'jenis' => 'nullable|string',
         ]);
 
         $periodeId = $request->periode_id;
         $status = $request->status ?? 'all';
+        $jenis = $request->jenis === 'ringkas' ? 'ringkas' : 'lengkap';
         $periode = $periodeId ? Periode::find($periodeId) : null;
         $statusLabel = match ($status) {
             'disetujui' => 'Disetujui',
@@ -99,10 +103,11 @@ class ExportController extends Controller
             'pengajuan',
             'periode',
             'statusLabel',
+            'jenis',
         ))->setPaper('a4', 'landscape');
 
         // ✅ fix: hapus karakter / \ dan spasi dari nama file
-        $filename = 'pengajuan-ta';
+        $filename = 'pengajuan-ta-' . $jenis;
         if ($periode) {
             $filename .= '-' . str_replace(['/', '\\', ' '], '-', strtolower($periode->nama));
         }

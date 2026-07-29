@@ -48,6 +48,16 @@
                     <form method="POST" action="{{ route('koor-ta.export.excel') }}" class="p-6 space-y-5">
                         @csrf
 
+                        {{-- Jenis Laporan --}}
+                        <div>
+                            <label class="mb-1.5 block text-sm font-bold text-gray-700">Jenis Laporan</label>
+                            <select name="jenis"
+                                class="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-sm text-gray-800 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 transition">
+                                <option value="lengkap">Lengkap (log penuh per tingkat)</option>
+                                <option value="ringkas">Ringkas (log dipadatkan)</option>
+                            </select>
+                        </div>
+
                         {{-- Periode --}}
                         <div>
                             <label class="mb-1.5 block text-sm font-bold text-gray-700">
@@ -112,6 +122,16 @@
                     <form method="POST" action="{{ route('koor-ta.export.pdf') }}" class="p-6 space-y-5">
                         @csrf
 
+                        {{-- Jenis Laporan --}}
+                        <div>
+                            <label class="mb-1.5 block text-sm font-bold text-gray-700">Jenis Laporan</label>
+                            <select name="jenis"
+                                class="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-sm text-gray-800 focus:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-100 transition">
+                                <option value="lengkap">Lengkap (log penuh per tingkat)</option>
+                                <option value="ringkas">Ringkas (log dipadatkan)</option>
+                            </select>
+                        </div>
+
                         {{-- Periode --}}
                         <div>
                             <label class="mb-1.5 block text-sm font-bold text-gray-700">
@@ -171,15 +191,34 @@
                     </div>
                     <h3 class="font-extrabold text-white">Kolom yang Di-export</h3>
                 </div>
-                <div class="p-6">
-                    <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                        @foreach (['No', 'NIM', 'Nama Mahasiswa', 'Periode', 'Judul Ditetapkan', 'Dosen Pembimbing', 'Laboratorium', 'Status Ka Lab', 'Reviewer Ka Lab', 'Tgl Review Ka Lab', 'Status Kaprodi', 'Reviewer Kaprodi', 'Tgl Review Kaprodi', 'Catatan Ka Lab', 'Catatan Kaprodi', 'Tgl Pengajuan'] as $col)
-                            <div
-                                class="flex items-center gap-2 rounded-xl border-2 border-gray-100 bg-gray-50 px-3 py-2">
-                                <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-500"></span>
-                                <span class="text-xs font-semibold text-gray-700">{{ $col }}</span>
-                            </div>
-                        @endforeach
+                <div class="space-y-5 p-6">
+                    <div>
+                        <p class="mb-2 text-xs font-black uppercase tracking-wide text-gray-500">Mode Lengkap — log penuh per tingkat</p>
+                        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                            @foreach (['No', 'NIM', 'Nama Mahasiswa', 'Periode', 'Judul Ditetapkan', 'Dosen Pembimbing', 'Laboratorium', 'Status Ka Lab', 'Reviewer Ka Lab', 'Tgl Review Ka Lab', 'Status Kaprodi', 'Reviewer Kaprodi', 'Tgl Review Kaprodi', 'Catatan Ka Lab', 'Catatan Kaprodi', 'Tgl Pengajuan'] as $col)
+                                <div
+                                    class="flex items-center gap-2 rounded-xl border-2 border-gray-100 bg-gray-50 px-3 py-2">
+                                    <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-500"></span>
+                                    <span class="text-xs font-semibold text-gray-700">{{ $col }}</span>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                    <div>
+                        <p class="mb-2 text-xs font-black uppercase tracking-wide text-gray-500">Mode Ringkas — log dipadatkan</p>
+                        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                            @foreach (['No', 'NIM', 'Nama Mahasiswa', 'Periode', 'Judul Ditetapkan', 'Dosen Pembimbing', 'Laboratorium', 'Status Akhir', 'Log Ringkas', 'Tgl Pengajuan'] as $col)
+                                <div
+                                    class="flex items-center gap-2 rounded-xl border-2 border-gray-100 bg-gray-50 px-3 py-2">
+                                    <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500"></span>
+                                    <span class="text-xs font-semibold text-gray-700">{{ $col }}</span>
+                                </div>
+                            @endforeach
+                        </div>
+                        <p class="mt-2 text-xs text-gray-400">
+                            <span class="font-bold">Log Ringkas</span> menggabungkan jejak review jadi satu sel, mis.
+                            “Ka Lab: Disetujui (05/08/28 09:40) → Prodi: Disetujui (07/08/28 13:05)”.
+                        </p>
                     </div>
                 </div>
             </div>
